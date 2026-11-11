@@ -21,6 +21,7 @@
     "setup": "node scripts/setup.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "patterns:backfill": "tsx scripts/backfill-patterns.ts",
     "test:e2e": "tsx server/test/e2e/pvp-negotiation.ts",
     "test:resume": "tsx server/test/e2e/resume.ts",
     "test:ui": "tsx server/test/e2e/pvp-ui.ts",

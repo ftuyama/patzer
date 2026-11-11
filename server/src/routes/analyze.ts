@@ -13,6 +13,8 @@ import { gameAccuracy, type MoveAccPoint } from '../chess/accuracy.js';
 import { extractKeyMoments } from '../chess/keyMoments.js';
 import { lookupOpeningByEpd, fenToEpd, lookupOpeningFromPgn } from '../chess/openings.js';
 import { startFenOf } from '../chess/startFen.js';
+import { detectGamePatterns, PATTERN_VERSION, type GameMeta } from '../chess/patterns.js';
+import { hasEventsForGame, recordGameEvents } from '../patterns/store.js';
 import type { AnalysisResult, AnalyzedMove, Color, KeyMomentSummary, PhaseSplit } from '../types.js';
 
 const router = new Hono();
@@ -634,6 +636,50 @@ function medianDepth(depths: number[]): number {
   return d.length ? d[Math.floor(d.length / 2)]! : 0;
 }
 
+interface PatternGameRow {
+  user_id: number;
+  user_color: 'white' | 'black' | null;
+  end_time: string | null;
+  white: string | null;
+  black: string | null;
+  result: string | null;
+  start_fen: string | null;
+}
+
+/**
+ * Materialize the analysis into `error_events` (the diagnosis / progress /
+ * drill read model). Every caller of saveAnalysis — the single route, the bulk
+ * job, auto-import and finished PvP games — gets it for free.
+ *
+ * Pattern extraction is a bonus, never a requirement: a failure here must not
+ * fail the analysis response. Games started from a position never had an
+ * opening and are skipped, as are games already recorded at this version.
+ */
+function recordPatternsForAnalysis(gameId: number, result: AnalysisResult): void {
+  try {
+    const game = db.prepare(`
+      SELECT user_id, user_color, end_time, white, black, result, start_fen
+        FROM games WHERE id = ?
+    `).get(gameId) as PatternGameRow | undefined;
+    if (!game || game.start_fen) return;
+    if (hasEventsForGame(gameId, PATTERN_VERSION)) return;
+
+    const color = game.user_color ?? 'white';
+    const meta: GameMeta = {
+      game_id: gameId,
+      user_color: color,
+      end_time: game.end_time,
+      eco: result.opening_eco,
+      opening_name: result.opening_name,
+      opponent: color === 'white' ? game.black : game.white,
+      result: game.result,
+    };
+    recordGameEvents(game.user_id, gameId, detectGamePatterns(result.moves, meta, result.phase_split));
+  } catch (err) {
+    console.warn('[patterns] game', gameId, err instanceof Error ? err.message : err);
+  }
+}
+
 /** Upsert a full analysis row for a game, and backfill the game's opening so
  *  list endpoints can show it without joining `analyses`. */
 export function saveAnalysis(gameId: number, result: AnalysisResult): void {
@@ -668,6 +714,7 @@ export function saveAnalysis(gameId: number, result: AnalysisResult): void {
     db.prepare(`UPDATE games SET eco = ?, opening_name = ? WHERE id = ?`)
       .run(result.opening_eco, result.opening_name, gameId);
   }
+  recordPatternsForAnalysis(gameId, result);
 }
 
 // Phase split: opening = first N plies (ECO depth, fallback BOOK_PLIES);
