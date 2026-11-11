@@ -11,6 +11,7 @@ router.use('*', requireAuth);
 
 interface RatingRow { time_class: TimeClass; rating: number; rd: number; games_played: number; last_played_at: string | null }
 interface HistoryRow { game_id: number; time_class: TimeClass; rating_before: number; rating_after: number; created_at: string }
+interface ExternalRow { source: string; time_class: TimeClass; rating: number; updated_at: string }
 
 router.get('/me', (c) => {
   const me = c.get('user');
@@ -23,7 +24,21 @@ router.get('/me', (c) => {
     daily: shape('daily', null),
   };
   for (const r of rows) byClass[r.time_class] = shape(r.time_class, r);
-  return c.json({ ratings: byClass });
+
+  // Ratings imported from chess.com (or another linked site). Shown only when
+  // Patzer's own pool has no games for that class, so a player who has played
+  // here never sees a stale foreign number where their Glicko belongs.
+  const extRows = db.prepare(`SELECT source, time_class, rating, updated_at
+                              FROM external_ratings WHERE user_id = ?`).all(me.id) as ExternalRow[];
+  const external: Record<string, Record<string, { rating: number; updated_at: string }>> = {};
+  for (const r of extRows) {
+    (external[r.source] ??= {})[r.time_class] = {
+      rating: Math.round(r.rating),
+      updated_at: r.updated_at,
+    };
+  }
+
+  return c.json({ ratings: byClass, external });
 });
 
 router.get('/history', (c) => {

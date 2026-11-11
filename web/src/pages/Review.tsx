@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
+import { Download, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
 import { api } from '../api';
 import AnalyzeAllButton from '../components/AnalyzeAllButton';
+import GameResultIcon from '../components/GameResultIcon';
+import TimeClassIcon from '../components/TimeClassIcon';
 import { useAuth } from '../state/auth';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
@@ -38,6 +40,8 @@ export default function Review() {
     onSuccess: (r) => {
       setImportMsg({ text: t('review.imported', { n: r.imported }) });
       qc.invalidateQueries({ queryKey: ['games'] });
+      // The import also refreshes the chess.com ratings shown on Home.
+      qc.invalidateQueries({ queryKey: ['ratings', 'me'] });
       setTimeout(() => setImportMsg(null), 3000);
     },
     onError: (e) => {
@@ -193,13 +197,17 @@ function GameCard({ g }: { g: GameRow }) {
   return (
     <div className="card-hover group relative flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
       <Link to={`/review/${g.id}`} className="flex flex-1 items-center gap-3 sm:gap-4">
-        <ResultIcon r={g.result} />
+        <TimeClassIcon
+          timeClass={g.time_class}
+          label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
+        />
+        <GameResultIcon result={g.result} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span className={cn('truncate font-semibold', g.user_color === 'white' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.white}</span>
             <span className="text-chesscom-400">{t('players.vs')}</span>
             <span className={cn('truncate font-semibold', g.user_color === 'black' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.black}</span>
-            <span className="text-xs text-chesscom-400">· {fmtTimeControl(g.time_control, t)}</span>
+            {!g.time_class && <span className="text-xs text-chesscom-400">· {fmtTimeControl(g.time_control, t)}</span>}
             {g.opening_name && <span className="hidden truncate text-xs text-chesscom-400 sm:inline">· {g.opening_name}</span>}
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-chesscom-500">
@@ -213,10 +221,15 @@ function GameCard({ g }: { g: GameRow }) {
         {g.analyzed ? (
           <div className="text-right text-xs">
             <div className="text-[11px] uppercase tracking-wider text-chesscom-400">{t('review.accuracy')}</div>
-            <div className="font-mono text-sm font-semibold tabular-nums">
-              <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_white)}</span>
+            {/* Your side is the bold one — the opponent's number is context. */}
+            <div className="font-mono text-sm tabular-nums">
+              <span className={cn(g.user_color === 'white' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500')}>
+                {fmtAccuracy(g.accuracy_white)}
+              </span>
               <span className="mx-1 text-chesscom-400">/</span>
-              <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_black)}</span>
+              <span className={cn(g.user_color === 'black' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500')}>
+                {fmtAccuracy(g.accuracy_black)}
+              </span>
             </div>
           </div>
         ) : (
@@ -239,10 +252,4 @@ function GameCard({ g }: { g: GameRow }) {
       </button>
     </div>
   );
-}
-
-function ResultIcon({ r }: { r: string }) {
-  if (r === 'win') return <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-board-dark/15 text-board-dark"><Trophy className="h-4 w-4" /></div>;
-  if (r === 'loss') return <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mistake/15 text-mistake"><Frown className="h-4 w-4" /></div>;
-  return <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300"><Equal className="h-4 w-4" /></div>;
 }

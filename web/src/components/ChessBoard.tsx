@@ -17,13 +17,17 @@ interface Props {
   /** Bump to force the board to re-sync to the current `fen` prop (e.g. after
    *  a rolled-back blunder warning, or after the server rejects a move). */
   resetKey?: number;
+  /** Slide moved pieces over this many ms instead of snapping them. 0 (the
+   *  default) is what a live game wants — see the `animation` note below.
+   *  Below chessground's 70ms floor this is a no-op anyway. */
+  animateMs?: number;
 }
 
 export type PieceLetter = 'q' | 'r' | 'b' | 'n';
 
 export default function ChessBoard({
   fen, orientation = 'white', movable = false, turnColor, onMove,
-  lastMove, arrows, size, resetKey,
+  lastMove, arrows, size, resetKey, animateMs = 0,
 }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const apiRef = useRef<CgApi | null>(null);
@@ -84,10 +88,11 @@ export default function ChessBoard({
       orientation,
       turnColor,
       coordinates: true,
-      // No slide animation. In a real game the 200ms tween is dead time: you
-      // see the piece arrive later than the board already knows, and on a fast
-      // time control that reads as lag. Pieces appear where they are.
-      animation: { enabled: false, duration: 0 },
+      // No slide animation by default. In a real game the 200ms tween is dead
+      // time: you see the piece arrive later than the board already knows, and
+      // on a fast time control that reads as lag. Pieces appear where they
+      // are. Review/lesson surfaces opt back in via `animateMs`.
+      animation: { enabled: animateMs > 0, duration: animateMs },
       highlight: { lastMove: true, check: true },
       movable: {
         ...(movable
@@ -140,6 +145,9 @@ export default function ChessBoard({
       orientation,
       turnColor,
       lastMove,
+      // api.set() applies this before it plans the tween, so it takes effect on
+      // this very update — a step animates, a jump (animateMs=0) snaps.
+      animation: { enabled: animateMs > 0, duration: animateMs },
       movable: {
         ...(movable
           ? { color: turnColor, free: false, dests: legalDests(fen), showDests: true }
@@ -154,7 +162,7 @@ export default function ChessBoard({
     }
     syncBounds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fen, orientation, turnColor, lastMoveKey, movable, arrowsKey, resetKey]);
+  }, [fen, orientation, turnColor, lastMoveKey, movable, arrowsKey, resetKey, animateMs]);
 
   function pickPromotion(piece: PieceLetter) {
     if (!promotion) return;

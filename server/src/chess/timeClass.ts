@@ -45,6 +45,16 @@ export function classifyTimeControl(tc: string | null | undefined): TimeClass | 
   return null;
 }
 
+/** Class to badge a stored game with. `time_class` was added after the games
+ *  table existed and is null for some rows (untimed games, imports that never
+ *  classified), so fall back to the clock string the row does carry. */
+export function timeClassOrDerived(
+  stored: TimeClass | null | undefined,
+  timeControl: string | null | undefined,
+): TimeClass | null {
+  return stored ?? classifyTimeControl(timeControl);
+}
+
 /** Default time-control string for a known class (used when starting a PvP game). */
 export function defaultTimeControlFor(cls: TimeClass): string {
   switch (cls) {

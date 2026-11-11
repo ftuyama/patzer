@@ -5,6 +5,7 @@ import de from './de.json';
 import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
 import learnRu from './learn/ru.json';
+import learnPt from './learn/pt.json';
 import ru from './ru.json';
 import pt from './pt.json';
 import bg from './bg.json';
@@ -45,7 +46,7 @@ describe('de locale', () => {
 
 // Lesson texts have their own namespace; missing keys must not silently put
 // English sentences into a translated lesson.
-describe.each([['de', learnDe], ['ru', learnRu]] as const)('%s lesson texts', (lang, texts) => {
+describe.each([['de', learnDe], ['ru', learnRu], ['pt', learnPt]] as const)('%s lesson texts', (lang, texts) => {
   const enFlat = flatten(learnEn as Tree);
   const translated = flatten(texts as Tree);
 

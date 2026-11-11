@@ -170,6 +170,25 @@ cg-board square.last-move.premove-dest {
   }
 }
 
+/* ─── Dark-mode text contrast floor ────────────────────────────────────
+   The chess.com grey scale is tuned for white chrome. On the dark panels
+   (#312e2b cards, #262421 page) the same steps collapse: 400 reaches ~3:1,
+   500 ~1.9:1 and 600 ~1.5:1, so captions and hints ("Seta vermelha: o lance
+   que você jogou…") turn into grey mush. Rather than hand a dark: variant to
+   the hundreds of `text-chesscom-400/500/600` callsites — and to every new
+   one — lift the three text utilities here to ≥4.5:1 on both dark surfaces
+   while keeping their order (600 reads strongest, 400 faintest).
+
+   :where() keeps the specificity at (0,1,0), level with the plain utility, and
+   these rules are unlayered so they win over the utilities layer without
+   relying on source order. An explicit dark:text-* (or dark:hover:text-*,
+   0,3,0) on an element still takes precedence. Only the base utilities are
+   touched: `dark:text-chesscom-600` stays dim on purpose (unearned stars,
+   inactive values). */
+.dark :where(.text-chesscom-600) { color: #b8b2aa; }
+.dark :where(.text-chesscom-500) { color: #a8a29c; }
+.dark :where(.text-chesscom-400) { color: #9c968f; }
+
 /* Scrollbar polish */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: rgba(125, 118, 112, 0.3); border-radius: 4px; }

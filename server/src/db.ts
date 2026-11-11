@@ -28,7 +28,8 @@ const SCHEMA = [
     tts_pitch REAL NOT NULL DEFAULT 1.0,
     board_theme TEXT NOT NULL DEFAULT 'wood',
     piece_set TEXT NOT NULL DEFAULT 'cburnett',
-    site_theme TEXT NOT NULL DEFAULT 'auto'
+    site_theme TEXT NOT NULL DEFAULT 'auto',
+    move_animation TEXT NOT NULL DEFAULT 'medium'
   )`,
   `CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
@@ -91,6 +92,18 @@ const SCHEMA = [
     last_played_at TEXT,
     PRIMARY KEY (user_id, time_class)
   )`,
+  // The player's rating on an external site, refreshed on every import. Kept
+  // apart from `ratings` on purpose: these are somebody else's numbers, and
+  // merging them into Patzer's Glicko pool would fake games that never
+  // happened here.
+  `CREATE TABLE IF NOT EXISTS external_ratings (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    source TEXT NOT NULL,
+    time_class TEXT NOT NULL CHECK(time_class IN ('bullet','blitz','rapid','daily')),
+    rating INTEGER NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, source, time_class)
+  )`,
   // Audit trail of rating changes — used by admin "mark unrated" reversal.
   `CREATE TABLE IF NOT EXISTS rating_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,6 +153,10 @@ ensureColumn('profiles', 'sound_set', `TEXT NOT NULL DEFAULT 'classic'`);
 // Move / capture / castle sounds: 'classic' = the synthesized wood knocks
 // (default, unchanged), 'board' = recordings of real pieces on a board.
 ensureColumn('profiles', 'move_sound_set', `TEXT NOT NULL DEFAULT 'classic'`);
+// Piece-slide duration used when stepping through a game in Review ('off',
+// 'fast', 'medium', 'slow'). Live games always snap — the tween reads as lag
+// on a clock — so this only governs the browsing surfaces.
+ensureColumn('profiles', 'move_animation', `TEXT NOT NULL DEFAULT 'medium'`);
 ensureColumn('games', 'opponent_user_id', `INTEGER REFERENCES users(id) ON DELETE SET NULL`);
 // PvP clock persistence — without these a refresh during a blitz game silently
 // reset both clocks to the time control's initial. last_move_at is needed so

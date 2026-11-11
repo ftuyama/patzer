@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { api } from '../api';
 import { cn } from '../lib/utils';
+import { RatingsCard, useMyRatings } from '../components/UserRatings';
 import type { PatternKey, WeeklyProgressPayload, WeeklyProgressWeek } from '../types';
 
 type ProgressWeek = WeeklyProgressWeek & { summary_text?: string | null };
@@ -62,6 +63,7 @@ export default function Progress() {
     // flight; only the first load shows the skeleton.
     placeholderData: (previous) => previous,
   });
+  const { data: ratingsData } = useMyRatings();
 
   const header = (
     <header className="flex flex-wrap items-end justify-between gap-3">
@@ -189,6 +191,8 @@ export default function Progress() {
       </div>
 
       <EvolutionChart weeks={data.weeks} fmt={fmt} />
+
+      <RatingsCard ratings={ratingsData?.ratings ?? null} external={ratingsData?.external ?? null} />
 
       <section className="card p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Play } from 'lucide-react';
 import { api } from '../api';
+import { PROFILE_QUERY_KEY } from './OpeningProfilePanel';
 
 export interface BulkStatus {
   running: boolean;
@@ -49,6 +50,7 @@ export default function AnalyzeAllButton({ pending }: { pending?: number }) {
     void qc.invalidateQueries({ queryKey: ['diagnosis'] });
     void qc.invalidateQueries({ queryKey: ['insights-v2'] });
     void qc.invalidateQueries({ queryKey: ['games'] });
+    void qc.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
   }, [job?.running, qc]);
 
   const pendingGames = job?.pending_games ?? pending ?? 0;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles, FlipVertical2, ListOrdered, Handshake, Undo2, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'framer-motion';
 import { Chess } from 'chess.js';
@@ -10,6 +11,8 @@ import CoachPanel from '../components/CoachPanel';
 import CapturedPieces from '../components/CapturedPieces';
 import PieceEmotionsOverlay from '../components/PieceEmotionsOverlay';
 import Spinner from '../components/Spinner';
+import TimeClassIcon from '../components/TimeClassIcon';
+import { useMyRatings, resolveRating } from '../components/UserRatings';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
 import { fmtClock } from '../lib/utils';
@@ -104,9 +107,12 @@ interface ServerMsg {
   best_san?: string;
   // pvp_hello fields
   your_color?: 'white' | 'black';
-  opponent?: { user_id: number; display_name: string; online: boolean };
-  you?: { user_id: number; display_name: string };
+  opponent?: { user_id: number; display_name: string; online: boolean; rating?: RatingBadge | null };
+  you?: { user_id: number; display_name: string; rating?: RatingBadge | null };
   time_control?: string;
+  /** Bot tier + its approximate rating, echoed by game_started. */
+  difficulty?: Difficulty;
+  bot_elo?: number | null;
   history?: string[];
   /** Bot game from a position: the FEN it started from. */
   start_fen?: string | null;
@@ -139,6 +145,12 @@ interface GameResult { result: string; reason: string; gameId?: number }
 
 interface BlunderPreview { uci: string; classification: Classification; cp_loss: number; best_uci: string | null; best_san: string | null; eval_after_cp: number }
 
+/** A rating to sit next to a player's name, with the "?" provisional marker. */
+interface RatingBadge { rating: number; provisional?: boolean }
+
+/** One row of GET /api/play/bots. */
+interface BotLevel { difficulty: Difficulty; elo: number | null }
+
 export default function Play() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -157,6 +169,21 @@ export default function Play() {
   const [fromColor, setFromColor] = useState<'white' | 'black'>('white');
   useEffect(() => { if (fromPos) setFromColor(fromPos.color); }, [fromPos]);
   const [tc, setTc] = useState<typeof TIME_CONTROLS[number]>('untimed');
+
+  // The bot tiers' approximate ratings (server-owned config). Cached for the
+  // session: they only change when the server's difficulty table does.
+  const botLevels = useQuery<{ bots: BotLevel[] }>({
+    queryKey: ['play', 'bots'],
+    queryFn: () => api.get<{ bots: BotLevel[] }>('/api/play/bots'),
+    staleTime: Infinity,
+  });
+  const { data: ratingsData } = useMyRatings();
+  // The tier of the game on the board (the setup selection, then whatever
+  // `game_started` resumes) and the rating it plays at.
+  const [botDifficulty, setBotDifficulty] = useState<Difficulty>('medium');
+  const [botElo, setBotElo] = useState<number | null>(null);
+  // PvP sends both pool ratings in `pvp_hello`; bot games leave this empty.
+  const [pvpRatings, setPvpRatings] = useState<{ you: RatingBadge | null; opponent: RatingBadge | null }>({ you: null, opponent: null });
 
   const [fen, setFen] = useState(START_FEN);
   const [moves, setMoves] = useState<Move[]>([]);
@@ -403,6 +430,8 @@ export default function Play() {
     setPositions([{ fen: START_FEN }]);
     setBrowseIndex(null);
     setGameOverDismissed(false);
+    setBotElo(null);
+    setPvpRatings({ you: null, opponent: null });
     setDrawOffer(null); setTakeback(null); setRematch(null); setRematchDeclined(false);
     setMoreOpen(false); setSheetOpen(false);
     setPending(null);
@@ -450,6 +479,9 @@ export default function Play() {
         if (msg.fen) setFen(msg.fen);
         if (msg.your_color) setUserColor(msg.your_color);
         if (msg.opponent) setOpponent({ display_name: msg.opponent.display_name, online: msg.opponent.online });
+        if (msg.difficulty) setBotDifficulty(msg.difficulty);
+        if (msg.bot_elo !== undefined) setBotElo(msg.bot_elo);
+        setPvpRatings({ you: msg.you?.rating ?? null, opponent: msg.opponent?.rating ?? null });
         if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
         if (msg.blackTimeMs !== undefined) setBlackMs(msg.blackTimeMs);
         if (msg.time_control) setTc(msg.time_control as typeof TIME_CONTROLS[number]);
@@ -868,6 +900,16 @@ export default function Play() {
                         : 'border-chesscom-200 bg-white hover:border-chesscom-300 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:border-chesscom-600'}`}>
                     <div className="text-sm font-semibold">{t(`play.diff.${d}`)}</div>
                     <div className={`mt-1 text-xs ${difficulty === d ? 'opacity-90' : 'text-chesscom-500'}`}>{t(`play.diffDesc.${d}`)}</div>
+                    {(() => {
+                      const level = botLevels.data?.bots.find((b) => b.difficulty === d);
+                      if (!level) return null;
+                      return (
+                        <div className={`mt-2 inline-flex items-center rounded px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums
+                          ${difficulty === d ? 'bg-white/20 text-white' : 'bg-chesscom-100 text-chesscom-600 dark:bg-chesscom-800 dark:text-chesscom-300'}`}>
+                          {level.elo === null ? t('play.eloMax') : t('play.eloApprox', { elo: level.elo })}
+                        </div>
+                      );
+                    })()}
                   </button>
                 ))}
               </div>
@@ -892,7 +934,10 @@ export default function Play() {
               <div className="label mb-2">{t('play.timeControl')}</div>
               <div className="flex flex-wrap gap-2">
                 {TIME_CONTROLS.map((t2) => (
-                  <button key={t2} onClick={() => setTc(t2)} className={`btn ${tc === t2 ? 'btn-primary' : 'btn-secondary'}`}>{t(`play.tc.${t2}`)}</button>
+                  <button key={t2} onClick={() => setTc(t2)} className={`btn ${tc === t2 ? 'btn-primary' : 'btn-secondary'}`}>
+                    <TimeClassIcon timeClass={t2} orientation="inline" iconClassName="h-4 w-4 text-current" />
+                    {t(`play.tc.${t2}`)}
+                  </button>
                 ))}
               </div>
             </div>
@@ -938,9 +983,24 @@ export default function Play() {
     body: { fen, history: moveSans },
   }) : null);
 
-  const oppLabel = opponent ? opponent.display_name : (userColor === 'white' ? t('play.black') : t('play.white'));
   const isPvP = !!pvpGameId;
+  const oppLabel = isPvP
+    ? (opponent?.display_name ?? (userColor === 'white' ? t('play.black') : t('play.white')))
+    : t('play.botName', { difficulty: t(`play.diff.${botDifficulty}`) });
   const oppDisconnected = isPvP && opponent && !opponent.online;
+
+  // Rating shown on each clock bar. A rated PvP game takes the server's hello
+  // (Patzer's pool) for both sides; a bot game is unrated, so your own number
+  // is the current rating for that speed — imported from chess.com when there
+  // is no Glicko game yet — while the bot's is the tier's target.
+  const tcClass: 'bullet' | 'blitz' | 'rapid' | null =
+    tc === 'bullet' || tc === 'blitz' || tc === 'rapid' ? tc : tc === 'classical' ? 'rapid' : null;
+  const ownRating: RatingBadge | null = isPvP
+    ? pvpRatings.you
+    : tcClass ? resolveRating(ratingsData?.ratings ?? null, ratingsData?.external ?? null, tcClass) : null;
+  const oppRating: RatingBadge | null = isPvP
+    ? pvpRatings.opponent
+    : botElo !== null ? { rating: botElo } : null;
 
   const statusNode = isBrowsing ? <span className="font-medium text-amber-600">{t('play.browsingPast')}</span>
     : previewing ? <Spinner inline label={t('play.checking')} />
@@ -955,7 +1015,7 @@ export default function Play() {
             board shrinks vertically on short screens without making the
             column itself narrow. */}
         <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
-          <ClockBar timeMs={userColor === 'white' ? blackMs : whiteMs} active={turn !== userColor} label={oppLabel} flip />
+          <ClockBar timeMs={userColor === 'white' ? blackMs : whiteMs} active={turn !== userColor} label={oppLabel} rating={oppRating} flip />
           {/* Say it plainly rather than letting a dead socket look like a live
               game. The clock is frozen behind this and the game is safe on the
               server — which is the reassurance worth giving. */}
@@ -1038,7 +1098,7 @@ export default function Play() {
           <div className="my-1 flex items-center justify-between gap-2">
             <CapturedPieces fen={fen} side={userColor} />
           </div>
-          <ClockBar timeMs={userColor === 'white' ? whiteMs : blackMs} active={turn === userColor} label={user?.profile.display_name ?? (userColor === 'white' ? t('play.white') : t('play.black'))} />
+          <ClockBar timeMs={userColor === 'white' ? whiteMs : blackMs} active={turn === userColor} label={user?.profile.display_name ?? (userColor === 'white' ? t('play.white') : t('play.black'))} rating={ownRating} />
 
           {/* Rewind nav — visible once at least one move has been played */}
           {phase !== 'setup' && positions.length > 1 && (
@@ -1438,7 +1498,9 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
                 <span className="text-2xl">{c.from.avatar_emoji}</span>
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium">{c.from.display_name}</div>
-                  <div className="text-xs text-ink-500">{t(`play.${c.color}`)} · {t(`play.tc.${c.time_control}`)}</div>
+                  <div className="text-xs text-ink-500">
+                    {t(`play.${c.color}`)} · <TimeClassIcon timeClass={c.time_control} orientation="inline" iconClassName="h-3 w-3" /> {t(`play.tc.${c.time_control}`)}
+                  </div>
                 </div>
                 <button onClick={() => decline(c.id)} className="btn-ghost p-2"><X className="h-4 w-4" /></button>
                 <button onClick={() => accept(c.id)} className="btn-primary text-xs"><Check className="h-4 w-4" />{t('challenge.accept')}</button>
@@ -1460,7 +1522,9 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
                 <span className="text-2xl">{c.to.avatar_emoji}</span>
                 <div className="flex-1 min-w-0">
                   <div className="truncate font-medium">{c.to.display_name}</div>
-                  <div className="text-xs text-ink-500">{t(`play.${c.color}`)} · {t(`play.tc.${c.time_control}`)}</div>
+                  <div className="text-xs text-ink-500">
+                    {t(`play.${c.color}`)} · <TimeClassIcon timeClass={c.time_control} orientation="inline" iconClassName="h-3 w-3" /> {t(`play.tc.${c.time_control}`)}
+                  </div>
                 </div>
                 <button onClick={() => cancel(c.id)} className="btn-secondary text-xs">{t('common.cancel')}</button>
               </div>
@@ -1526,7 +1590,10 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
   );
 }
 
-function ClockBar({ timeMs, active, label, flip }: { timeMs: number; active: boolean; label: string; flip?: boolean }) {
+function ClockBar({ timeMs, active, label, rating, flip }: {
+  timeMs: number; active: boolean; label: string; rating?: RatingBadge | null; flip?: boolean;
+}) {
+  const { t } = useTranslation();
   // Under 30s the clock is the thing you need to read at a glance, so it grows
   // and the row grows with it; under 10s it also goes red and pulses. Only for
   // the side actually on the clock — a big number on the idle side is noise.
@@ -1538,7 +1605,19 @@ function ClockBar({ timeMs, active, label, flip }: { timeMs: number; active: boo
       ${active
         ? (critical ? 'bg-bad text-white animate-pulse-soft' : 'bg-green-500 text-white')
         : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800 dark:text-chesscom-300'} ${flip ? '' : ''}`}>
-      <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="truncate text-xs font-semibold uppercase tracking-wide">{label}</span>
+        {rating && (
+          <span
+            className="shrink-0 rounded bg-black/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold leading-none tabular-nums dark:bg-white/10"
+            title={rating.provisional
+              ? `${t('ratings.title')} (${t('ratings.provisional')})`
+              : t('ratings.title')}
+          >
+            {rating.rating}{rating.provisional ? '?' : ''}
+          </span>
+        )}
+      </span>
       <span
         className={`font-mono font-bold tabular-nums transition-all ${urgent ? 'text-3xl leading-none tracking-tight sm:text-4xl' : 'text-lg'}`}
         aria-live={critical ? 'assertive' : 'off'}

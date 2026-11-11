@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Chess } from 'chess.js';
-import { resolveTimeControl, normaliseTimeControl, classifyTimeControl } from '../src/chess/timeClass.js';
+import { resolveTimeControl, normaliseTimeControl, classifyTimeControl, timeClassOrDerived } from '../src/chess/timeClass.js';
 import { applyTakeback } from '../src/chess/takeback.js';
 
 describe('resolveTimeControl', () => {
@@ -21,6 +21,21 @@ describe('resolveTimeControl', () => {
     expect(resolveTimeControl('')).toBeNull();
     expect(resolveTimeControl('1/86400')).toBeNull();
     expect(resolveTimeControl('0+5')).toBeNull();
+  });
+});
+
+describe('timeClassOrDerived', () => {
+  it('keeps the stored class when the row has one', () => {
+    expect(timeClassOrDerived('blitz', '600+0')).toBe('blitz');
+  });
+  it('derives the class for rows written before time_class existed', () => {
+    expect(timeClassOrDerived(null, '60+0')).toBe('bullet');
+    expect(timeClassOrDerived(null, '300+2')).toBe('blitz');
+    expect(timeClassOrDerived(null, '1/86400')).toBe('daily');
+  });
+  it('stays null for untimed games so no badge is shown', () => {
+    expect(timeClassOrDerived(null, 'untimed')).toBeNull();
+    expect(timeClassOrDerived(undefined, null)).toBeNull();
   });
 });
 

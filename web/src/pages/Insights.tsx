@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
 import { Activity, BarChart3, Target, TrendingUp, Flame, AlertTriangle, BookOpen, Award, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { api } from '../api';
+import TimeClassIcon from '../components/TimeClassIcon';
 
 type Achievement = {
   id: string;
@@ -223,7 +224,7 @@ function PhaseStat({ label, value }: { label: string; value: number }) {
 /* ───── Time-class stats ───────────────────────────────────────────────── */
 function TimeClassCard({ data }: { data: InsightsV2['time_class_stats'] }) {
   const { t } = useTranslation();
-  const order: { key: string; label: string }[] = [
+  const order: { key: 'bullet' | 'blitz' | 'rapid' | 'daily'; label: string }[] = [
     { key: 'bullet', label: t('players.tc.bullet') },
     { key: 'blitz', label: t('players.tc.blitz') },
     { key: 'rapid', label: t('players.tc.rapid') },
@@ -240,7 +241,11 @@ function TimeClassCard({ data }: { data: InsightsV2['time_class_stats'] }) {
           const s = data[key];
           if (!s || s.games === 0) return (
             <div key={key} className="flex items-center justify-between text-xs text-chesscom-400">
-              <span>{label}</span><span>—</span>
+              <span className="inline-flex items-center gap-1.5">
+                <TimeClassIcon timeClass={key} orientation="inline" iconClassName="h-3 w-3" />
+                {label}
+              </span>
+              <span>—</span>
             </div>
           );
           const wp = (s.wins / s.games) * 100;
@@ -248,7 +253,10 @@ function TimeClassCard({ data }: { data: InsightsV2['time_class_stats'] }) {
           return (
             <div key={key}>
               <div className="mb-1 flex items-baseline justify-between text-xs">
-                <span className="font-medium text-chesscom-700 dark:text-chesscom-200">{label}</span>
+                <span className="inline-flex items-center gap-1.5 font-medium text-chesscom-700 dark:text-chesscom-200">
+                  <TimeClassIcon timeClass={key} orientation="inline" iconClassName="h-3 w-3" />
+                  {label}
+                </span>
                 <span className="font-mono tabular-nums text-chesscom-500">
                   {t('insights.tcLine', { games: s.games, wins: s.wins, draws: s.draws, losses: s.losses })}
                   {s.avg_accuracy != null && <> · {s.avg_accuracy.toFixed(1)}%</>}

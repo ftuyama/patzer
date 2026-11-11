@@ -73,6 +73,14 @@ async function main() {
   const bobCookie = bobLogin.cookie!;
   const bobId = bobLogin.json?.user?.id ?? bobCreate.json?.user?.id;
 
+  // The setup cards' rating labels come from the server's own tier table.
+  const bots = await api('/api/play/bots', undefined, aliceCookie);
+  check(
+    bots.status === 200 && bots.json.bots?.length === 7 && bots.json.bots[3].elo === 1240
+      && bots.json.bots.at(-1).elo === null,
+    `bot ratings endpoint (${JSON.stringify(bots.json.bots?.map((b: any) => b.elo))})`,
+  );
+
   console.log('challenge → accept (rapid)');
   // `color` is the colour the *acceptor* plays.
   const ch = await api('/api/challenges', { to_user_id: bobId, color: 'black', time_control: 'rapid' }, aliceCookie);
@@ -93,6 +101,13 @@ async function main() {
   await A.wait('opponent_status').catch(() => null);
   check(helloA.your_color === 'white' && helloB.your_color === 'black', 'colours as expected');
   check(helloA.whiteTimeMs === 600_000 && helloB.blackTimeMs === 600_000, `clocks resolved from "600+0" (got ${helloA.whiteTimeMs})`);
+  // Both clock bars show the pool rating: fresh players sit at 1200, provisional.
+  check(helloA.rated === true && helloA.time_class === 'rapid', 'a rapid game is rated and carries its time class');
+  check(
+    helloA.you?.rating?.rating === 1200 && helloA.opponent?.rating?.rating === 1200
+      && helloA.you.rating.provisional === true,
+    `hello carries both ratings (${JSON.stringify(helloA.you?.rating)} / ${JSON.stringify(helloA.opponent?.rating)})`,
+  );
 
   console.log('draw: offer → decline → offer → accept');
   A.send('offer_draw');

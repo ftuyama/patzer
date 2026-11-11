@@ -11,6 +11,7 @@ export type BoardTheme = 'wood' | 'green' | 'blue';
 export type SiteTheme = 'light' | 'dark' | 'auto';
 export type SoundSet = 'classic' | 'soft';
 export type MoveSoundSet = 'classic' | 'board';
+export type BoardAnimation = 'off' | 'fast' | 'medium' | 'slow';
 
 export interface Profile {
   user_id: number;
@@ -27,6 +28,7 @@ export interface Profile {
   tts_pitch: number;
   board_theme: BoardTheme;
   piece_set: string;
+  move_animation: BoardAnimation;
   site_theme: SiteTheme;
   blunder_warning: number;
   sound_enabled: number;

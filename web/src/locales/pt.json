@@ -110,6 +110,9 @@
       "stockfish": "Força de nível mundial"
     },
     "start": "Começar partida",
+    "botName": "Stockfish ({{difficulty}})",
+    "eloApprox": "≈ {{elo}} Elo",
+    "eloMax": "Máx.",
     "resign": "Desistir",
     "hint": "Dica",
     "yourTurn": "Sua vez",
@@ -186,6 +189,14 @@
     }
   },
   "review": {
+    "tc": {
+      "bullet": "Bullet",
+      "blitz": "Blitz",
+      "rapid": "Rápido",
+      "daily": "Diário",
+      "classical": "Clássica",
+      "untimed": "Sem tempo"
+    },
     "title": "Revisão de partidas",
     "yourGames": "Suas partidas",
     "import": "Importar",
@@ -405,6 +416,12 @@
     "boardWood": "Madeira",
     "boardGreen": "Verde",
     "boardBlue": "Azul",
+    "boardAnimation": "Animação das peças",
+    "boardAnimationOff": "Desligada",
+    "boardAnimationFast": "Rápida",
+    "boardAnimationMedium": "Média",
+    "boardAnimationSlow": "Lenta",
+    "boardAnimationHelp": "Como as peças deslizam ao passar pelos lances no Review. Em partidas ao vivo elas sempre aparecem direto, sem animação.",
     "adminHint": "Você é administrador — use a seção Admin na barra lateral para gerenciar usuários e configurações do sistema (Ollama, Stockfish).",
     "kidEmotions": "Peças vivas",
     "kidEmotionsDesc": "Ajuda as crianças a ler o tabuleiro inteiro num relance — as peças mostram sentimentos conforme o que acontece.",
@@ -1099,6 +1116,22 @@
         "kings-indian": "Defesa Índia do Rei: Clássica",
         "slav": "Defesa Eslava: Linha Principal",
         "nimzo-indian": "Defesa Nimzo-Índia: Rubinstein"
+      },
+      "profile": {
+        "title": "Suas aberturas",
+        "sub": "Montado a partir das suas partidas analisadas: o que você joga, como pontua e os lances de abertura que mais custam.",
+        "empty": "Ainda não há partidas analisadas",
+        "emptyHint": "Importe ou analise algumas partidas e suas aberturas aparecem aqui.",
+        "noGames": "Nenhuma partida com essa cor ainda.",
+        "sample_one": "{{count}} partida",
+        "sample_other": "{{count}} partidas",
+        "score": "{{n}}% de aproveitamento",
+        "accuracy": "{{n}}% de precisão",
+        "cpLoss": "−{{pawns}}",
+        "train": "Treinar correção",
+        "noLeaks": "Nenhum lance caro na abertura nestas partidas.",
+        "unknownOpening": "Abertura não reconhecida",
+        "loadError": "Não foi possível carregar suas aberturas."
       }
     },
     "theory": {
@@ -1349,6 +1382,12 @@
     "resendSubtitle": "Digite seu e-mail para receber um novo link de confirmação",
     "resendSentTitle": "Verifique sua caixa de entrada",
     "resendSentBody": "Se esse e-mail precisar de confirmação, um novo link está a caminho."
+  },
+  "ratings": {
+    "title": "Ratings",
+    "provisional": "provisório",
+    "unrated": "Sem rating",
+    "chesscomSource": "Rating importado do Chess.com"
   },
   "players": {
     "nav": "Jogadores",

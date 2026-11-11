@@ -10,6 +10,7 @@ import ChangelogModal from './ChangelogModal';
 import GitHubStar from './GitHubStar';
 import { LogoMark, LogoLockup } from './Logo';
 import LanguagePicker from './LanguagePicker';
+import { primaryRating, RatingChip, useMyRatings } from './UserRatings';
 import { endSession } from '../lib/logout';
 
 // v4.0.0 Layout — chess.com-style horizontal top bar.
@@ -26,6 +27,8 @@ interface LayoutProps {
 export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
   const { t, i18n } = useTranslation();
   const { user, refresh } = useAuth();
+  const { data: ratingsData } = useMyRatings();
+  const rating = primaryRating(ratingsData?.ratings, ratingsData?.external);
   const nav = useNavigate();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
@@ -237,6 +240,9 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             {/* Language picker — a compact dropdown so it fits on laptops too.
                 Below `lg` the switch remains in the mobile drawer, Settings
                 and the command palette (⌘K → "Switch to …"). */}
+            {rating && user && (
+              <RatingChip rating={rating} to={`/players/${user.id}`} className="hidden xl:inline-flex" />
+            )}
             <div className="hidden shrink-0 lg:block">
               <LanguagePicker tone="dark" appearance="button" align="right" />
             </div>

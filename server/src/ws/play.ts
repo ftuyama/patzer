@@ -11,50 +11,15 @@ import { db } from '../db.js';
 import { analyzePgn, analyzePgnFull, saveAnalysis } from '../routes/analyze.js';
 import { kickAutoReview } from '../autoReview.js';
 import { classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct, SCORING_VERSION } from '../chess/classifier.js';
-import { classifyTimeControl, type TimeClass } from '../chess/timeClass.js';
-import { GLICKO_DEFAULTS, inflateRd, updatePair } from '../chess/glicko.js';
+import { classifyTimeControl, timeClassOrDerived, type TimeClass } from '../chess/timeClass.js';
+import { inflateRd, updatePair } from '../chess/glicko.js';
+import { loadOrInitRating, ratingSnapshot } from '../chess/ratingLookup.js';
 import { chatStream, llmConfigured } from '../coach/llm.js';
 import { coachExplain } from '../coach/explain.js';
 import type { AuthedUser, Difficulty, Classification } from '../types.js';
 import { notifyUser } from './lobby.js';
 import { startFromPosition, startFenOf } from '../chess/startFen.js';
-
-// `Skill Level` alone produces tiers that don't match their labels — at
-// `Skill 3 / depth 4`, "Beginner" already plays around 1400 Elo, so a
-// chess.com 800-rated kid picking "Easy" gets crushed. We now drive tiers
-// through `UCI_LimitStrength` + `UCI_Elo`, which Stockfish supports natively
-// (range ~1320..3190) and which targets a real rating rather than a search
-// shape. The top two tiers turn the limiter off so they play full strength.
-interface DifficultyConfig {
-  /** When set, enables UCI_LimitStrength + UCI_Elo at this rating. */
-  uciElo: number | null;
-  /** Search depth — kept low for fast bot moves on weak tiers. */
-  depth: number;
-  /** Move time cap; combines with depth so a long search doesn't stall play. */
-  movetimeMs: number;
-}
-
-const DIFFICULTY: Record<Difficulty, DifficultyConfig> = {
-  kid:        { uciElo:  196, depth: 2,  movetimeMs: 192 },  // Stockfish floor + depth 1 = many hung pieces, deliberately
-  beginner:   { uciElo:  428, depth: 3,  movetimeMs: 294 },  
-  easy:       { uciElo:  724, depth: 5,  movetimeMs: 348 },
-  medium:     { uciElo: 1240, depth: 8,  movetimeMs: 412 },
-  hard:       { uciElo: 1720, depth: 12, movetimeMs: 648 },
-  master:     { uciElo: 2480, depth: 16, movetimeMs: 924 },
-  stockfish:  { uciElo: null, depth: 22, movetimeMs: 1280 }, // adapt elos to be more realistic,
-                                                             // depth 1 also leads to super weird moves.
-                                                             // moveTimeMs will depend on session.timeControls as well,
-                                                             // as seen further down. ~qrakhen 2026-08-12
-};
-
-async function applyDifficulty(engine: StockfishEngine, conf: DifficultyConfig): Promise<void> {
-  if (conf.uciElo !== null) {
-    await engine.setOption('UCI_LimitStrength', 'true');
-    await engine.setOption('UCI_Elo', conf.uciElo);
-  } else {
-    await engine.setOption('UCI_LimitStrength', 'false');
-  }
-}
+import { DIFFICULTY, applyDifficulty } from '../chess/botLevels.js';
 
 const TIME_CONTROLS: Record<string, { initial: number; increment: number } | null> = {
   bullet:    { initial: 60_000,    increment: 0 },
@@ -361,7 +326,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
 
         send(ws, 'game_started', {
           fen: session.chess.fen(), turn: session.chess.turn(),
-          difficulty, userColor, time_control: tcKey,
+          difficulty, bot_elo: DIFFICULTY[difficulty].elo, userColor, time_control: tcKey,
           whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
           start_fen: startFen,
           history: session.chess.history(),
@@ -430,7 +395,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
 
         send(ws, 'game_started', {
           fen: session.chess.fen(), turn: session.chess.turn(),
-          difficulty, userColor: session.userColor, time_control: tcKey,
+          difficulty, bot_elo: DIFFICULTY[difficulty].elo, userColor: session.userColor, time_control: tcKey,
           whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
           history: session.chess.history(),
           start_fen: session.startFen,
@@ -777,13 +742,22 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
   me.ws = ws;
   const opp: PvpPlayer = myColor === 'white' ? session.black : session.white;
 
+  // Rated games show the pool rating on both clock bars. Untimed games have no
+  // pool to read from, so they get no badges at all.
+  const ratedTc = row.rated === 1
+    ? timeClassOrDerived(row.time_class as TimeClass | null, row.time_control)
+    : null;
+  const ratingOf = (userId: number) => ratedTc ? ratingSnapshot(userId, ratedTc) : null;
+
   send(ws, 'pvp_hello', {
     game_id: gameId,
     fen: session.chess.fen(),
     your_color: myColor,
-    you: { user_id: me.user_id, display_name: me.display_name },
-    opponent: { user_id: opp.user_id, display_name: opp.display_name, online: !!opp.ws },
+    you: { user_id: me.user_id, display_name: me.display_name, rating: ratingOf(me.user_id) },
+    opponent: { user_id: opp.user_id, display_name: opp.display_name, online: !!opp.ws, rating: ratingOf(opp.user_id) },
     time_control: row.time_control,
+    rated: ratedTc !== null,
+    time_class: ratedTc,
     whiteTimeMs: session.whiteTimeMs,
     blackTimeMs: session.blackTimeMs,
     history: session.chess.history(),
@@ -1064,8 +1038,6 @@ function scoreFor(result: '1-0' | '0-1' | '1/2-1/2', color: 'white' | 'black'): 
   return color === 'black' ? 1 : 0;
 }
 
-interface RatingRowDb { rating: number; rd: number; games_played: number; last_played_at: string | null }
-
 /** Glicko-1 update for a finished rated PvP game. Idempotent — safe to call
  *  twice; the second invocation no-ops because `games.user_rating_after` is
  *  already populated. */
@@ -1141,14 +1113,6 @@ function applyRatedUpdate(session: PvpSession, result: '1-0' | '0-1' | '1/2-1/2'
       .run(blackRow.id, blackRow.user_id, tc, blackRating.rating, update.black.newR, blackRdInflated, update.black.newRd);
   });
   tx();
-}
-
-function loadOrInitRating(userId: number, tc: TimeClass): RatingRowDb {
-  const row = db.prepare(`SELECT rating, rd, games_played, last_played_at
-                          FROM ratings WHERE user_id = ? AND time_class = ?`)
-    .get(userId, tc) as RatingRowDb | undefined;
-  if (row) return row;
-  return { rating: GLICKO_DEFAULTS.rating, rd: GLICKO_DEFAULTS.rd, games_played: 0, last_played_at: null };
 }
 
 function upsertRating(userId: number, tc: TimeClass, rating: number, rd: number, lastIso: string): void {

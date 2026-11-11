@@ -1,0 +1,721 @@
+{
+  "courses": {
+    "pieces": {
+      "title": "As peças",
+      "desc": "Conheça o tabuleiro e aprenda como cada peça se move."
+    },
+    "rules": {
+      "title": "As regras",
+      "desc": "Capturas, xeque, xeque-mate, roque e as outras regras especiais."
+    },
+    "basic-mates": {
+      "title": "Noções de xeque-mate",
+      "desc": "Mate em um, o mate do corredor e os mates básicos com dama e torres."
+    },
+    "tactics-1": {
+      "title": "Primeiras táticas",
+      "desc": "Peças penduradas, garfos, cravadas, espetos, o f7 fraco, peões fugitivos – e como se defender."
+    },
+    "openings-1": {
+      "title": "Princípios de abertura",
+      "desc": "Como começar uma partida: centro, desenvolvimento, segurança do rei – e as armadilhas a evitar."
+    },
+    "tactics-2": {
+      "title": "Táticas II",
+      "desc": "Ataques e xeques descobertos, xeques duplos, desvio, isca, remoção do defensor, lances intermediários, peças presas e o rei exposto."
+    },
+    "mates-2": {
+      "title": "Padrões de mate",
+      "desc": "Mate em dois e os padrões clássicos: mate abafado, de Anastasia, árabe, da ópera, do gancho e de Pillsbury."
+    },
+    "pawn-endings": {
+      "title": "Finais de peões",
+      "desc": "A regra do quadrado, a oposição e como vencer com rei e peão."
+    },
+    "tactics-3": {
+      "title": "Táticas avançadas",
+      "desc": "Mate em três, lances tranquilos, zugzwang, o lance único, liberação, interceptação, raio X e subpromoção."
+    },
+    "mates-3": {
+      "title": "Padrões raros de mate",
+      "desc": "Mate de Boden, de cauda de andorinha, o par de bispos – e mate em quatro."
+    },
+    "rook-endings": {
+      "title": "Finais de torres",
+      "desc": "O final mais comum: torres ativas, a posição de Lucena e a de Philidor."
+    },
+    "endgames-2": {
+      "title": "Finais de dama e peças menores",
+      "desc": "Bispos, cavalos e damas no final: tempo, táticas e peões fugitivos."
+    }
+  },
+  "board": {
+    "title": "O tabuleiro",
+    "desc": "64 casas e seus nomes.",
+    "intro": "O tabuleiro tem **64 casas**, claras e escuras alternadas. Ele sempre fica com a **casa do canto inferior direito clara** – é a que está marcada aqui.",
+    "intro_kid": "Este é o tabuleiro! Ele tem 64 casas – claras e escuras, sempre alternadas. Olhe o canto de baixo à direita: ele é claro. O tabuleiro sempre fica assim.",
+    "names": "As **colunas** vão de **a** a **h**. As **fileiras** vão de **1** a **8**. Cada casa tem o nome da sua coluna e da sua fileira: a casa marcada é **e4** – coluna e, fileira 4. As letras e os números ficam impressos na borda do tabuleiro.",
+    "names_kid": "Cada casa tem um nome, como o assento de um cinema! A letra (de a até h) diz a coluna, o número (de 1 até 8) diz a fileira. A casa marcada se chama e4. Veja as letras e os números na borda do tabuleiro.",
+    "find1": "Toque na casa **c6**.",
+    "find2": "Agora toque em **g2**.",
+    "corners": "Toque nas **quatro casas dos cantos**.",
+    "setup": "É assim que uma partida começa. As brancas ficam embaixo e sempre fazem o **primeiro lance**. Os peões ficam na frente; atrás deles, da esquerda para a direita: torre, cavalo, bispo, dama, rei, bispo, cavalo, torre.",
+    "setup_kid": "É assim que as peças ficam no começo. As brancas ficam embaixo e sempre jogam primeiro. Os peõezinhos ficam na frente e as peças grandes atrás deles.",
+    "queen": "Uma regra prática: a dama começa na **sua própria cor** – a dama branca em uma casa clara, a dama preta em uma casa escura. Toque na dama branca.",
+    "queen_kid": "A dama gosta da cor dela: a dama branca fica em uma casa clara. Consegue encontrá-la? Toque nela!",
+    "king": "Os dois reis ficam frente a frente na mesma coluna. Toque no **rei preto**."
+  },
+  "rook": {
+    "title": "A torre",
+    "desc": "Linhas retas, até onde quiser.",
+    "intro": "A **torre** se move em linhas retas: para a frente, para trás, para os lados – quantas casas quiser. Ela não pode pular por cima de outras peças.",
+    "intro_kid": "A torre é como um carro de corrida em estradas retas: para a frente, para trás, para os lados – até onde quiser! Mas ela não pode pular por cima de outras peças.",
+    "s1": "Mova a torre até a estrela para pegá-la.",
+    "s1_kid": "Leve a torre até a estrela!",
+    "s2": "Pegue as duas estrelas. Com quantos lances você consegue?",
+    "s3": "Seus próprios peões atrapalham, e a torre não pode pular por cima deles. Pegue as duas estrelas.",
+    "s3_kid": "Os peões são muros – a torre precisa dar a volta neles. Pegue as duas estrelas!"
+  },
+  "bishop": {
+    "title": "O bispo",
+    "desc": "Linhas diagonais – e sempre a mesma cor.",
+    "intro": "O **bispo** se move na diagonal, até onde quiser. Por isso ele fica sempre em casas de **uma cor só**: este bispo está em uma casa escura e nunca vai alcançar uma casa clara.",
+    "intro_kid": "O bispo só anda na diagonal, como num escorregador. Por isso ele sempre fica na cor dele: este aqui mora nas casas escuras.",
+    "s1": "Pegue a estrela com o bispo.",
+    "s2": "Pegue as duas estrelas.",
+    "s3": "Este bispo vive nas casas claras. Pegue as três estrelas.",
+    "color": "Este bispo algum dia consegue alcançar a casa marcada **d4**?",
+    "color_yes": "Sim",
+    "color_no": "Não",
+    "color_done": "Isso! Este bispo está em uma casa clara e fica sempre nas casas claras – d4 é escura."
+  },
+  "queen": {
+    "title": "A dama",
+    "desc": "A peça mais forte: torre e bispo juntos.",
+    "intro": "A **dama** é a peça mais forte. Ela se move como a torre e o bispo juntos: em linha reta **e** na diagonal, até onde quiser.",
+    "intro_kid": "A dama é a super-heroína do xadrez! Ela anda em linha reta como a torre e na diagonal como o bispo – em todas as direções, até onde quiser.",
+    "s1": "Pegue as duas estrelas com a dama.",
+    "s2": "Quatro estrelas – encontre o caminho mais curto!",
+    "s3": "Cuidado com seus próprios peões. Pegue as três estrelas."
+  },
+  "king": {
+    "title": "O rei",
+    "desc": "A peça mais importante – um passo por vez.",
+    "intro": "O **rei** é a peça mais importante: se ele for encurralado, a partida está perdida. Ele anda apenas **uma casa**, em qualquer direção.",
+    "intro_kid": "O rei é a peça mais importante – você precisa protegê-lo! Ele é meio lento: anda só um passo por vez, mas em qualquer direção.",
+    "s1": "Leve o rei até as duas estrelas.",
+    "danger": "O rei **nunca** pode ir para uma casa atacada por uma peça inimiga – ele seria capturado ali. A torre preta ataca a fileira 5 inteira.",
+    "danger_kid": "Cuidado! O rei nunca pode pisar em uma casa que uma peça inimiga está mirando. A torre preta vigia a linha vermelha toda.",
+    "where": "Toque em todas as casas para onde o rei branco **pode** ir.",
+    "s2": "O cavalo preto vigia algumas casas, então o rei não pode pisar nelas. Pegue as duas estrelas mesmo assim."
+  },
+  "knight": {
+    "title": "O cavalo",
+    "desc": "O saltador: em L, por cima de tudo.",
+    "intro": "O **cavalo** se move em **forma de L**: duas casas em linha reta e depois uma para o lado. É a única peça que pode **saltar** por cima das outras.",
+    "intro_kid": "O cavalo pula como um cavalo de verdade, em L: dois passos em linha reta e um para o lado – pimba! É a única peça que pula por cima das outras.",
+    "where": "O cavalo está cercado, mas ele simplesmente pula. Toque em todas as casas onde ele pode cair.",
+    "s1": "Salte até as duas estrelas.",
+    "s2": "O cavalo pula por cima dos peões. Pegue as três estrelas.",
+    "s3": "Às vezes o cavalo precisa dar um rodeio. Leve-o até a estrela o mais rápido que puder!",
+    "s3_kid": "A estrela está logo ali, mas o cavalo tem que pular em volta. Consegue achar o caminho?"
+  },
+  "pawn": {
+    "title": "O peão",
+    "desc": "Só para a frente – e captura na diagonal.",
+    "intro": "O **peão** só anda para a frente, uma casa por vez. A partir da casa inicial ele também pode avançar **duas casas** de uma vez. Nunca pode andar para trás.",
+    "intro_kid": "O peão é pequeno mas corajoso: só anda para a frente, um passo de cada vez. No primeiro lance ele pode dar um pulo grande de duas casas.",
+    "s1": "Pegue as duas estrelas com o peão.",
+    "capture": "O peão captura de um jeito diferente de como anda: **uma casa na diagonal, para a frente**. Uma peça bem na frente bloqueia o peão – ele não pode capturar em linha reta.",
+    "capture_kid": "O peão anda reto mas captura na diagonal! E se algo estiver bem na frente dele, ele fica travado.",
+    "s2": "O caminho está bloqueado. Capture o seu caminho até as duas estrelas!",
+    "where": "Para onde este peão pode ir? Toque em todas as casas para onde ele pode andar ou capturar."
+  },
+  "capture": {
+    "title": "Capturas",
+    "desc": "Tire as peças inimigas do tabuleiro.",
+    "intro": "Todas as peças **menos o peão** capturam do mesmo jeito que andam: ela vai para a casa da peça inimiga e a tira do tabuleiro. (O peão captura na diagonal, como você viu.) Você nunca pode capturar suas próprias peças.",
+    "intro_kid": "Capturar significa que sua peça vai para a casa de uma peça inimiga e a derruba do tabuleiro!",
+    "s1": "Capture todas as peças pretas com a torre.",
+    "s2": "Agora com o cavalo: capture os três peões.",
+    "safe": "Você pode capturar o bispo ou o cavalo. Um deles está **protegido**: outra peça preta poderia recapturar. Capture o que está **sem proteção**!",
+    "safe_kid": "Você pode pegar o bispo ou o cavalo. Mas um deles tem um guarda-costas! Pegue o que está sozinho.",
+    "safe_done": "Isso! Nada protegia o cavalo. Se tivesse pegado o bispo, o peão em e6 teria capturado sua dama."
+  },
+  "check": {
+    "title": "Xeque",
+    "desc": "Quando o rei é atacado.",
+    "intro": "Quando uma peça ataca o rei, o rei está em **xeque**. Quem está em xeque precisa sair dele imediatamente – nenhum outro lance é permitido. Aqui a torre branca dá xeque pela coluna e.",
+    "intro_kid": "Quando uma peça aponta para o rei, isso se chama xeque! O rei precisa sair do perigo na hora.",
+    "give1": "Dê xeque no rei preto!",
+    "give2": "Dê xeque com o cavalo.",
+    "give3": "Até um peão pode dar xeque. Tente!"
+  },
+  "escape": {
+    "title": "Saindo do xeque",
+    "desc": "Três saídas: mover, bloquear, capturar.",
+    "intro": "Existem três formas de sair do xeque:\n1. **Mover** o rei para uma casa segura.\n2. **Bloquear**: colocar uma peça no meio.\n3. **Capturar** a peça que está atacando.\nQual funciona depende da posição.",
+    "intro_kid": "Seu rei está em xeque – e agora? Três ideias: fugir, colocar uma peça no caminho ou capturar o atacante!",
+    "run": "Seu rei está em xeque e não tem ajudantes. Mova-o para uma casa segura.",
+    "block": "O rei não pode sair do lugar – mas você pode colocar uma peça no meio.",
+    "take": "Um cavalo dá xeque. O xeque de cavalo não pode ser bloqueado – capture o cavalo!"
+  },
+  "checkmate": {
+    "title": "Xeque-mate",
+    "desc": "Xeque sem saída ganha a partida.",
+    "intro": "Se o rei está em xeque e **não há saída** – nenhuma casa livre, nada para colocar no meio, nada para capturar – é **xeque-mate**. A partida acaba, e quem dá o xeque-mate vence. Aqui as pretas estão em xeque-mate: os próprios peões pretos bloqueiam a fuga do rei.",
+    "intro_kid": "Xeque-mate é o objetivo do jogo! O rei está em xeque e não consegue escapar para lugar nenhum. Aí a partida acaba – e quem dá o xeque-mate vence!",
+    "q1": "As pretas estão em xeque-mate?",
+    "q1_yes": "Sim, é xeque-mate",
+    "q1_no": "Não, o rei consegue escapar",
+    "q1_done": "Certo – não é mate. O rei consegue escapar para h7.",
+    "q2": "E esta – as pretas estão em xeque-mate?",
+    "q2_yes": "Sim, é xeque-mate",
+    "q2_no": "Não, o rei consegue escapar",
+    "q2_done": "Isso! A dama dá xeque, o rei branco a protege, e todas as casas ao redor do rei preto estão cobertas.",
+    "m1": "Dê xeque-mate no rei preto em um lance!",
+    "m2": "Xeque-mate em um lance com a dama.",
+    "m3": "Mais um: xeque-mate em um lance."
+  },
+  "castling": {
+    "title": "Roque",
+    "desc": "Rei em segurança, torre em jogo – em um lance.",
+    "intro": "Uma vez por partida você pode **rocar**: o rei anda **duas casas** na direção de uma torre, e a torre vai para o outro lado do rei, bem ao lado dele. Isso guarda seu rei em segurança e coloca uma torre em jogo. Este é o **roque pequeno**, para a **ala do rei** – o lado onde o rei começa.",
+    "intro_kid": "O roque é um lance especial: o rei dá dois passos para o lado, e a torre passa para o outro lado dele. Agora o rei está seguro no seu castelo!",
+    "short": "Faça o roque pequeno! Mova o rei duas casas para a direita (ou solte-o sobre a torre) – a torre vem junto sozinha.",
+    "long": "Agora faça o roque **grande**, para a **ala da dama** – o lado onde a dama começa: o rei anda duas casas para a esquerda.",
+    "rules": "Este é o roque **grande**. Você só pode rocar se:\n• o rei e aquela torre ainda **não se moveram**,\n• não há **nada** entre eles,\n• o rei **não está em xeque** e não passa por uma casa atacada nem termina nela.",
+    "why": "Por que as brancas **não** podem fazer o roque pequeno aqui?",
+    "why_check": "O rei está em xeque",
+    "why_through": "O rei passaria por uma casa atacada",
+    "why_blocked": "Há uma peça no caminho",
+    "why_moved": "O rei já se moveu",
+    "why_done": "Isso! O bispo preto ataca f1 – a casa pela qual o rei precisa passar. Então o roque pequeno não é permitido."
+  },
+  "en-passant": {
+    "title": "En passant",
+    "desc": "A captura especial do peão.",
+    "intro": "Uma regra especial: se um peão inimigo avança **duas casas** e para **bem ao lado** do seu peão, você pode capturá-lo como se ele tivesse andado só uma casa. Isso se chama **en passant** (em francês, “de passagem”). Veja: as pretas jogam d7–d5, e as brancas capturam em d6.",
+    "intro_kid": "Um truque secreto de peão! Se um peão inimigo pula duas casas e para bem ao lado do seu peão, o seu peão ainda pode capturá-lo – como se ele tivesse dado só um passo.",
+    "ep1": "As pretas acabaram de jogar d7–d5. Capture en passant!",
+    "ep2": "Agora você é as pretas. As brancas acabaram de jogar c2–c4 – capture en passant!",
+    "when": "Digamos que você perdeu o momento e jogou outro lance antes. Ainda pode capturar en passant depois?",
+    "when_yes": "Sim, a qualquer momento",
+    "when_no": "Não, só na hora",
+    "when_done": "Isso! O en passant só é permitido no lance imediatamente seguinte – depois a chance se foi."
+  },
+  "promotion": {
+    "title": "Promoção",
+    "desc": "Um peão na última fileira vira uma nova peça.",
+    "intro": "Quando um peão chega à **última fileira**, ele é promovido na hora: vira dama, torre, bispo ou cavalo – você escolhe. Quase sempre se escolhe a **dama**.",
+    "intro_kid": "Quando um peão chega até o outro lado do tabuleiro, ele se transforma – em uma dama, por exemplo! Um peãozinho vira a peça mais forte.",
+    "queen": "Empurre o peão para a frente e transforme-o em dama!",
+    "mate": "Promova – e dê xeque-mate ao mesmo tempo!"
+  },
+  "draw": {
+    "title": "Empates e afogamento",
+    "desc": "Quando ninguém vence.",
+    "stalemate": "Se o jogador da vez **não tem nenhum lance legal** mas **não está em xeque**, é **afogamento** – um **empate**, mesmo que um lado tenha muito mais material! Aqui é a vez das pretas: o rei não está atacado, mas todas as casas ao redor dele estão.",
+    "stalemate_kid": "O afogamento é uma armadilha para quem está ganhando! O rei não está em xeque, mas não pode ir a lugar nenhum – então a partida empata e ninguém vence.",
+    "q1": "É a vez das pretas. Xeque-mate, afogamento ou nenhum dos dois?",
+    "q1_mate": "Xeque-mate",
+    "q1_stalemate": "Afogamento",
+    "q1_neither": "Nenhum dos dois",
+    "q1_done": "Certo – afogamento. O rei preto não está em xeque, mas todas as suas casas estão cobertas.",
+    "q2": "E aqui? É a vez das pretas.",
+    "q2_mate": "Xeque-mate",
+    "q2_stalemate": "Afogamento",
+    "q2_neither": "Nenhum dos dois",
+    "q2_done": "Certo – xeque-mate! O rei está em xeque, e o rei branco protege a dama.",
+    "avoid": "Xeque-mate em um lance – mas cuidado: muitos lances aqui seriam afogamento!",
+    "avoid_done": "Xeque-mate! Mover a dama para c7 teria sido afogamento – sempre confira se o rei inimigo ainda tem uma casa para ir.",
+    "other": "Uma partida também empata quando:\n• a **mesma posição** ocorre **três vezes**,\n• passam **50 lances** sem mover peão nem capturar,\n• nenhum dos lados tem material suficiente para dar xeque-mate – como aqui, rei e bispo contra rei,\n• ou os dois jogadores **concordam** com o empate."
+  },
+  "values": {
+    "title": "Quanto valem as peças?",
+    "desc": "Quanto valem suas peças – seu material.",
+    "intro": "Todas as suas peças juntas são o seu **material**. Para avaliar uma troca, os jogadores contam em pontos:\n• peão **1**\n• cavalo **3**\n• bispo **3**\n• torre **5**\n• dama **9**\nO rei não tem preço – perdê-lo é perder a partida.",
+    "intro_kid": "As peças são como moedas de valores diferentes: peão 1, cavalo 3, bispo 3, torre 5, dama 9. O rei não tem preço!",
+    "q1": "Qual vale mais?",
+    "q1_rook": "A torre",
+    "q1_bishop": "O bispo",
+    "q1_done": "Certo: a torre vale 5, o bispo 3.",
+    "q2": "Você pode trocar seu cavalo pela torre preta. É um bom negócio?",
+    "q2_yes": "Sim",
+    "q2_no": "Não",
+    "q2_done": "Sim! Você dá 3 pontos e recebe 5.",
+    "q3": "Dois bispos contra uma dama – quem tem mais material?",
+    "q3_queen": "A dama",
+    "q3_bishops": "Os dois bispos",
+    "q3_done": "Certo: a dama vale 9, os dois bispos juntos valem 6.",
+    "take": "Seu cavalo pode capturar um peão ou uma torre. Pegue a peça mais valiosa!",
+    "take_done": "Isso – a torre vale 5 pontos, o peão só 1."
+  },
+  "notation": {
+    "title": "Lendo os lances",
+    "desc": "Como os lances de xadrez são escritos.",
+    "intro": "Os enxadristas anotam todos os lances. Um lance é a **letra da peça** mais a **casa** de destino: **K** rei, **Q** dama, **R** torre, **B** bispo, **N** cavalo. Peões não têm letra. Veja: **e4** (peão para e4), **e5**, **Nf3** (cavalo para f3).",
+    "intro_kid": "Cada lance de xadrez tem um nome curto, como um código secreto! Uma letra grande diz qual peça se move (N para cavalo, B para bispo, R para torre, Q para dama, K para rei) e depois vem a casa. Peões não têm letra: e4 só quer dizer que um peão vai para e4.",
+    "target": "No lance **Nc3**, um cavalo vai para uma casa. Toque nessa casa.",
+    "target_kid": "Nc3: o cavalo pula para… qual casa? Toque nela!",
+    "symbols": "Mais alguns sinais:\n• **x** = captura: **Nxe5** – o cavalo captura em e5\n• **+** = xeque, **#** = xeque-mate\n• **O-O** = roque pequeno, **O-O-O** = roque grande\n• **e8=Q** = o peão promove a dama\n• **1.** conta os lances; **…** antes de um lance indica que foi das pretas (**1…e5**).",
+    "q1": "As brancas jogam **Nxe5**. O que isso significa?",
+    "q1_takes": "O cavalo captura a peça em e5",
+    "q1_moves": "O cavalo vai para e5 sem capturar",
+    "q1_check": "O cavalo dá xeque em e5",
+    "q1_done": "Certo – **x** significa captura.",
+    "q2": "O último lance foi **Qxf7#**. O que aconteceu?",
+    "q2_check": "A dama capturou em f7 – xeque, mas o rei consegue escapar",
+    "q2_mate": "A dama capturou em f7 – xeque-mate",
+    "q2_moves": "A dama foi para f7 sem capturar",
+    "q2_done": "Certo – **#** significa xeque-mate. O rei não consegue escapar: o bispo em c4 protege a dama.",
+    "play": "Agora jogue **Nf3** você mesmo!",
+    "play_done": "Isso é Nf3 – agora você sabe ler lances de xadrez."
+  },
+  "mate-in-one": {
+    "title": "Mate em um",
+    "desc": "Encontre o xeque-mate em um único lance.",
+    "intro": "A maioria das partidas termina em xeque-mate – então treine o olho para ele! Todas as tarefas desta lição têm um xeque-mate em um lance. Dica: olhe para **todos os xeques** que você pode dar e pergunte se o rei ainda consegue escapar. Aqui Qh8 é mate.\nDaqui em diante, muitas tarefas vêm de partidas reais: primeiro o adversário faz um lance (você vai vê-lo acontecer), depois o tabuleiro vira para o seu lado e é a sua vez.",
+    "intro_kid": "Agora você é o caçador! Em todas as tarefas você pode dar xeque-mate em um lance. Tente todos os xeques e veja se o rei ainda consegue fugir.",
+    "task": "É a vez das {{side}}. Xeque-mate em um lance!",
+    "task_kid": "É a vez das {{side}}. Um lance, e o rei está preso – encontre-o!"
+  },
+  "back-rank": {
+    "title": "Mate do corredor",
+    "desc": "Quando os próprios peões do rei viram uma armadilha.",
+    "intro": "Um rei que rocou costuma ficar atrás dos próprios peões. Isso o mantém seguro – até uma torre ou dama chegar à **última fileira** (a fileira onde o rei está). Aí os peões bloqueiam toda fuga, e é xeque-mate. Veja Re8.",
+    "intro_kid": "O rei se esconde atrás dos peões – mas eles também são um muro que ele não consegue atravessar! Uma torre na última fileira dá xeque-mate.",
+    "m1": "Agora você: xeque-mate na última fileira!",
+    "luft": "A defesa: dê um pouco de **ar** ao seu rei. Aqui as pretas jogaram …h6 – agora Re8 é só xeque, porque o rei pode ir para **h7**. Lembre-se disso para o seu próprio rei!",
+    "task": "É a vez das {{side}}. Abra caminho até a última fileira e dê xeque-mate em **dois lances** – às vezes é preciso primeiro **sacrificar** (entregar uma peça de propósito)!",
+    "task_kid": "É a vez das {{side}}. Dois lances, e o rei fica preso atrás dos próprios peões – às vezes você precisa entregar uma peça primeiro!"
+  },
+  "ladder": {
+    "title": "Mate da escada",
+    "desc": "Duas torres empurram o rei até a borda.",
+    "intro": "Com duas torres, o mate é fácil: uma torre **corta** uma fileira, a outra dá **xeque** na fileira seguinte. O rei precisa recuar a cada vez, e as torres sobem atrás dele como uma escada – até o mate na borda.",
+    "intro_kid": "Duas torres funcionam como uma escada: uma bloqueia, a outra dá xeque – passo a passo o rei vai recuando até ficar preso na borda. Xeque-mate!",
+    "m1": "Termine: xeque-mate em um lance com as duas torres.",
+    "play": "Agora jogue contra Patzer: dê xeque-mate no rei preto com suas duas torres. Dica: mantenha as torres longe do rei, para ele não poder atacá-las."
+  },
+  "queen-mate": {
+    "title": "Mate com dama e rei",
+    "desc": "Xeque-mate no rei sozinho – sem afogamento.",
+    "intro": "Dama e rei contra um rei sozinho sempre vencem. O plano:\n1. Diminua a caixa do rei com a dama – a distância de um **lance de cavalo** é segura.\n2. Aproxime **o seu rei**.\n3. Dê mate na borda, com seu rei protegendo a dama ou cobrindo as casas de fuga.\nE fique sempre atento ao **afogamento**!",
+    "intro_kid": "A dama empurra o rei até a borda, o seu rei vem ajudar e então – xeque-mate! Mas cuidado: nunca deixe o rei preto sem nenhum lance quando ele não está em xeque. Isso é afogamento!",
+    "m1": "Xeque-mate em um lance!",
+    "patt": "O que Qf7 faria aqui?",
+    "patt_mate": "Xeque-mate",
+    "patt_stalemate": "Afogamento – empate",
+    "patt_check": "Apenas xeque",
+    "patt_done": "Certo – afogamento! O rei não está em xeque mas não tem para onde ir. Qe8 ou Qf8 teriam sido xeque-mate.",
+    "play": "Sua vez: dê xeque-mate no rei preto com dama e rei – Patzer defende. Não deixe a dama ser capturada e evite o afogamento!"
+  },
+  "rook-mate": {
+    "title": "Mate com torre e rei",
+    "desc": "A técnica básica com uma única torre.",
+    "intro": "Com uma única torre, seu rei precisa ajudar. A torre **corta** o rei preto, seu rei avança até os dois reis ficarem **frente a frente** – então a torre dá xeque pela borda. Aqui Rh8 é mate.",
+    "intro_kid": "Uma torre sozinha não consegue – seu rei precisa ajudar! Quando os dois reis ficam frente a frente e a torre dá xeque pela borda: xeque-mate!",
+    "m1": "Xeque-mate em um lance.",
+    "play": "Agora tudo junto: xeque-mate com torre e rei. Empurre o rei preto até a borda fileira por fileira – sem pressa, você tem lances de sobra."
+  },
+  "hanging": {
+    "title": "Peças penduradas",
+    "desc": "Pegue o que está de graça – e não deixe suas peças penduradas.",
+    "intro": "Uma peça que está atacada e **sem defesa** está pendurada – qualquer um pode pegá-la de graça. Aqui nada protege o cavalo preto, então a torre simplesmente o captura. Crie o hábito: antes de cada lance, pergunte o que está pendurado – nos **dois** lados!",
+    "intro_kid": "Uma peça sem guarda-costas está “pendurada”. Aqui ninguém protege o cavalo preto – então a torre agarra ele! Sempre confira: o que posso pegar de graça?",
+    "task": "É a vez das {{side}}. Tem algo pendurado – ganhe material!",
+    "task_kid": "É a vez das {{side}}. Tem algo aí sem proteção – pegue!"
+  },
+  "fork": {
+    "title": "O garfo",
+    "desc": "Uma peça, dois alvos.",
+    "intro": "Um **garfo** é uma peça atacando duas (ou mais) peças inimigas ao mesmo tempo – o adversário só consegue salvar uma delas. Os cavalos são os grandes garfadores: aqui Nf6+ ataca o rei **e** a dama. O rei precisa sair, e a dama está perdida.",
+    "intro_kid": "Um garfo é um ataque duplo: uma peça ataca duas coisas ao mesmo tempo! O cavalo dá xeque e ataca a dama também – o rei tem que fugir, e a dama se foi.",
+    "task": "É a vez das {{side}}. Encontre o garfo!",
+    "task_kid": "É a vez das {{side}}. Ataque duas coisas ao mesmo tempo!"
+  },
+  "pin": {
+    "title": "A cravada",
+    "desc": "Uma peça que não pode sair do lugar.",
+    "intro": "Uma **cravada** ataca uma peça que tem uma peça mais valiosa atrás. Se a peça de trás for o **rei**, a peça cravada não pode se mover de jeito nenhum. Aqui Bb5 crava o cavalo preto no seu rei.",
+    "intro_kid": "Uma cravada prende uma peça no lugar! O cavalo até gostaria de sair, mas aí o bispo atacaria o rei – então não pode.",
+    "use": "Uma peça cravada também não consegue defender. Este peão em g7 não pode andar nem capturar, porque aí o bispo atacaria o rei em h8. Fique de olho em defensores cravados nos exercícios!",
+    "task": "É a vez das {{side}}. Crave uma peça – ou use uma cravada – e ganhe material!",
+    "task_kid": "É a vez das {{side}}. Prenda uma peça no lugar – e ganhe alguma coisa!"
+  },
+  "skewer": {
+    "title": "O espeto",
+    "desc": "Ataque a peça grande, ganhe a de trás.",
+    "intro": "Um **espeto** é uma cravada ao contrário: você ataca uma peça valiosa – muitas vezes o rei – e, quando ela sai do caminho, você captura a peça **atrás** dela. Aqui Rd1+ tira o rei da coluna d, e a torre captura a dama.",
+    "intro_kid": "Um espeto é como um espetinho: dê xeque no rei, ele precisa pular para o lado – e então você pega a peça atrás dele!",
+    "task": "É a vez das {{side}}. Encontre o espeto!",
+    "task_kid": "É a vez das {{side}}. Dê xeque na peça grande – e pegue a de trás!"
+  },
+  "defend": {
+    "title": "Defenda!",
+    "desc": "Nem todo lance é ataque: salve o que está ameaçado.",
+    "intro": "Nem todo lance bom é um ataque. Quando seu rei está em xeque ou uma peça está atacada, procure a defesa que segura tudo: saia do caminho, bloqueie ou proteja. Aqui as pretas dão xeque com Qg1+. As brancas bloqueiam com **Ng2** – e agora a torre em c1 ataca a dama! As pretas só podem capturar a torre (**Qxc1**), e depois de **Qxc1** as brancas ganharam a dama por uma torre.",
+    "intro_kid": "Perigo! Quando algo está sendo atacado, salve primeiro. Aqui o cavalo pula na frente do rei – e de repente a dama preta está presa!",
+    "task": "É a vez das {{side}}. Tem algo sob ataque – encontre o lance que salva!",
+    "task_kid": "É a vez das {{side}}. Perigo! Encontre o lance que salva tudo!"
+  },
+  "attack-f7": {
+    "title": "O ponto fraco f7",
+    "desc": "No começo da partida, f7 e f2 são protegidos só pelo rei.",
+    "intro": "No início da partida o peão em **f7** é protegido só pelo rei (para as brancas é o **f2**). Isso faz dele o alvo favorito dos ataques iniciais. Aqui a dama ataca: **Qxf7+** – o rei precisa ir para d8, e **Qd7#**. O cavalo em e5 protege a dama.",
+    "intro_kid": "O peão ao lado do rei é protegido só pelo próprio rei. Ataque-o com a dama – e é xeque-mate!",
+    "task": "É a vez das {{side}}. Atinja o ponto fraco ao lado do rei!",
+    "task_kid": "É a vez das {{side}}. Ataque a casa fraca ao lado do rei!"
+  },
+  "advanced-pawn": {
+    "title": "Peão em fuga",
+    "desc": "Um peão perto da promoção vale quase uma dama.",
+    "intro": "Um peão que quase chegou à última fileira vale quase uma dama – muitas vezes compensa entregar uma peça para deixá-lo passar. Aqui as brancas trocam torres com **Rxc7**. Depois de **…Rxc7** a torre preta saiu da última fileira, nada mais protege a8, e **a8=Q+** cria uma nova dama com xeque.",
+    "intro_kid": "Mais um passo e o peão vira dama! Primeiro tire a torre do caminho – depois o peão caminha até o fim do tabuleiro.",
+    "task": "É a vez das {{side}}. Ajude seu peão a chegar à última fileira!",
+    "task_kid": "É a vez das {{side}}. Ajude seu peão a virar dama!"
+  },
+  "center": {
+    "title": "Controle o centro",
+    "desc": "Por que o meio do tabuleiro importa.",
+    "intro": "As quatro casas do meio – **d4, e4, d5 e e5** – são o **centro**. Peças no centro alcançam mais casas e podem mudar de lado rapidamente. Por isso as boas aberturas começam lutando por ele.",
+    "intro_kid": "As quatro casas do meio são o centro – as casas mais importantes! De lá, suas peças podem ir a qualquer lugar.",
+    "squares": "Toque nas quatro casas do centro.",
+    "first": "Seu primeiro lance: coloque um peão no centro!",
+    "first_done": "Muito bem! 1.e4 e 1.d4 são os primeiros lances mais populares – eles ocupam o centro e abrem linhas para suas peças.",
+    "why": "O cavalo no meio alcança 8 casas, o do canto só 2. Por que os jogadores lutam pelo centro?",
+    "why_reach": "As peças ali alcançam mais casas",
+    "why_rule": "Porque as regras mandam",
+    "why_safe": "Porque o rei fica mais seguro ali",
+    "why_done": "Isso! No centro suas peças são mais fortes. (O rei, porém, fica mais seguro no lado, atrás dos peões – falaremos disso logo.)"
+  },
+  "develop": {
+    "title": "Desenvolva suas peças",
+    "desc": "Cavalos e bispos para fora – rápido.",
+    "intro": "**Desenvolver** significa trazer suas peças da última fileira para o jogo. Cavalos e bispos vêm primeiro, apontando para o centro. Na abertura, todo lance deve trazer uma peça nova para o jogo.",
+    "intro_kid": "No começo suas peças estão dormindo na última fileira. Acorde-as! Ponha os cavalos e os bispos para fora primeiro.",
+    "knight": "Desenvolva um cavalo – em direção ao centro.",
+    "knight_done": "Bom! Um cavalo em f3 ou c3 controla casas do centro.",
+    "rim": "Por que Nh3 costuma ser pior que Nf3?",
+    "rim_rim": "Na borda o cavalo controla menos casas",
+    "rim_slow": "O cavalo nunca mais pode voltar",
+    "rim_illegal": "Nh3 não é permitido",
+    "rim_done": "Isso! “Cavalo na borda fica sem força”: de h3 ele alcança no máximo 4 casas, de f3 até 8 – incluindo o centro.",
+    "bishop": "Agora desenvolva seu bispo – para uma casa onde ele mire o campo inimigo.",
+    "bishop_done": "Bom! Bc4 mira f7, Bb5 pressiona o cavalo em c6 – os dois são lances clássicos.",
+    "twice": "Você deve mover a mesma peça duas vezes na abertura sem um bom motivo?",
+    "twice_yes": "Sim, tudo bem",
+    "twice_no": "Não – melhor desenvolver outra peça",
+    "twice_done": "Isso! Cada lance extra com a mesma peça é um lance em que suas outras peças continuam dormindo."
+  },
+  "king-safety": {
+    "title": "Segurança do rei",
+    "desc": "Roque cedo e deixe a dama em casa.",
+    "intro": "Na abertura, um rei no meio está em perigo – as linhas se abrem rápido por ali. Então **roquen cedo**, normalmente nos primeiros dez lances. Aqui as brancas estão prontas: o rei pode fazer o roque pequeno.",
+    "intro_kid": "No meio do tabuleiro o rei corre perigo. Roque cedo e coloque-o no castelo seguro!",
+    "castle1": "Leve seu rei para a segurança – roque!",
+    "queen": "Qual destes costuma ser uma má ideia na abertura?",
+    "queen_queen": "Trazer a dama para fora cedo",
+    "queen_knights": "Desenvolver os cavalos",
+    "queen_castle": "Roque cedo",
+    "queen_done": "Isso! Uma dama adiantada é perseguida pelas peças inimigas – e toda vez que ela foge, seu adversário desenvolve uma peça de graça.",
+    "castle2": "Sua dama e as peças da ala da dama já saíram. Desta vez, faça o roque **grande**!"
+  },
+  "traps": {
+    "title": "Armadilhas de abertura",
+    "desc": "Mate do pastor, mate do louco – e como evitá-los.",
+    "intro": "No começo, a casa mais fraca é **f7** (e **f2** para as brancas): só o rei a protege. Veja o **mate do pastor**: dama e bispo atacam f7 juntos, as pretas não percebem – xeque-mate em quatro lances!",
+    "intro_kid": "Cuidado com este truque: dama e bispo se juntam contra o peãozinho em f7 – e se as pretas não perceberem, já é xeque-mate!",
+    "defend": "As brancas ameaçam Qxf7, xeque-mate. Defenda!",
+    "defend_done": "Muito bem! …g6 expulsa a dama. …Qe7, …Qf6 ou …Nh6 também teriam protegido f7.",
+    "fool": "As brancas enfraqueceram muito a posição do rei. Encontre o xeque-mate mais rápido que existe!",
+    "fool_done": "Mate do louco – xeque-mate no segundo lance! É por isso que você não deve empurrar os peões f e g cedo.",
+    "f7": "No começo, qual peça sozinha protege f7 (e f2 para as brancas)?",
+    "f7_king": "O rei",
+    "f7_queen": "A dama",
+    "f7_knight": "O cavalo",
+    "f7_done": "Certo – só o rei. É por isso que f7 e f2 são os alvos favoritos dos ataques iniciais."
+  },
+  "discovered": {
+    "title": "Ataque descoberto",
+    "desc": "Mova uma peça – e revele outra.",
+    "intro": "Um **ataque descoberto**: uma peça sai do caminho e revela um ataque da peça atrás dela. Se a peça que se move também ataca algo – ou se o ataque revelado é xeque – o adversário não consegue lidar com os dois. Um exemplo de uma partida real: o cavalo em e2 fica entre a dama preta e o rei branco. **Nc3+** o tira do caminho – agora a dama em d3 dá xeque, e o cavalo ataca a dama em d1. Depois de Kg1, **Nxd1** ganha a dama.",
+    "intro_kid": "Um truque sorrateiro: uma peça sai do caminho e, de repente, a peça atrás dela ataca! Aqui o cavalo pula fora – agora a dama dá xeque, e o cavalo ataca a dama branca ao mesmo tempo.",
+    "task": "É a vez das {{side}}. Revele um ataque!"
+  },
+  "discovered-check": {
+    "title": "Xeque descoberto",
+    "desc": "Uma peça sai do caminho – a de trás dá xeque.",
+    "intro": "Um **xeque descoberto**: uma peça sai do caminho e revela um xeque da peça atrás dela. O adversário precisa responder ao xeque – então a peça que se moveu pode fazer o que quiser. Aqui o rei branco fica entre a sua torre e o rei preto. **Kd6+** – a torre em g7 dá xeque! As pretas precisam cuidar disso (**…Kb6**), e **Kxe5** ganha o cavalo.",
+    "intro_kid": "Uma peça pula fora – e a peça atrás dela dá xeque! Enquanto o rei está ocupado, a primeira peça agarra alguma coisa.",
+    "task": "É a vez das {{side}}. Revele um xeque – e ganhe algo com a peça que se move!",
+    "task_kid": "É a vez das {{side}}. Tire uma peça do caminho para a de trás dar xeque!"
+  },
+  "double-check": {
+    "title": "Xeque duplo",
+    "desc": "Dois xeques de uma vez – só o rei pode fugir.",
+    "intro": "Em um **xeque duplo**, duas peças dão xeque ao mesmo tempo. Não dá para bloquear dois xeques nem capturar duas peças com um lance – então o rei **precisa** se mover. Aqui **Nf3+** dá xeque com o cavalo e ao mesmo tempo abre a diagonal da dama de b6 até g1. O rei vai para h1, e o cavalo captura a dama: **Nxd2**.",
+    "intro_kid": "Xeque duplo significa que duas peças dizem “xeque!” ao mesmo tempo. Aí o rei não pode se esconder atrás de nada – ele precisa fugir!",
+    "task": "É a vez das {{side}}. Encontre o xeque duplo!"
+  },
+  "deflection": {
+    "title": "Desvio",
+    "desc": "Afaste um defensor do seu trabalho.",
+    "intro": "**Desvio** significa forçar uma peça defensora a sair de perto do que ela protege. Aqui o rei branco em e2 é o único guarda do bispo em f3. **Ra2+** ataca o rei; depois de Kd3 o bispo perdeu seu guarda, e a torre em f8 o captura: **Rxf3**.",
+    "intro_kid": "Afaste o guarda-costas – e então pegue o que ele estava protegendo!",
+    "task": "É a vez das {{side}}. Afaste um defensor!"
+  },
+  "attraction": {
+    "title": "Atração",
+    "desc": "Force uma peça para uma casa fatal.",
+    "intro": "**Atração** (uma isca) força uma peça inimiga – muitas vezes o rei – para uma casa onde ela cai em uma tática, geralmente com um sacrifício. Aqui **Rxh3+!** entrega uma torre para arrastar o rei até h3. Depois de Kxh3 vem **Rh4#** – a dama em g5 cobre todas as casas de fuga.",
+    "intro_kid": "Atraia o rei para uma armadilha! Um sacrifício o puxa para uma casa onde ele leva xeque-mate.",
+    "task": "É a vez das {{side}}. Atraia uma peça para uma armadilha!"
+  },
+  "defender": {
+    "title": "Removendo o defensor",
+    "desc": "Tire o guarda e pegue o prêmio.",
+    "intro": "Se uma peça está protegida só uma vez, **capture o defensor dela** – e a peça cai. Aqui a torre branca em f2 é protegida só pelo cavalo em d1. **Rxd1** captura o cavalo; depois de Bxd1 a dama ganha a torre: **Qxf2**.",
+    "intro_kid": "Derrube o guarda-costas primeiro – depois a peça que ele protegia fica livre para pegar!",
+    "task": "É a vez das {{side}}. Remova o defensor e ganhe material!"
+  },
+  "intermezzo": {
+    "title": "O lance intermediário",
+    "desc": "Não recapture no automático.",
+    "intro": "Quando uma peça é capturada, recapturar parece automático. Mas às vezes há algo melhor antes: um **lance intermediário** (em alemão, Zwischenzug), muitas vezes um xeque ou uma captura. Aqui as brancas acabaram de capturar em c6, e …Rxc6 seria natural. Mas primeiro **Bxe3+** ganha a torre em e3 com xeque – e só depois de Kf1 as pretas recapturam: **Rxc6**.",
+    "intro_kid": "Antes de recapturar, pare e olhe: não tem algo ainda melhor primeiro? Aqui as pretas primeiro pegam uma torre com xeque – e só depois recapturam.",
+    "task": "É a vez das {{side}}. Procure um lance intermediário!"
+  },
+  "trapped": {
+    "title": "Peças presas",
+    "desc": "Ataque uma peça que não tem para onde ir.",
+    "intro": "Uma peça sem casas seguras pode ser **presa**: ataque-a, e ela está perdida. Damas que pegam peões no fundo do território inimigo são vítimas clássicas. Aqui a dama preta acabou de capturar em g2. **Bf3** a ataca, e todas as casas para onde ela poderia fugir estão cobertas – o melhor que ela pode fazer é capturar a torre em h1, e **Bxh1** a conquista.",
+    "intro_kid": "Se uma peça não tem saída, você pode prendê-la! A dama foi caçar um peão – e agora está presa.",
+    "task": "É a vez das {{side}}. Prenda uma peça!"
+  },
+  "exposed-king": {
+    "title": "O rei exposto",
+    "desc": "Um rei sem peões ao redor é presa fácil.",
+    "intro": "Um rei sem o escudo de peões está em perigo: xeques vêm de todos os lados, e todo xeque pode esconder uma segunda ameaça. Aqui o rei preto não tem mais peões ao redor. **Qxh4+** – depois de **…Kg8** o cavalo entra com xeque: **Ne7+** ataca o rei **e** a dama em g6. **…Kg7 Nxg6** ganha a dama.",
+    "intro_kid": "O rei perdeu os guardas! Dê xeque após xeque – e pegue o que ficou sem proteção.",
+    "task": "É a vez das {{side}}. Vá atrás do rei desprotegido!",
+    "task_kid": "É a vez das {{side}}. O rei não tem guardas – ataque!"
+  },
+  "mate-in-two": {
+    "title": "Mate em dois",
+    "desc": "Xeques primeiro – depois o golpe final.",
+    "intro": "Em um mate em dois, olhe primeiro os lances forçados: **xeques**, depois **capturas**, depois **ameaças**. Aqui **Qg6+** (a torre em g3 protege a dama) deixa o rei só com h8, e **Qxh6** é xeque-mate.",
+    "intro_kid": "Dois lances até o xeque-mate! Tente os xeques primeiro – eles não dão escolha ao adversário.",
+    "task": "É a vez das {{side}}. Xeque-mate em dois lances!"
+  },
+  "smothered": {
+    "title": "Mate abafado",
+    "desc": "Um cavalo dá mate em um rei cercado pelas próprias peças.",
+    "intro": "Um **mate abafado**: o rei está cercado pelas próprias peças, e um cavalo dá xeque-mate. O caminho famoso até ele: **Nh3+** (um xeque duplo) – o rei precisa ir para h1. **Qg1+!!** – a dama se sacrifica, e a torre precisa capturá-la. **Nf2#**.",
+    "intro_kid": "O rei está tão cercado pelas próprias peças que não consegue se mover – e o cavalo pula dentro: xeque-mate!",
+    "task": "É a vez das {{side}}. Abafe o rei!"
+  },
+  "anastasia": {
+    "title": "Mate de Anastasia",
+    "desc": "Um cavalo e uma torre ou dama contra o rei na borda.",
+    "intro": "**Mate de Anastasia**: um cavalo tira as casas de fuga do rei, e uma torre ou dama dá mate pela coluna da borda. Aqui **Ne7+** vem primeiro – é xeque, e de e7 o cavalo cobre g8 e g6. Depois de Kh7, **Qxh5** é mate na coluna h.",
+    "intro_kid": "Um cavalo e uma dama se unem: o cavalo bloqueia as casas de fuga, a dama dá xeque-mate pela borda.",
+    "task": "É a vez das {{side}}. Encontre o mate!"
+  },
+  "arabian": {
+    "title": "O mate árabe",
+    "desc": "Torre e cavalo no canto.",
+    "intro": "O **mate árabe** é um dos padrões de mate mais antigos que se conhece: uma torre dá mate no rei no canto, enquanto um cavalo protege a torre e cobre a casa de fuga. Aqui: **Nf6+** Kh8, e **Rh7#** – o cavalo em f6 protege a torre e cobre g8.",
+    "intro_kid": "Torre e cavalo são grandes amigos aqui: o cavalo protege a torre, e a torre dá xeque-mate no canto!",
+    "task": "É a vez das {{side}}. Mate com torre e cavalo!"
+  },
+  "opera": {
+    "title": "Mate da ópera",
+    "desc": "Uma torre dá mate na borda, um bispo guarda a torre.",
+    "intro": "O **mate da ópera** (batizado por causa de uma famosa partida de Paul Morphy em um camarote de ópera em Paris): uma torre dá mate na última fileira, e um bispo a protege. Aqui as pretas até sacrificam a dama: **Qf1+!** – **Rxf1** é forçado, e **Rxf1#**. O bispo em h3 protege a torre e cobre g2.",
+    "intro_kid": "A torre dá xeque-mate na fileira de baixo, e o bispo a protege de longe – o rei não pode capturá-la!",
+    "task": "É a vez das {{side}}. Mate com torre e bispo!"
+  },
+  "hook": {
+    "title": "Mate do gancho",
+    "desc": "Torre, cavalo e peão pegam o rei juntos.",
+    "intro": "O **mate do gancho**: uma torre dá mate bem ao lado do rei, um cavalo protege a torre, e um peão protege o cavalo – uma corrente que o rei não consegue romper. Aqui: **Rc8+** Kf7, e **Rf8#**. O cavalo em e6 protege a torre e cobre g7, o peão em d5 protege o cavalo, e os peões pretos em e7 e g6 bloqueiam o resto.",
+    "intro_kid": "Torre, cavalo e peão de mãos dadas: o peão protege o cavalo, o cavalo protege a torre – e a torre dá xeque-mate!",
+    "task": "É a vez das {{side}}. Torre e cavalo: mate!"
+  },
+  "pillsbury": {
+    "title": "Mate de Pillsbury",
+    "desc": "Uma torre na coluna g aberta, um bispo na diagonal longa.",
+    "intro": "**Mate de Pillsbury**: uma torre dá mate, e um bispo de longe toma a última casa de fuga do rei. Aqui o rei preto em h8 só pode ir para g8 – mas o bispo em b3 mira exatamente nela. **Rh1+** – as pretas só podem colocar a dama no meio (**…Qh5**), e **Rxh5#**.",
+    "intro_kid": "A torre dá xeque na borda, e o bispo bloqueia a última saída lá do outro lado do tabuleiro!",
+    "task": "É a vez das {{side}}. Torre e bispo contra o rei que rocou – encontre o mate!"
+  },
+  "square": {
+    "title": "A regra do quadrado",
+    "desc": "O rei consegue alcançar o peão?",
+    "intro": "Um rei consegue pegar um peão fugitivo? Imagine um **quadrado** do peão até a fileira da promoção – aqui de b4 até f8. Se o rei defensor estiver dentro do quadrado, ou puder entrar nele no seu lance, ele pega o peão. Se for a vez do peão, imagine-o um passo adiante primeiro. (Um peão na casa inicial pode andar duas casas – conte a partir de uma fileira mais adiante.)",
+    "intro_kid": "Desenhe um quadrado do peão até o fim do tabuleiro. Se o rei inimigo conseguir entrar no quadrado, ele pega o peão. Se não – o peão vira dama!",
+    "q1": "É a vez das brancas. O rei preto consegue pegar o peão?",
+    "q1_yes": "Sim",
+    "q1_no": "Não",
+    "q1_done": "Certo: depois de b5 o quadrado é b5–e8, e o rei entra nele direto com …Ke6.",
+    "q2": "E aqui, com o rei em g6? É a vez das brancas de novo.",
+    "q2_yes": "Sim",
+    "q2_no": "Não",
+    "q2_done": "Certo: depois de b5 o quadrado é b5–e8, e de g6 o rei não consegue chegar nele em um passo – o peão passa e promove.",
+    "run": "Então o que as brancas jogam aqui?",
+    "run_done": "Exatamente – b5 na hora! Qualquer lance de rei daria tempo às pretas de entrar no quadrado."
+  },
+  "opposition": {
+    "title": "A oposição",
+    "desc": "Quando os reis se encaram, quem tem que jogar cede.",
+    "intro": "Quando os dois reis ficam frente a frente com **uma casa entre eles**, eles estão em **oposição**. Nenhum pode pisar ao lado do outro, então quem tem que jogar precisa ceder. Aqui é a vez das brancas – então as pretas **têm a oposição**.",
+    "intro_kid": "Dois reis ficam cara a cara com uma casa no meio – ninguém pode se aproximar. Quem tem que jogar precisa sair do caminho!",
+    "who": "É a vez das pretas. Quem tem a oposição?",
+    "who_white": "As brancas",
+    "who_black": "As pretas",
+    "who_done": "Certo – as brancas. As pretas têm que jogar e precisam ceder.",
+    "tempo": "Nos finais de rei e peão a oposição decide tudo. Aqui o rei branco está na frente do seu peão, mas é a vez das brancas. O truque é um **lance de peão reserva**: depois de **e3**, as pretas jogam e precisam ceder – e o rei branco avança.",
+    "draw": "É a vez das brancas. As brancas conseguem vencer?",
+    "draw_yes": "Sim",
+    "draw_no": "Não, é empate",
+    "draw_done": "Certo – empate com jogo perfeito. As pretas têm a oposição, e desta vez o peão não tem lance reserva: o rei branco em e3 está no caminho dele.",
+    "play": "Agora vença você mesmo: coloque seu rei na frente do peão, tome a oposição e promova. Patzer defende."
+  },
+  "pawn-endgames": {
+    "title": "Finais de peões",
+    "desc": "Conte, calcule – cada lance importa.",
+    "intro": "Nos finais de peões o rei vira lutador, e cada **tempo** (cada lance) conta. Aqui o rei preto ataca com **Kc4**: o peão em d4 tenta escapar com d5, mas o rei simplesmente o segue e captura: **Kxd5**.",
+    "intro_kid": "No fim da partida o rei vira um guerreiro! Aqui ele sai à caça de peões.",
+    "task": "É a vez das {{side}}. Encontre o plano vencedor!"
+  },
+  "mate-in-three": {
+    "title": "Mate em três",
+    "desc": "Combinações mais longas – xeque após xeque.",
+    "intro": "Um mate em três precisa de um plano. Muitas vezes cada lance é um xeque que não deixa escolha ao adversário. Veja: **Rd1+** Kf2, **Bc5+** Kg3, **Rg1#** – o rei é conduzido para uma rede.",
+    "intro_kid": "Três lances até o xeque-mate! Dê xeque sem parar, para o rei nunca respirar.",
+    "task": "É a vez das {{side}}. Xeque-mate em três lances!"
+  },
+  "quiet": {
+    "title": "Lances tranquilos",
+    "desc": "Sem xeque, sem captura – e ainda assim decisivo.",
+    "intro": "Os lances mais difíceis de achar são os **tranquilos**: sem xeque, sem captura – e mesmo assim decidem a partida. Aqui a torre preta em e2 protege a casa de promoção. **Be5!** simplesmente bloqueia a coluna e, depois de Kb4, o peão promove: **e8=Q**.",
+    "intro_kid": "Às vezes o melhor lance é um lance calmo: sem xeque, sem captura – só a casa certa!",
+    "task": "É a vez das {{side}}. Procure um lance tranquilo!"
+  },
+  "zugzwang": {
+    "title": "Zugzwang",
+    "desc": "Quando ter que jogar é o problema.",
+    "intro": "**Zugzwang** (em alemão, “obrigação de jogar”): todo lance piora a situação – mas você não pode passar. Aqui, depois de **Kf4!**, o rei preto não tem mais casas, então as pretas precisam jogar …g3 – e **hxg3** é xeque-mate.",
+    "intro_kid": "Zugzwang é quando você adoraria dizer “passo!” – mas no xadrez você sempre tem que jogar, mesmo quando todo lance é ruim.",
+    "task": "É a vez das {{side}}. Cada tempo conta – encontre o melhor lance!"
+  },
+  "only-move": {
+    "title": "O lance único",
+    "desc": "Sob pressão, só um lance resiste. Encontre-o.",
+    "intro": "Às vezes você está sob ataque e só um lance não perde. Antes de jogar, olhe para **todas** as ameaças do adversário: o que está atacado e o que acontece depois de cada ideia sua? Aqui a torre preta em d8 ataca a dama branca. **Qxf6** salva a dama e ainda captura um cavalo no caminho. Depois de **…Qa6+**, só **Kf3** mantém tudo – qualquer outro lance perde material.",
+    "intro_kid": "Seu adversário está atacando! Só um lance salva você. Olhe com cuidado o que está sendo atacado antes de jogar.",
+    "task": "É a vez das {{side}}. Só um lance salva você – qual?"
+  },
+  "clearance": {
+    "title": "Liberação",
+    "desc": "Saia do caminho – com tempo.",
+    "intro": "Uma **liberação**: uma peça sai da sua casa ou linha para outra peça usá-la – de preferência **com tempo** (com uma ameaça que o adversário precisa responder). Aqui o bispo branco em h7 ocupa a casa que a dama quer. **Bg8+** a libera com um xeque descoberto da torre em h3. Depois de Bh4 a dama pousa na casa liberada: **Qh7#**.",
+    "intro_kid": "Às vezes sua própria peça está no caminho! Tire-a de lá com xeque – e a casa fica livre para a dama.",
+    "task": "É a vez das {{side}}. Abra o caminho!"
+  },
+  "interference": {
+    "title": "Interceptação",
+    "desc": "Corte a linha entre um defensor e o que ele defende.",
+    "intro": "A **interceptação** corta a linha entre um defensor e a peça que ele protege. Aqui o bispo preto em d4 protege a torre em h8 pela diagonal longa. **Bg5+** é respondido com …f6 – e esse peão agora bloqueia a linha do bispo. **Qxh8** ganha a torre.",
+    "intro_kid": "Coloque algo no caminho! O bispo estava protegendo a torre – agora um peão bloqueia a passagem.",
+    "task": "É a vez das {{side}}. Corte uma linha!"
+  },
+  "xray": {
+    "title": "Raio X",
+    "desc": "Ataques que atravessam uma peça.",
+    "intro": "Um **raio X**: uma peça ataca através de outra peça que está na sua linha. Aqui a torre preta em a1 está atrás da torre branca em b1. **Qe1+!** – quando a torre captura a dama, ela sai de b1, e a torre em a1 dá mate: **Rxe1#**.",
+    "intro_kid": "A torre olha através da torre inimiga, como se tivesse visão de raio X! Assim que aquela torre sai, o caminho fica livre.",
+    "task": "É a vez das {{side}}. Olhe através das peças!"
+  },
+  "underpromotion": {
+    "title": "Subpromoção",
+    "desc": "Às vezes um cavalo é melhor que uma dama.",
+    "intro": "Um peão quase sempre vira dama – mas não sempre! Aqui **e1=N+** dá xeque **e** ataca a dama em f3: um garfo que uma dama nova em e1 não conseguiria fazer. Depois de Kf2 o cavalo captura a dama: **Nxf3**.",
+    "intro_kid": "Surpresa! Em vez de dama, o peão vira cavalo – porque só um cavalo consegue atacar rei e dama ao mesmo tempo aqui.",
+    "task": "É a vez das {{side}}. Em qual peça o peão deve se transformar?"
+  },
+  "boden": {
+    "title": "Mate de Boden",
+    "desc": "Dois bispos em diagonais cruzadas dão mate em um rei que rocou grande.",
+    "intro": "**Mate de Boden**: dois bispos em diagonais cruzadas dão mate em um rei cujas próprias peças atrapalham – típico depois de o rei rocar para a ala da dama. O caminho até ele muitas vezes é um sacrifício de dama que abre uma diagonal. Aqui: **Qxc6+!** **…bxc6** e **Ba6#**. O bispo em a6 dá xeque, o de f4 cobre b8, e a torre e o cavalo pretos bloqueiam d8 e d7.",
+    "intro_kid": "Dois bispos formam um X na frente do rei – e as próprias peças dele atrapalham. Primeiro a dama se sacrifica para abrir o caminho!",
+    "task": "É a vez das {{side}}. Mate com os dois bispos!"
+  },
+  "dovetail": {
+    "title": "Mate de cauda de andorinha",
+    "desc": "A dama dá mate bem ao lado do rei, cujas próprias peças bloqueiam a saída.",
+    "intro": "O **mate de cauda de andorinha** (também chamado de mate de Cozio): a dama dá mate de bem ao lado do rei, protegida por outra peça, e as próprias peças do rei bloqueiam as casas atrás dele. Aqui: **Qxf4+** captura a torre com xeque, **…Kg6**, e **Qf5#**. A torre em f1 protege a dama, e os peões pretos em g7 e h6 atrapalham o rei.",
+    "intro_kid": "A dama fica bem ao lado do rei, e uma amiga a protege. Os próprios peões do rei atrapalham – xeque-mate!",
+    "task": "É a vez das {{side}}. Leve a dama para o lado do rei – mate!"
+  },
+  "double-bishop": {
+    "title": "O par de bispos dá mate",
+    "desc": "Dois bispos lado a lado varrem um canto inteiro.",
+    "intro": "Dois bispos lado a lado em diagonais vizinhas controlam um canto inteiro. Aqui a dama limpa a diagonal longa: **Qxc3+!** captura o bispo preto, **…bxc3**, e **Bf6#**. O bispo em f6 dá xeque pela diagonal longa, o bispo em e6 cobre g8, e o peão em h7 bloqueia a última casa.",
+    "intro_kid": "Dois bispos lado a lado são como uma cerca grande em volta do canto. Primeiro a dama abre espaço – depois o bispo dá xeque-mate!",
+    "task": "É a vez das {{side}}. Deixe os dois bispos acabarem com o rei!"
+  },
+  "mate-in-four": {
+    "title": "Mate em quatro",
+    "desc": "Sete lances à frente: as combinações mais longas do curso.",
+    "intro": "Mate em quatro significa enxergar sete lances à frente. O segredo: lances forçados. Quando todo lance é xeque, o adversário quase não tem escolha, e você só precisa seguir algumas linhas. Veja: **Bg6+** – o bispo sai do caminho, e a dama dá xeque (um xeque descoberto). **…Kg8 Qh7+ Kf8 Qh8+ Ke7 Qe8#** – o bispo em g6 protege a dama no lance final.",
+    "intro_kid": "Quatro lances até o xeque-mate! Dê xeque toda vez – assim o rei nunca respira.",
+    "task": "É a vez das {{side}}. Mate em quatro!"
+  },
+  "rook-endgames": {
+    "title": "Finais de torres",
+    "desc": "Torres ativas, e a torre atrás do peão.",
+    "intro": "Os finais de torres são os finais mais comuns. Duas regras de ouro: mantenha sua torre **ativa** e coloque-a **atrás dos peões passados** (peões que nenhum peão inimigo consegue mais parar) – atrás dos seus para empurrá-los, atrás dos adversários para atacá-los. Aqui a torre branca em a1 apoia o peão da coluna a por trás.",
+    "intro_kid": "Torres adoram linhas abertas! E gostam de ficar atrás de um peão que está correndo para o outro lado.",
+    "task": "É a vez das {{side}}. Encontre o melhor lance!"
+  },
+  "lucena": {
+    "title": "A posição de Lucena",
+    "desc": "Vença com torre e peão: construa uma ponte.",
+    "intro": "A **posição de Lucena**: seu peão está na 7ª fileira, seu rei fica na frente dele, e sua torre na coluna c mantém o rei preto afastado. A torre preta na coluna a impede que seu rei saia por aquele lado. Então como o seu rei escapa?",
+    "bridge": "A resposta se chama **construir uma ponte**. 1.Rd1+ empurra o rei preto mais uma coluna para longe. 2.**Rd4!** coloca a torre na 4ª fileira. Agora o rei sai, a torre preta dá xeques – e quando o rei chega a b5, a torre bloqueia o último xeque em **b4**. Nada mais segura o peão.",
+    "play": "Agora você: vença a posição de Lucena e promova o peão – Patzer defende. Dica: primeiro afaste o rei com um xeque, depois construa a ponte."
+  },
+  "philidor": {
+    "title": "A posição de Philidor",
+    "desc": "A defesa fundamental com torre contra torre e peão.",
+    "intro": "Agora o outro lado: como **defender** com torre contra torre e peão. O **método de Philidor**: enquanto o peão está na 5ª fileira, a torre defensora espera na **6ª fileira** (aqui em b6). O rei branco não consegue avançar até a 6ª fileira sem levar xeque.",
+    "where": "É a vez das pretas, e o peão está em e5. O que diz o método de Philidor – para onde vai a torre preta?",
+    "where_sixth": "Para a 6ª fileira (…Rb6)",
+    "where_behind": "Para baixo, até a 1ª fileira",
+    "where_eighth": "Fica na 8ª fileira",
+    "where_done": "Certo – …Rb6! Da 6ª fileira a torre mantém o rei branco do lado de fora. Outros lances também podem resistir, mas esta montagem é a confiável e fácil de lembrar.",
+    "checks": "Quando o peão avança para a **6ª fileira**, o trabalho da torre muda: o rei branco não consegue mais se esconder dos xeques na frente do peão. Então a torre vai para o outro extremo do tabuleiro e **dá xeque por trás**.",
+    "plan": "O peão chegou a e6. O que o método de Philidor manda as pretas fazerem agora?",
+    "plan_behind": "Torre para a 1ª fileira, depois xeques por trás",
+    "plan_wait": "Manter a torre na 6ª fileira",
+    "plan_king": "Correr com o rei para atacar o peão",
+    "plan_done": "Isso! Por trás, a torre pode dar xeque no rei branco de novo e de novo – empate."
+  },
+  "minor-endgames": {
+    "title": "Finais de bispos e cavalos",
+    "desc": "Poucas peças, cada lance conta: o rei entra na luta.",
+    "intro": "Com só bispos, cavalos e peões no tabuleiro, cada tempo conta, e o rei é uma peça de luta. As táticas ainda decidem muito: aqui o cavalo preto em c5 é protegido só pelo seu rei. **a5+** – o peão dá xeque e atrai o rei para longe (**…Kxa5**), e **Kxc5** ganha o cavalo.",
+    "intro_kid": "Só sobraram poucas peças – agora o rei também luta! Engane o outro rei para longe do cavalo dele.",
+    "task": "É a vez das {{side}}. Encontre o melhor lance!"
+  },
+  "queen-endgames": {
+    "title": "Finais de damas",
+    "desc": "Xeques, garfos e peões fugitivos: as damas são rápidas.",
+    "intro": "Finais de damas são cheios de xeques: uma dama dá xeque de quase qualquer lugar. Fique de olho em garfos – e no momento em que trocar damas vence, porque seus peões são mais rápidos. Aqui: **Qa1+ Kh2 Qe5+** – xeque, e as damas saem: **Qxe5 fxe5**. Agora o peão preto da coluna a está longe do rei branco e corre até a1.",
+    "intro_kid": "As damas são as peças mais rápidas! Às vezes o melhor truque é trocá-las – aí o seu peão ganha a corrida.",
+    "task": "É a vez das {{side}}. Encontre o melhor lance!"
+  }
+}

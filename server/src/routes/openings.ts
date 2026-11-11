@@ -19,6 +19,7 @@ import {
   TRAINER_LINES, LEARNED_AFTER, MAX_LINE_PLIES, MAX_REPERTOIRE_PLIES,
   replayLine, lineName, repertoireLine, repertoireBranches, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, checkReview, dayOf,
 } from '../chess/openingTrainer.js';
+import { buildOpeningProfile, clampProfileWindow } from '../chess/openingProfile.js';
 import type { AnalyzedMove, Color } from '../types.js';
 
 const router = new Hono();
@@ -198,6 +199,19 @@ const FLAWS = new Set(['mistake', 'blunder', 'miss']);
 router.get('/trainer', (c) => {
   const me = c.get('user');
   return c.json({ lines: TRAINER_LINES, learned_after: LEARNED_AFTER, ...queueSummary(me.id, todayOf(c.req.query('today'))) });
+});
+
+// "Your openings" — what the analysed games say you play, how it scores, and
+// the opening moves that cost the most. Local analysis only (see
+// chess/openingProfile.ts); never an error just because a game lacks analysis.
+router.get('/profile', (c) => {
+  const me = c.get('user');
+  const window = clampProfileWindow(c.req.query('games'));
+  return c.json({
+    window,
+    white: buildOpeningProfile(me.id, 'white', window),
+    black: buildOpeningProfile(me.id, 'black', window),
+  });
 });
 
 // A line from your own repertoire: the moves up to a tree node, continued the

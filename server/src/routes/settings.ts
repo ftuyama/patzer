@@ -21,6 +21,9 @@ const profileSchema = z.object({
   tts_pitch: z.number().min(0).max(2).optional(),
   board_theme: z.enum(['wood', 'green', 'blue']).optional(),
   piece_set: z.string().optional(),
+  // Piece-slide speed in Review. Named rather than milliseconds so the exact
+  // duration can be tuned without a migration; 'off' snaps pieces into place.
+  move_animation: z.enum(['off', 'fast', 'medium', 'slow']).optional(),
   site_theme: z.enum(['light', 'dark', 'auto']).optional(),
   blunder_warning: z.boolean().optional(),
   sound_enabled: z.boolean().optional(),

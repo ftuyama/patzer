@@ -110,6 +110,9 @@
       "stockfish": "World-class strength"
     },
     "start": "Start game",
+    "botName": "Stockfish ({{difficulty}})",
+    "eloApprox": "≈ {{elo}} Elo",
+    "eloMax": "Max",
     "resign": "Resign",
     "hint": "Hint",
     "yourTurn": "Your turn",
@@ -243,6 +246,14 @@
       "played": "Played",
       "pvp": "PvP",
       "lichess": "Lichess"
+    },
+    "tc": {
+      "bullet": "Bullet",
+      "blitz": "Blitz",
+      "rapid": "Rapid",
+      "daily": "Daily",
+      "classical": "Classical",
+      "untimed": "Untimed"
     },
     "hasNote": "note",
     "clearSearch": "Clear",
@@ -386,6 +397,12 @@
     "boardWood": "Wood",
     "boardGreen": "Green",
     "boardBlue": "Blue",
+    "boardAnimation": "Piece animation",
+    "boardAnimationOff": "Off",
+    "boardAnimationFast": "Fast",
+    "boardAnimationMedium": "Medium",
+    "boardAnimationSlow": "Slow",
+    "boardAnimationHelp": "How pieces slide when you step through a game in Review. Live games always show them instantly.",
     "adminHint": "You're an admin — use the Admin section in the sidebar to manage users and system-wide settings (Ollama, Stockfish).",
     "kidEmotions": "Living pieces",
     "kidEmotionsDesc": "Help kids read the whole board at a glance — pieces show feelings based on what's happening.",
@@ -1028,6 +1045,22 @@
         "kings-indian": "King's Indian Defense: Classical",
         "slav": "Slav Defense: Main Line",
         "nimzo-indian": "Nimzo-Indian Defense: Rubinstein"
+      },
+      "profile": {
+        "title": "Your openings",
+        "sub": "Built from your analysed games: what you play, how it scores, and the opening moves that cost you the most.",
+        "empty": "No analysed games yet",
+        "emptyHint": "Import or analyse a few games and your openings show up here.",
+        "noGames": "No games with this colour yet.",
+        "sample_one": "{{count}} game",
+        "sample_other": "{{count}} games",
+        "score": "{{n}}% score",
+        "accuracy": "{{n}}% accuracy",
+        "cpLoss": "−{{pawns}}",
+        "train": "Train the fix",
+        "noLeaks": "No costly opening moves in these games.",
+        "unknownOpening": "Unrecognised opening",
+        "loadError": "Couldn't load your openings."
       }
     },
     "theory": {
@@ -1247,6 +1280,12 @@
     "resendSubtitle": "Enter your email to get a new confirmation link",
     "resendSentTitle": "Check your inbox",
     "resendSentBody": "If that email needs confirming, a new link is on its way."
+  },
+  "ratings": {
+    "title": "Ratings",
+    "provisional": "provisional",
+    "unrated": "Unrated",
+    "chesscomSource": "Rating imported from Chess.com"
   },
   "players": {
     "nav": "Players",

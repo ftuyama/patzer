@@ -8,6 +8,7 @@ import { fetchRecentGames as fetchLichessGames, toImportRow } from '../chess/lic
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
+import { timeClassOrDerived, type TimeClass } from '../chess/timeClass.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -41,8 +42,14 @@ router.get('/', (c) => {
     WHERE ${filters.join(' AND ')}
     ORDER BY g.end_time DESC NULLS LAST, g.id DESC
     LIMIT ?
-  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit);
-  return c.json({ games: rows });
+  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit) as Array<{
+    time_control: string; time_class: TimeClass | null; [column: string]: unknown;
+  }>;
+  // Games written before `time_class` existed still have a usable clock string,
+  // so the badge can be derived instead of missing on those rows.
+  return c.json({
+    games: rows.map((row) => ({ ...row, time_class: timeClassOrDerived(row.time_class, row.time_control) })),
+  });
 });
 
 // Games you can walk back into: the bot game you left mid-move, and any PvP
@@ -129,7 +136,9 @@ router.patch('/:id/bookmark', async (c) => {
 router.get('/:id', (c) => {
   const user = c.get('user');
   const id = Number(c.req.param('id'));
-  const game = db.prepare('SELECT * FROM games WHERE id = ? AND user_id = ?').get(id, user.id);
+  const game = db.prepare('SELECT * FROM games WHERE id = ? AND user_id = ?').get(id, user.id) as
+    | { time_control: string; time_class: TimeClass | null; [column: string]: unknown }
+    | undefined;
   if (!game) return c.json({ error: 'not_found' }, 404);
   const analysis = db.prepare('SELECT * FROM analyses WHERE game_id = ?').get(id) as
     | { scoring_version: number }
@@ -138,7 +147,7 @@ router.get('/:id', (c) => {
   // show the Analyze CTA (and we set a flag so the frontend can auto-fire it).
   const stale = !!(analysis && analysis.scoring_version < SCORING_VERSION);
   return c.json({
-    game,
+    game: { ...game, time_class: timeClassOrDerived(game.time_class, game.time_control) },
     analysis: stale ? null : analysis,
     analysis_stale: stale,
   });

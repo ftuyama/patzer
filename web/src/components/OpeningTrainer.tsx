@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Eye, GitBranch, GraduationCap, Lightbulb, Repeat, RotateCcw, Target, Trash2, Trophy, X, Zap } from 'lucide-react';
 import ChessBoard from './ChessBoard';
+import OpeningProfilePanel from './OpeningProfilePanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
@@ -144,6 +145,8 @@ function Picker({ info, repertoirePrefix, onClearRepertoire, onStart, onReview }
             </div>
           )}
       </div>
+
+      <OpeningProfilePanel onStart={onStart} />
 
       <LineGroup title={t('openings.trainer.linesWhite')} lines={white} onStart={onStart} />
       <LineGroup title={t('openings.trainer.linesBlack')} lines={black} onStart={onStart} />

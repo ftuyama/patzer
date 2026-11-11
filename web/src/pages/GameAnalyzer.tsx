@@ -15,17 +15,19 @@ import GameReportPanel, { type GameReviewProse } from '../components/GameReportP
 import KeyMomentsList from '../components/KeyMomentsList';
 import OpeningBanner from '../components/OpeningBanner';
 import ClassificationBadge from '../components/ClassificationBadge';
+import TimeClassIcon from '../components/TimeClassIcon';
 import CapturedPieces from '../components/CapturedPieces';
 import ThreatPanel from '../components/ThreatPanel';
 import ExplorerPanel from '../components/ExplorerPanel';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
+import { boardAnimationMs } from '../lib/boardAnimation';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { parseFromPosition, playFromPosition, playFromUrl } from '../lib/fromPosition';
-import type { AnalysisResult, AnalyzedMove, KeyMomentSummary, PhaseSplit } from '../types';
+import type { AnalysisResult, AnalyzedMove, KeyMomentSummary, PhaseSplit, TimeClass } from '../types';
 
 interface GameDetail {
-  game: { id: number; pgn: string; white: string; black: string; result: string; user_color: 'white' | 'black' | null; eco?: string | null; opening_name?: string | null; bookmarked?: number | null; notes?: string | null; start_fen?: string | null };
+  game: { id: number; pgn: string; white: string; black: string; result: string; time_control?: string | null; time_class?: TimeClass | null; user_color: 'white' | 'black' | null; eco?: string | null; opening_name?: string | null; bookmarked?: number | null; notes?: string | null; start_fen?: string | null };
   analysis: {
     depth: number; accuracy_white: number; accuracy_black: number;
     estimated_elo_white: number | null; estimated_elo_black: number | null;
@@ -171,6 +173,17 @@ export default function GameAnalyzer() {
     prevPlyRef.current = ply;
   }, [ply, positions]);
 
+  // Only a single-step (arrow keys, ‹ ›, prev/next in the move list) gets the
+  // slide, at the speed chosen in Settings. Clicking a move list entry near the
+  // other end of the game would otherwise send every piece flying across the
+  // board. The ref is still the previous ply while this render runs — the
+  // effect above updates it afterwards, and ChessBoard's effect (a child) has
+  // already synced by then.
+  const animFromPlyRef = useRef(ply);
+  const preferredAnimationMs = boardAnimationMs(user?.profile.move_animation);
+  const boardAnimateMs = Math.abs(ply - animFromPlyRef.current) === 1 ? preferredAnimationMs : 0;
+  useEffect(() => { animFromPlyRef.current = ply; }, [ply]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -315,6 +328,14 @@ export default function GameAnalyzer() {
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.white}</span> vs{' '}
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.black}</span>
           <span className="ml-2">· {data.game.result}</span>
+          {data.game.time_class && (
+            <TimeClassIcon
+              timeClass={data.game.time_class}
+              label={data.game.time_control && data.game.time_control !== '-' ? data.game.time_control : undefined}
+              orientation="inline"
+              className="ml-2 align-[1px]"
+            />
+          )}
           {data.game.start_fen && <span className="ml-2 rounded-full bg-chesscom-100 px-2 py-0.5 text-[11px] dark:bg-chesscom-800">{t('review.fromPosition')}</span>}
         </div>
       </div>
@@ -348,6 +369,7 @@ export default function GameAnalyzer() {
               <ChessBoard
                 fen={pos?.fen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}
                 orientation={orientation}
+                animateMs={boardAnimateMs}
                 lastMove={pos?.from && pos?.to ? [pos.from as never, pos.to as never] : undefined}
                 arrows={arrow as never[]}
               />

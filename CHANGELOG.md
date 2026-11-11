@@ -6,6 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Opening trainer
+
+- **The trainer now reads your own games.** *Openings → Trainer* opens with
+  "Your openings": the openings you actually play as White and as Black, with
+  how many games, your score and your accuracy in each. Under every opening it
+  lists the two or three opening moves that cost you the most, shows the move
+  the engine wanted instead and its price in pawns, and a **Train the fix**
+  button drops you straight into the drill for the corrected line. Everything is
+  computed on the server from analyses you already have, so it works offline and
+  needs no extra engine run.
+
+### Recent games
+
+- **Home's recent-games list now looks like the Review page.** The time-class
+  icon leads each row with the clock underneath, a trophy marks a win and a
+  red sad face a loss, and unreviewed games get the same badge as on Review.
+
+### Ratings
+
+- **The Play screen shows the ratings.** Every bot difficulty card now says the
+  rating it plays at (≈ 196 Elo for *Kid* up to ≈ 2480 for *Master*; *Stockfish
+  (max)* stays uncapped), read from the same table the engine is configured
+  with. During the game the bot's rating sits next to its name on the clock
+  bar, and a rated friend game shows both players' pool ratings — with `?` while
+  they are still provisional.
+- **Your chess.com rating on the home screen.** Every chess.com import now
+  also refreshes the player's bullet/blitz/rapid/daily rating from chess.com's
+  public stats. The Home hero, the top bar and Progress show those numbers
+  alongside Patzer's own Glicko ratings, which take precedence as soon as you
+  play a rated game here.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
@@ -67,6 +98,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
 
+### Game Review: speed icons
+
+- **Bullet, blitz, rapid and daily at a glance.** Every row in *Game Review* and
+  the game header now carry chess.com's speed column: a rocket, a bolt, a
+  stopwatch or a calendar, with the clock underneath (`3+2`). Games imported
+  before `time_class` existed get their speed derived from the stored clock
+  instead of showing nothing. Untimed games show no icon.
+- **Pieces glide when you step through a game.** Stepping one move forward or
+  back in *Game Review* slides the piece to its square instead of teleporting;
+  jumping several moves (a move-list click, the eval graph, `Home` / `End`)
+  still snaps, so pieces never fly across the board. Live games are unchanged —
+  the slide is opt-in per board.
+- **Choose how fast that slide is.** *Settings → Appearance → Piece animation*
+  offers Off / Fast / Medium / Slow (0 / 120 / 200 / 350 ms), saved per profile
+  and defaulting to Medium. The setting only governs Review; on a live clock the
+  tween still reads as lag, so games keep snapping pieces into place.
+- **The same glyph wherever a speed appears.** The Home hero and Progress
+  rating strips, the top-bar rating chip, the player profile, *Insights*'
+  time-class card, the *Play* time-control picker and the challenge lists now
+  reuse those icons, with an hourglass for classical and a lemniscate for
+  untimed.
+- **Your accuracy stands out in the game list.** Like Home, *Game Review* now
+  bolds your side of the white/black accuracy pair and dims the opponent's, so
+  the number that matters is the one that reads first.
+
 ### One language picker everywhere
 
 - **A dropdown instead of a row of buttons.** The top bar, the login screens,
@@ -87,6 +143,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   weeks — inline SVG, no chart dependency — with a dashed average line and a
   hollow marker for the week still in progress. A one-week history is centred
   against its own level line instead of showing an empty card.
+
+### Learn: Portuguese lessons
+
+- **The whole Learn section now speaks Portuguese.** All 70 lessons have a
+  `web/src/locales/learn/pt.json` translation, so switching to *Português
+  (Brasil)* no longer leaves lesson intros, tasks and explanations in English.
+  The locale tests now pin `pt` to full parity with English, like `de` and `ru`.
+- **Missing speed labels.** Added the `review.tc.*` strings (Bullet, Blitz,
+  Rápido, Diário) that Portuguese was still falling back to English for.
+
+### Fixed
+
+- **Muted text is readable in dark mode.** The chess.com grey scale is built
+  for white chrome: on the dark panels the caption grey landed at 1.9:1
+  contrast and the icon grey at 3:1, so secondary text such as *"Seta
+  vermelha: o lance que você jogou na partida (exf5)"* faded into the card.
+  The three grey text steps now lift to 4.6–6.4:1 on the dark background,
+  keeping their order (the strongest step still reads strongest), while any
+  element that picks its own dark colour keeps doing so.
 
 ## [7.19.0] — 2026-10-18
 

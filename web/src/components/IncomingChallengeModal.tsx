@@ -4,6 +4,7 @@ import { Swords, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
 import { useLobby, type Challenge } from '../state/lobby';
+import TimeClassIcon from './TimeClassIcon';
 
 export default function IncomingChallengeModal() {
   const { t } = useTranslation();
@@ -62,7 +63,10 @@ export default function IncomingChallengeModal() {
                 </div>
                 <div className="rounded-lg bg-ink-100 px-3 py-2 dark:bg-ink-800">
                   <div className="text-[11px] uppercase tracking-wide text-ink-500">{t('play.timeControl')}</div>
-                  <div className="font-medium">{t(`play.tc.${c.time_control}`)}</div>
+                  <div className="font-medium">
+                    <TimeClassIcon timeClass={c.time_control} orientation="inline" iconClassName="mr-1 inline h-3.5 w-3.5" />
+                    {t(`play.tc.${c.time_control}`)}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2">

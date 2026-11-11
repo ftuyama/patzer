@@ -1,5 +1,7 @@
 // Chess.com public API client. The API is unauthenticated but requires a User-Agent.
 
+import type { TimeClass } from './timeClass.js';
+
 const UA = 'patzer/3.1 (+https://github.com/SikamikanikoBG/patzer)';
 
 // Chess.com usernames are 3–25 chars; we extend slightly for historical grandfathered handles.
@@ -91,6 +93,39 @@ export async function fetchRecentGames(username: string, limit: number): Promise
     for (const g of standard) {
       out.push(g);
       if (out.length >= limit) break;
+    }
+  }
+  return out;
+}
+
+/** The four per-time-class ratings from chess.com's public stats endpoint.
+ *  Returns null when the player has no chess.com account or the endpoint is
+ *  down: an import must still succeed with games even if stats do not. */
+export async function getPlayerRatings(username: string): Promise<Partial<Record<TimeClass, number>> | null> {
+  try {
+    assertValidUsername(username);
+    const data = (await get(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/stats`)) as Record<string, unknown>;
+    return normalizeStats(data);
+  } catch {
+    return null;
+  }
+}
+
+// chess.com keys its stats by rule set; Patzer collapses classical into rapid,
+// exactly like `classifyTimeControl` does.
+export function normalizeStats(data: Record<string, unknown>): Partial<Record<TimeClass, number>> {
+  const sources: [string, TimeClass][] = [
+    ['chess_bullet', 'bullet'],
+    ['chess_blitz', 'blitz'],
+    ['chess_rapid', 'rapid'],
+    ['chess_daily', 'daily'],
+  ];
+  const out: Partial<Record<TimeClass, number>> = {};
+  for (const [key, tc] of sources) {
+    const last = (data[key] as { last?: { rating?: unknown } } | undefined)?.last;
+    const rating = last?.rating;
+    if (typeof rating === 'number' && Number.isFinite(rating) && rating > 0) {
+      out[tc] = Math.round(rating);
     }
   }
   return out;

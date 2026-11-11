@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
-import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
+import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet, type BoardAnimation } from '../state/auth';
+import { BOARD_ANIMATIONS } from '../lib/boardAnimation';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
 import { moveSoundsReady, playSound, setMoveSoundSet, setSoundSet } from '../lib/sounds';
 import LanguagePicker from '../components/LanguagePicker';
@@ -43,6 +44,7 @@ export default function Settings() {
       tts_pitch: form.tts_pitch,
       board_theme: form.board_theme,
       piece_set: form.piece_set,
+      move_animation: form.move_animation,
       site_theme: form.site_theme,
       sound_enabled: !!form.sound_enabled,
       sound_set: form.sound_set,
@@ -182,6 +184,26 @@ export default function Settings() {
                 <BoardThemeOption key={th} value={th} selected={form.board_theme === th} onPick={() => set('board_theme', th)} label={t(`settings.board${th[0]!.toUpperCase()}${th.slice(1)}`)} />
               ))}
             </div>
+          </div>
+          <div>
+            <label className="label mb-2 block">{t('settings.boardAnimation')}</label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {BOARD_ANIMATIONS.map((a: BoardAnimation) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => set('move_animation', a)}
+                  aria-pressed={form.move_animation === a}
+                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors
+                    ${form.move_animation === a
+                      ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
+                      : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}
+                >
+                  {t(`settings.boardAnimation${a[0]!.toUpperCase()}${a.slice(1)}`)}
+                </button>
+              ))}
+            </div>
+            <div className="mt-1 text-xs text-ink-400">{t('settings.boardAnimationHelp')}</div>
           </div>
         </div>
       </section>

@@ -110,6 +110,9 @@
       "stockfish": "Weltklasse-Stärke"
     },
     "start": "Partie starten",
+    "botName": "Stockfish ({{difficulty}})",
+    "eloApprox": "≈ {{elo}} Elo",
+    "eloMax": "Max.",
     "resign": "Aufgeben",
     "hint": "Tipp",
     "yourTurn": "Du bist am Zug",
@@ -243,6 +246,14 @@
       "played": "Gegen Bot",
       "pvp": "Gegen Menschen",
       "lichess": "Lichess"
+    },
+    "tc": {
+      "bullet": "Bullet",
+      "blitz": "Blitz",
+      "rapid": "Schnellschach",
+      "daily": "Täglich",
+      "classical": "Klassisch",
+      "untimed": "Ohne Uhr"
     },
     "hasNote": "Notiz",
     "clearSearch": "Leeren",
@@ -386,6 +397,12 @@
     "boardWood": "Holz",
     "boardGreen": "Grün",
     "boardBlue": "Blau",
+    "boardAnimation": "Figurenanimation",
+    "boardAnimationOff": "Aus",
+    "boardAnimationFast": "Schnell",
+    "boardAnimationMedium": "Mittel",
+    "boardAnimationSlow": "Langsam",
+    "boardAnimationHelp": "Wie sich Figuren bewegen, wenn du im Review durch eine Partie gehst. In Live-Partien erscheinen sie immer sofort.",
     "adminHint": "Du bist Admin — im Admin-Bereich der Seitenleiste verwaltest du Benutzer und systemweite Einstellungen (Ollama, Stockfish).",
     "kidEmotions": "Lebendige Figuren",
     "kidEmotionsDesc": "Hilft Kindern, das ganze Brett auf einen Blick zu erfassen — die Figuren zeigen Gefühle, je nachdem, was gerade passiert.",
@@ -1028,6 +1045,22 @@
         "kings-indian": "Königsindisch: Klassische Variante",
         "slav": "Slawisch: Hauptvariante",
         "nimzo-indian": "Nimzo-Indisch: Rubinstein-Variante"
+      },
+      "profile": {
+        "title": "Deine Eröffnungen",
+        "sub": "Aus deinen analysierten Partien: was du spielst, wie es punktet und welche Eröffnungszüge dich am meisten kosten.",
+        "empty": "Noch keine analysierten Partien",
+        "emptyHint": "Importiere oder analysiere ein paar Partien, dann erscheinen hier deine Eröffnungen.",
+        "noGames": "Noch keine Partien mit dieser Farbe.",
+        "sample_one": "{{count}} Partie",
+        "sample_other": "{{count}} Partien",
+        "score": "{{n}} % Punkte",
+        "accuracy": "{{n}} % Genauigkeit",
+        "cpLoss": "−{{pawns}}",
+        "train": "Korrektur üben",
+        "noLeaks": "Keine teuren Eröffnungszüge in diesen Partien.",
+        "unknownOpening": "Unbekannte Eröffnung",
+        "loadError": "Deine Eröffnungen konnten nicht geladen werden."
       }
     },
     "theory": {
@@ -1247,6 +1280,12 @@
     "resendSubtitle": "Gib deine E-Mail-Adresse ein, um einen neuen Bestätigungslink zu erhalten",
     "resendSentTitle": "Schau in dein Postfach",
     "resendSentBody": "Falls diese E-Mail-Adresse noch bestätigt werden muss, ist ein neuer Link unterwegs."
+  },
+  "ratings": {
+    "title": "Wertungen",
+    "provisional": "vorläufig",
+    "unrated": "Ohne Wertung",
+    "chesscomSource": "Wertung von Chess.com importiert"
   },
   "players": {
     "nav": "Spieler",

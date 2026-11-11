@@ -102,6 +102,9 @@
       "stockfish": "Nivel de clase mundial"
     },
     "start": "Iniciar partida",
+    "botName": "Stockfish ({{difficulty}})",
+    "eloApprox": "≈ {{elo}} Elo",
+    "eloMax": "Máx.",
     "resign": "Rendirse",
     "hint": "Pista",
     "yourTurn": "Tu turno",
@@ -228,6 +231,14 @@
     "source": {
       "lichess": "Lichess"
     },
+    "tc": {
+      "bullet": "Bullet",
+      "blitz": "Blitz",
+      "rapid": "Rápidas",
+      "daily": "Diarias",
+      "classical": "Clásicas",
+      "untimed": "Sin tiempo"
+    },
     "pickMoves": "Mostrar estas jugadas",
     "pickBoth": "ambos bandos",
     "why": {
@@ -334,6 +345,12 @@
     "boardWood": "Madera",
     "boardGreen": "Verde",
     "boardBlue": "Azul",
+    "boardAnimation": "Animación de las piezas",
+    "boardAnimationOff": "Desactivada",
+    "boardAnimationFast": "Rápida",
+    "boardAnimationMedium": "Media",
+    "boardAnimationSlow": "Lenta",
+    "boardAnimationHelp": "Cómo se deslizan las piezas al recorrer una partida en Review. En partidas en vivo siempre aparecen de inmediato.",
     "adminHint": "Eres administrador — usa la sección de Administración en la barra lateral para gestionar usuarios y la configuración global del sistema (Ollama, Stockfish).",
     "kidEmotions": "Piezas con vida",
     "kidEmotionsDesc": "Ayuda a los niños a leer todo el tablero de un vistazo — las piezas muestran emociones según lo que esté sucediendo.",
@@ -570,7 +587,25 @@
     "played": "Partidas",
     "afterMove": "tras {{san}}",
     "unknownLine": "Línea fuera de teoría",
-    "trainCta": "Entrenar esto →"
+    "trainCta": "Entrenar esto →",
+    "trainer": {
+      "profile": {
+        "title": "Tus aperturas",
+        "sub": "Creado a partir de tus partidas analizadas: lo que juegas, cómo puntúa y los movimientos de apertura que más te cuestan.",
+        "empty": "Aún no hay partidas analizadas",
+        "emptyHint": "Importa o analiza algunas partidas y tus aperturas aparecerán aquí.",
+        "noGames": "Aún no hay partidas con este color.",
+        "sample_one": "{{count}} partida",
+        "sample_other": "{{count}} partidas",
+        "score": "{{n}}% de puntos",
+        "accuracy": "{{n}}% de precisión",
+        "cpLoss": "−{{pawns}}",
+        "train": "Practicar la corrección",
+        "noLeaks": "Ningún movimiento de apertura caro en estas partidas.",
+        "unknownOpening": "Apertura no reconocida",
+        "loadError": "No se pudieron cargar tus aperturas."
+      }
+    }
   },
   "plan": {
     "nav": "Plan",
@@ -712,6 +747,12 @@
     "resendSubtitle": "Ingresa tu correo electrónico para recibir un nuevo enlace",
     "resendSentTitle": "Revisa tu bandeja de entrada",
     "resendSentBody": "Si ese correo necesita verificación, recibirás un nuevo enlace en breve."
+  },
+  "ratings": {
+    "title": "Puntuaciones",
+    "provisional": "provisional",
+    "unrated": "Sin puntuación",
+    "chesscomSource": "Puntuación importada de Chess.com"
   },
   "players": {
     "nav": "Jugadores",

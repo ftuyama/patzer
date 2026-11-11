@@ -12,6 +12,7 @@ import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
 import { cn, fmtTimeControl } from '../lib/utils';
+import TimeClassIcon from '../components/TimeClassIcon';
 
 const TIME_CONTROLS = ['untimed', 'bullet', 'blitz', 'rapid', 'classical'] as const;
 const TIME_CLASSES = ['bullet', 'blitz', 'rapid', 'daily'] as const;
@@ -148,6 +149,7 @@ export default function PlayerProfile() {
                 const played = r && r.games_played > 0;
                 return (
                   <div key={tcId} className="p-4 text-center">
+                    <TimeClassIcon timeClass={tcId} className="mx-auto mb-1" iconClassName="h-4 w-4" />
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-chesscom-400">
                       {t(`players.tc.${tcId}`, { defaultValue: tcId })}
                     </div>
@@ -183,10 +185,19 @@ export default function PlayerProfile() {
                         <div className="truncate text-sm font-medium text-chesscom-900 dark:text-chesscom-100">
                           {t('players.vs', { defaultValue: 'vs' })} {oppName || t('players.unknownOpp', { defaultValue: '—' })}
                         </div>
-                        <div className="text-xs text-chesscom-500">
+                        <div className="flex items-center gap-0.5 text-xs text-chesscom-500">
                           <span>{new Date(g.end_time).toLocaleDateString()}</span>
                           <span className="mx-1.5 text-chesscom-400">·</span>
-                          <span>{fmtTimeControl(g.time_control, t)}</span>
+                          {g.time_class ? (
+                            <TimeClassIcon
+                              timeClass={g.time_class}
+                              label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
+                              orientation="inline"
+                              iconClassName="h-3 w-3"
+                            />
+                          ) : (
+                            <span>{fmtTimeControl(g.time_control, t)}</span>
+                          )}
                           {g.opening_name && (
                             <span className="hidden sm:inline">
                               <span className="mx-1.5 text-chesscom-400">·</span>

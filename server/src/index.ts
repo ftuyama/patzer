@@ -32,6 +32,7 @@ import planRoutes from './routes/plan.js';
 import achievementsRoutes from './routes/achievements.js';
 import { startChessComSync } from './autoImport.js';
 import learnRoutes from './routes/learn.js';
+import playRoutes from './routes/play.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
 import { prepareSsoOnlyFirstRun, warnIfNoPublicBaseUrl } from './auth/oidc.js';
@@ -121,6 +122,7 @@ app.route('/api/openings', theoryRoutes);
 app.route('/api/plan', planRoutes);
 app.route('/api/achievements', achievementsRoutes);
 app.route('/api/learn', learnRoutes);
+app.route('/api/play', playRoutes);
 
 // In production, serve the built web app
 import { existsSync, readFileSync } from 'node:fs';

@@ -9,6 +9,9 @@ import {
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
+import { hasAnyRating, RatingStrip, useMyRatings, type ExternalRatings, type RatingsMap } from '../components/UserRatings';
+import GameResultIcon from '../components/GameResultIcon';
+import TimeClassIcon from '../components/TimeClassIcon';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { goalText } from '../lib/goalText';
 import type { GameRow } from '../types';
@@ -75,6 +78,7 @@ export default function Home() {
     queryKey: ['achievements-home'],
     queryFn: () => api.get<{ achievements: Achievement[] }>('/api/achievements'),
   });
+  const { data: ratingsData } = useMyRatings();
 
   const games = gamesData?.games ?? [];
 
@@ -84,6 +88,8 @@ export default function Home() {
         displayName={user?.profile.display_name ?? ''}
         avatar={user?.profile.avatar_emoji ?? '♟'}
         stats={stats ?? null}
+        ratings={ratingsData?.ratings ?? null}
+        external={ratingsData?.external ?? null}
         tagline={t('app.tagline')}
       />
 
@@ -99,8 +105,9 @@ export default function Home() {
 
 /* ───────────────────────────────  HERO  ────────────────────────────────── */
 
-function Hero({ displayName, avatar, stats, tagline }: {
-  displayName: string; avatar: string; stats: Stats | null; tagline: string;
+function Hero({ displayName, avatar, stats, ratings, external, tagline }: {
+  displayName: string; avatar: string; stats: Stats | null;
+  ratings: RatingsMap | null; external: ExternalRatings | null; tagline: string;
 }) {
   const { t } = useTranslation();
   const hour = new Date().getHours();
@@ -161,6 +168,12 @@ function Hero({ displayName, avatar, stats, tagline }: {
             </div>
           ) : (
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/75">{tagline}</p>
+          )}
+
+          {hasAnyRating(ratings, external) && (
+            <div className="mt-4 border-t border-white/10 pt-3">
+              <RatingStrip ratings={ratings} external={external} tone="dark" />
+            </div>
           )}
         </div>
 
@@ -442,7 +455,11 @@ function RecentGames({ games }: { games: GameRow[] }) {
               to={`/review/${g.id}`}
               className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40 sm:px-4 sm:py-3"
             >
-              <ResultGlyph r={g.result} />
+              <TimeClassIcon
+                timeClass={g.time_class}
+                label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
+              />
+              <GameResultIcon result={g.result} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">
                   {g.user_color === 'white' ? (
@@ -459,13 +476,17 @@ function RecentGames({ games }: { games: GameRow[] }) {
                     </>
                   )}
                 </div>
-                <div className="text-xs text-chesscom-500">
+                <div className="flex items-center gap-1.5 text-xs text-chesscom-500">
                   <span>{new Date(g.end_time).toLocaleDateString()}</span>
-                  <span className="mx-1.5 text-chesscom-400">·</span>
-                  <span>{fmtTimeControl(g.time_control, t)}</span>
+                  {!g.time_class && (
+                    <>
+                      <span className="text-chesscom-400">·</span>
+                      <span>{fmtTimeControl(g.time_control, t)}</span>
+                    </>
+                  )}
                   {g.opening_name && (
-                    <span className="hidden sm:inline">
-                      <span className="mx-1.5 text-chesscom-400">·</span>
+                    <span className="hidden min-w-0 items-center gap-1.5 sm:inline-flex">
+                      <span className="text-chesscom-400">·</span>
                       <span className="truncate">{g.opening_name}</span>
                     </span>
                   )}
@@ -483,8 +504,8 @@ function RecentGames({ games }: { games: GameRow[] }) {
                     </span>
                   </div>
                 ) : (
-                  <span className="text-[11px] uppercase tracking-wider text-chesscom-400">
-                    {t('home.unreviewed', { defaultValue: 'unreviewed' })}
+                  <span className="badge bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
+                    <BookOpen className="h-3 w-3" /> {t('home.unreviewed', { defaultValue: 'unreviewed' })}
                   </span>
                 )}
               </div>
@@ -531,28 +552,6 @@ function Pill({ Icon, tone }: { Icon: React.ElementType; tone: 'gold' | 'board' 
     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${cls}`}>
       <Icon className="h-4 w-4" />
     </div>
-  );
-}
-
-function ResultGlyph({ r }: { r: string }) {
-  if (r === 'win') {
-    return (
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-xs font-bold text-green-500">
-        W
-      </span>
-    );
-  }
-  if (r === 'loss') {
-    return (
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-bad/15 text-xs font-bold text-bad">
-        L
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-chesscom-100 text-xs font-bold text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
-      D
-    </span>
   );
 }
 
