@@ -475,7 +475,16 @@
       "emptyDesc": "Ou você segue as linhas principais, ou ainda faltam partidas analisadas.",
       "source_lichess": "Conferido no Lichess Opening Explorer",
       "source_local": "Conferido no livro de aberturas embutido",
-      "source_unavailable": "Explorer indisponível — mostrando resultados locais"
+      "source_unavailable": "Explorer indisponível — mostrando resultados locais",
+      "window": "Partidas",
+      "gamesHeader": "Partidas",
+      "lossHeader": "Perda de avaliação",
+      "line": "Abertura",
+      "scanning": "Analisando…",
+      "scanHint": "Vamos analisar suas partidas para mostrar onde você sai do livro. Isso pode levar alguns segundos.",
+      "unavailable": "Lichess Explorer indisponível",
+      "unavailableDesc": "Não foi possível acessar o explorador de aberturas. Suas partidas estão seguras — tente novamente em um minuto.",
+      "scanned": "{{count}} partidas analisadas"
     }
   },
   "settings": {
