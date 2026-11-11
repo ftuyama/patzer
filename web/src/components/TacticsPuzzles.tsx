@@ -10,10 +10,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Eye, Flame, Lightbulb, RotateCcw, Trophy, TrendingDown, TrendingUp, X, Zap } from 'lucide-react';
+import { Chess } from 'chess.js';
 import ChessBoard from './ChessBoard';
+import EvalBar from './EvalBar';
+import WrongMoveVerdict from './WrongMoveVerdict';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
-import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
+import { usePositionEval } from '../lib/usePositionEval';
+import { playSound, soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
+import type { TriedMoveEval } from '../lib/moveVerdict';
 import { isRightMove, playerOf, positionAt, sanAt, type TacticsPuzzle } from '../lib/tactics';
 import { localDay } from '../lib/openingTrainer';
 
@@ -27,6 +32,8 @@ interface Stats {
   total: number;
 }
 interface Attempt { rated: boolean; rating_before: number; rating_after: number; streak?: number }
+/** POST /api/tactics/eval — what a wrong try was worth. */
+interface TryReviewResponse { ok: boolean; evaluation?: TriedMoveEval }
 interface Daily { day: string; puzzle: TacticsPuzzle | null; done: { solved: boolean } | null; streak: number }
 
 const THEMES = ['mate', 'fork', 'pin', 'discovered', 'sacrifice', 'hanging', 'defence', 'endgame'] as const;
@@ -140,8 +147,14 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
   const [hint, setHint] = useState<'none' | 'piece' | 'move'>('none');
   const [result, setResult] = useState<Attempt | null>(null);
   const [boardKey, setBoardKey] = useState(0);
+  // The wrong try the card talks about: the move, and the engine's score for it.
+  const [wrongSan, setWrongSan] = useState<string | null>(null);
+  const [wrongEval, setWrongEval] = useState<TriedMoveEval | null>(null);
+  const [evalLoading, setEvalLoading] = useState(false);
 
   const pos = useMemo(() => positionAt(puzzle, n), [puzzle, n]);
+  // The bar scores the position the board shows, from White's side.
+  const evalWhite = usePositionEval(pos.fen);
   const done = n >= puzzle.moves.length;
   const yourTurn = !done && n % 2 === 1 && (status === 'play' || status === 'wrong');
 
@@ -185,6 +198,8 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
     if (isRightMove(puzzle, n, uci)) {
       soundForMove(inferMoveFlagsFromSan(sanAt(puzzle, n)));
       setHint('none');
+      setWrongSan(null);
+      setWrongEval(null);
       setStatus('play');
       if (n + 1 >= puzzle.moves.length) {
         setN(puzzle.moves.length);
@@ -197,7 +212,24 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
     }
     setBoardKey((k) => k + 1);
     setStatus('wrong');
+    playSound('error');
     lose();
+
+    // How good was that? (The board went back, so the card has to say it.)
+    const probe = new Chess(pos.fen);
+    let san: string | null = null;
+    try {
+      san = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
+    } catch { /* not a legal move after all */ }
+    setWrongSan(san);
+    setWrongEval(null);
+    setEvalLoading(san !== null);
+    if (san !== null) {
+      api.post<TryReviewResponse>('/api/tactics/eval', { fen: pos.fen, uci, best: puzzle.moves[n]! })
+        .then((r) => setWrongEval(r.evaluation ?? null))
+        .catch(() => { /* no engine: the card just says it was wrong */ })
+        .finally(() => setEvalLoading(false));
+    }
   }
 
   function showHint() {
@@ -225,16 +257,21 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       <div className={`mx-auto w-full lg:max-w-[640px] lg:flex-1 board-theme-${user?.profile.board_theme ?? 'green'}`}>
-        <ChessBoard
-          fen={pos.fen}
-          orientation={player}
-          turnColor={pos.turn}
-          movable={yourTurn}
-          onMove={onMove}
-          lastMove={pos.lastMove as never}
-          arrows={arrows as never}
-          resetKey={boardKey}
-        />
+        <div className="flex items-stretch gap-2">
+          <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={player} />
+          <div className="min-w-0 flex-1">
+            <ChessBoard
+              fen={pos.fen}
+              orientation={player}
+              turnColor={pos.turn}
+              movable={yourTurn}
+              onMove={onMove}
+              lastMove={pos.lastMove as never}
+              arrows={arrows as never}
+              resetKey={boardKey}
+            />
+          </div>
+        </div>
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">
@@ -264,8 +301,12 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
             </div>
           )}
           {status === 'wrong' && (
-            <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
-              <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> <span>{t('train.puzzles.wrong')}</span>
+            <div className="space-y-1.5">
+              <div className="flex items-start gap-2 text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> <span>{t('train.wrongTitle')}</span>
+              </div>
+              <WrongMoveVerdict san={wrongSan} evaluation={wrongEval} side={player} loading={evalLoading} />
+              <div className="text-xs text-chesscom-500">{t('train.wrongAgain')}</div>
             </div>
           )}
           {finished && status === 'solved' && (

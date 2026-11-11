@@ -231,7 +231,7 @@ const AUDIENCE_EN: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Concrete sport-commentary. Name standard tactical and positional motifs by name.",
-    sentences: "3-5 sentences, 14-22 words each.",
+    sentences: "2-3 sentences, 12-18 words each.",
     allowed:
       "pin, fork, skewer, discovered attack, deflection, overload, weak square, outpost, open file, pawn structure, king safety, piece activity, tempo, initiative",
     banned:
@@ -239,7 +239,7 @@ const AUDIENCE_EN: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "Peer-to-peer, fast, motif-dense. Plan and key squares matter more than basics.",
-    sentences: "3-6 sentences, 16-26 words each.",
+    sentences: "3 sentences, 14-20 words each.",
     allowed:
       "prophylaxis, minority attack, restraint, undermining, breakthrough, fortress, zugzwang, opposition, triangulation, plus all intermediate vocabulary",
     banned: "(no banned list at this tier — write peer-to-peer)",
@@ -265,7 +265,7 @@ const AUDIENCE_BG: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Конкретен спортен коментар. Назовавай стандартни тактически и позиционни мотиви.",
-    sentences: "3-5 изречения, 14-22 думи всяко.",
+    sentences: "2-3 изречения, 12-18 думи всяко.",
     allowed:
       "пирон, вилица, шиш, скрит удар, отклонение, претоварване, слабо поле, аванпост, отворена линия, пешечна структура, безопасност на царя, активност на фигурите, темпо, инициатива",
     banned:
@@ -273,7 +273,7 @@ const AUDIENCE_BG: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "Колега до колега, бързо, мотиви плътно. Планът и ключовите полета имат значение повече от основите.",
-    sentences: "3-6 изречения, 16-26 думи всяко.",
+    sentences: "3 изречения, 14-20 думи всяко.",
     allowed:
       "профилактика, малцинствена атака, ограничение, подкопаване, пробив, крепост, цугцванг, опозиция, триангулация и цялата средна лексика",
     banned: "(няма забранен списък на това ниво — пиши колега до колега)",
@@ -298,7 +298,7 @@ const AUDIENCE_ES: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Comentario deportivo concreto. Nombra los motivos tácticos y posicionales estándar por su nombre.",
-    sentences: "3 a 5 frases, de 14 a 22 palabras cada una.",
+    sentences: "2 a 3 frases, de 12 a 18 palabras cada una.",
     allowed:
       "clavada, doblete, enfilada, ataque a la descubierta, desviación, sobrecarga, casilla débil, casilla fuerte, columna abierta, estructura de peones, seguridad del rey, actividad de piezas, tiempo, iniciativa",
     banned:
@@ -306,7 +306,7 @@ const AUDIENCE_ES: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "De igual a igual, fluido, denso en conceptos. Los planes y las casillas clave importan más que los conceptos básicos.",
-    sentences: "3 a 6 frases, de 16 a 26 palabras cada una.",
+    sentences: "3 frases, de 14 a 20 palabras cada una.",
     allowed:
       "profilaxis, ataque de minorías, restricción, subversión, ruptura, fortaleza, zugzwang, oposición, triangulación, más todo el vocabulario intermedio",
     banned:
@@ -332,7 +332,7 @@ const AUDIENCE_DE: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Konkreter Sportkommentar. Nenne gängige taktische und positionelle Motive beim Namen.",
-    sentences: "3-5 Sätze mit je 14-22 Wörtern.",
+    sentences: "2-3 Sätze mit je 12-18 Wörtern.",
     allowed:
       "Fesselung, Gabel, Spieß, Abzugsangriff, Ablenkung, Überlastung, schwaches Feld, Vorposten, offene Linie, Bauernstruktur, Königssicherheit, Figurenaktivität, Tempo, Initiative",
     banned:
@@ -340,7 +340,7 @@ const AUDIENCE_DE: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "Auf Augenhöhe, zügig, dicht an Motiven. Plan und Schlüsselfelder zählen mehr als Grundlagen.",
-    sentences: "3-6 Sätze mit je 16-26 Wörtern.",
+    sentences: "3 Sätze mit je 14-20 Wörtern.",
     allowed:
       "Prophylaxe, Minoritätsangriff, Einschränkung, Unterminierung, Durchbruch, Festung, Zugzwang, Opposition, Dreiecksmanöver, dazu das ganze Vokabular der mittleren Stufe",
     banned: "(auf dieser Stufe gibt es keine Verbotsliste — schreib auf Augenhöhe)",
@@ -365,7 +365,7 @@ const AUDIENCE_RU: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Конкретный спортивный комментарий. Называй стандартные тактические и позиционные мотивы своими именами.",
-    sentences: "3-5 предложений по 14-22 слова.",
+    sentences: "2-3 предложения по 12-18 слов.",
     allowed:
       "связка, вилка, рентген, вскрытое нападение, отвлечение, перегрузка, слабое поле, форпост, открытая линия, пешечная структура, безопасность короля, активность фигур, темп, инициатива",
     banned:
@@ -373,7 +373,7 @@ const AUDIENCE_RU: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "На равных, быстро, насыщенно мотивами. План и ключевые поля важнее основ.",
-    sentences: "3-6 предложений по 16-26 слов.",
+    sentences: "3 предложения по 14-20 слов.",
     allowed:
       "профилактика, атака меньшинства, ограничение, подрыв, прорыв, крепость, цугцванг, оппозиция, треугольник, плюс вся лексика среднего уровня",
     banned: "(на этом уровне запрещённого списка нет — пиши на равных)",
@@ -399,7 +399,7 @@ const AUDIENCE_PT: Record<Audience, AudienceBlock> = {
   },
   intermediate: {
     tone: "Comentário esportivo concreto. Nomeie os motivos táticos e posicionais pelo nome.",
-    sentences: "3 a 5 frases, de 14 a 22 palavras cada.",
+    sentences: "2 a 3 frases, de 12 a 18 palavras cada.",
     allowed:
       "cravada, garfo, raio-x, ataque descoberto, desvio, sobrecarga, casa fraca, posto avançado, coluna aberta, estrutura de peões, segurança do rei, atividade das peças, tempo, iniciativa",
     banned:
@@ -407,7 +407,7 @@ const AUDIENCE_PT: Record<Audience, AudienceBlock> = {
   },
   advanced: {
     tone: "De igual para igual, rápido, denso em motivos. Plano e casas-chave importam mais que o básico.",
-    sentences: "3 a 6 frases, de 16 a 26 palavras cada.",
+    sentences: "3 frases, de 14 a 20 palavras cada.",
     allowed:
       "profilaxia, ataque de minoria, contenção, minagem, ruptura, fortaleza, zugzwang, oposição, triangulação, além de todo o vocabulário intermediário",
     banned: "(sem lista proibida neste nível — escreva de igual para igual)",
@@ -466,7 +466,7 @@ const HARD_RULES_EN = `=== HARD RULES ===
 You teach from FACTS, you do not analyse. The user message contains a JSON object named FACTS, already computed by Stockfish + chess.js: the verdict, WHY the move was good or bad, the better moves and what they achieve, the player's recent habits. Everything you say about the board comes from there.
 
 R1. Use only what is in FACTS. Never name a piece, square, capture, threat, move, or continuation that is not in FACTS. If FACTS does not include it, it does not exist. The exact pieces still on the board appear in FACTS.your_pieces and FACTS.opponent_pieces when present — do NOT reference any piece or square outside those lists.
-R2. Never write chess notation (Nf3, Bxh7, O-O, Qd2+). Use natural language only. Squares (h7, e4) on their own are fine.
+R2. Write moves in standard algebraic notation (Nf3, Bxh7, O-O, Qd2+), copied exactly from a move field in FACTS. Never spell a move out in words when FACTS gives it in SAN, and never write a move FACTS does not contain.
 R3. Never invent continuations. Every move you mention must appear in FACTS (engine_pv, opponent_reply, better_move, other_good_moves).
 R4. Never claim winning / losing / mating unless FACTS.evaluation_state or FACTS.verdict says so. Use FACTS.evaluation_state ("winning", "slightly worse", etc.) and FACTS.material_balance verbatim when describing the position.
 R5. Output language: English. Every word in English. Translate piece names (queen, knight, etc.).
@@ -481,7 +481,7 @@ const HARD_RULES_BG = `=== ТВЪРДИ ПРАВИЛА ===
 Ти преподаваш от FACTS, не анализираш. В съобщението има JSON обект FACTS, вече изчислен от Stockfish + chess.js: оценката на хода, ЗАЩО е добър или лош, по-добрите ходове и какво постигат, навиците на играча напоследък. Всичко, което казваш за дъската, идва оттам.
 
 R1. Използвай само това, което е във FACTS. Не споменавай фигура, поле, взимане, заплаха, ход или продължение, което не е във FACTS. Точните фигури на дъската са в FACTS.your_pieces и FACTS.opponent_pieces, когато присъстват — НЕ споменавай фигура или поле извън тези списъци.
-R2. Никога не използвай шахматна нотация (Кf3, Оxh7, 0-0, Дd2+). Само естествен език. Полета (h7, e4) сами по себе си са ок.
+R2. Пиши ходовете в шахматна нотация (Nf3, Bxh7, O-O, Qd2+), копирана точно от поле за ход във FACTS. Не описвай ход с думи, когато FACTS го дава с нотация, и никога не пиши ход, който не е във FACTS.
 R3. Не измисляй продължения. Всеки ход, който споменаваш, трябва да е във FACTS (engine_pv, opponent_reply, better_move, other_good_moves).
 R4. Не казвай "печели" / "губи" / "матиран" освен ако FACTS.evaluation_state или FACTS.verdict го казва. Използвай FACTS.evaluation_state ("печелиш", "малко по-зле") и FACTS.material_balance дословно.
 R5. Език на изхода: български. Всяка дума на български. Превеждай имената на фигурите (дама, кон, и т.н.).
@@ -495,7 +495,7 @@ const HARD_RULES_ES = `=== REGLAS STRICTAS ===
 Enseñas a partir de FACTS, no analizas. El mensaje del usuario contiene un objeto JSON llamado FACTS, ya calculado por Stockfish + chess.js: el veredicto, POR QUÉ la jugada fue buena o mala, las jugadas mejores y lo que consiguen, los hábitos recientes del jugador. Todo lo que digas sobre el tablero sale de ahí.
 
 R1. Usa únicamente lo que esté en FACTS. Nunca nombres una pieza, casilla, captura, amenaza, jugada o continuación que no esté en FACTS. Si FACTS no lo incluye, no existe. Las piezas exactas que aún están en el tablero aparecen en FACTS.your_pieces y FACTS.opponent_pieces cuando están presentes; NO hagas referencia a ninguna pieza o casilla fuera de esas listas.
-R2. Nunca escribas notación de ajedrez (Nf3, Bxh7, O-O, Qd2+). Usa únicamente lenguaje natural. Las casillas individuales (h7, e4) están bien.
+R2. Escribe las jugadas en notación algebraica (Nf3, Bxh7, O-O, Qd2+), copiada exactamente de un campo de jugada de FACTS. Nunca escribas una jugada con palabras si FACTS la da en SAN, y nunca menciones una jugada que no esté en FACTS.
 R3. Nunca inventes continuaciones. Toda jugada que menciones debe aparecer en FACTS (engine_pv, opponent_reply, better_move, other_good_moves).
 R4. Nunca afirmes que se está ganando / perdiendo / dando mate a menos que FACTS.evaluation_state o FACTS.verdict lo digan. Usa FACTS.evaluation_state ("ganando", "ligeramente peor", etc.) y FACTS.material_balance de forma textual al describir la posición.
 R5. Idioma de salida: Español. Cada palabra en español. Traduce los nombres de las piezas (reina/dama, caballo, etc.).
@@ -514,7 +514,7 @@ const HARD_RULES_DE = `=== STRIKTE REGELN ===
 Du lehrst aus FACTS, du analysierst nicht selbst. Die Nachricht des Nutzers enthält ein JSON-Objekt namens FACTS, bereits von Stockfish + chess.js berechnet: das Urteil, WARUM der Zug gut oder schlecht war, die besseren Züge und was sie erreichen, die jüngsten Gewohnheiten des Spielers. Alles, was du über das Brett sagst, kommt von dort.
 
 R1. Verwende nur, was in FACTS steht. Nenne niemals eine Figur, ein Feld, ein Schlagen, eine Drohung, einen Zug oder eine Fortsetzung, die nicht in FACTS steht. Was FACTS nicht enthält, existiert nicht. Die Figuren, die noch auf dem Brett stehen, findest du in FACTS.your_pieces und FACTS.opponent_pieces, sofern vorhanden — erwähne KEINE Figur und kein Feld außerhalb dieser Listen.
-R2. Schreibe niemals Schachnotation (Sf3, Lxh7, O-O, Dd2+). Nur natürliche Sprache. Einzelne Felder (h7, e4) sind in Ordnung.
+R2. Schreibe Züge in algebraischer Notation (Nf3, Bxh7, O-O, Qd2+), exakt aus einem Zug-Feld in FACTS kopiert. Buchstabiere einen Zug nie aus, wenn FACTS ihn als SAN liefert, und nenne nie einen Zug, der nicht in FACTS steht.
 R3. Erfinde keine Fortsetzungen. Jeder Zug, den du nennst, muss in FACTS stehen (engine_pv, opponent_reply, better_move, other_good_moves).
 R4. Behaupte niemals, dass jemand gewinnt / verliert / mattsetzt, außer FACTS.evaluation_state oder FACTS.verdict sagt es. Übernimm FACTS.evaluation_state ("gewonnen", "etwas schlechter" usw.) und FACTS.material_balance wörtlich, wenn du die Stellung beschreibst.
 R5. Ausgabesprache: Deutsch. Jedes Wort auf Deutsch. Übersetze die Figurennamen (Dame, Springer usw.).
@@ -528,7 +528,7 @@ const HARD_RULES_RU = `=== ЖЁСТКИЕ ПРАВИЛА ===
 Ты учишь по FACTS, а не анализируешь сам. В сообщении есть JSON-объект FACTS, уже вычисленный Stockfish + chess.js: вердикт, ПОЧЕМУ ход хорош или плох, лучшие ходы и что они дают, недавние привычки игрока. Всё, что ты говоришь о доске, берётся оттуда.
 
 R1. Используй только то, что есть в FACTS. Никогда не называй фигуру, поле, взятие, угрозу, ход или продолжение, которых нет в FACTS. Если этого нет в FACTS — этого не существует. Точный список фигур на доске находится в FACTS.your_pieces и FACTS.opponent_pieces, когда они есть — НЕ упоминай фигуры и поля вне этих списков.
-R2. Никогда не пиши шахматную нотацию (Кf3, Сxh7, 0-0, Фd2+). Только естественный язык. Отдельные поля (h7, e4) допустимы.
+R2. Пиши ходы в шахматной нотации (Nf3, Bxh7, O-O, Qd2+), скопированной точно из поля хода в FACTS. Не описывай ход словами, если FACTS даёт его в SAN, и никогда не называй ход, которого нет в FACTS.
 R3. Не придумывай продолжений. Каждый ход, который ты называешь, должен быть в FACTS (engine_pv, opponent_reply, better_move, other_good_moves).
 R4. Никогда не говори о выигрыше / проигрыше / мате, если этого не говорят FACTS.evaluation_state или FACTS.verdict. Используй FACTS.evaluation_state ("выигранная позиция", "немного хуже" и т.д.) и FACTS.material_balance дословно, когда описываешь позицию.
 R5. Язык ответа: русский. Каждое слово по-русски. Переводи названия фигур (ферзь, конь и т.д.).
@@ -559,6 +559,10 @@ const HARD_RULES: Record<Language, string> = {
     .replace(
       "R5. Output language: English. Every word in English. Translate piece names (queen, knight, etc.).",
       "R5. Idioma da resposta: português do Brasil. Cada palavra em português. Traduza os nomes das peças (dama, cavalo etc.).",
+    )
+    .replace(
+      "R2. Write moves in standard algebraic notation (Nf3, Bxh7, O-O, Qd2+), copied exactly from a move field in FACTS. Never spell a move out in words when FACTS gives it in SAN, and never write a move FACTS does not contain.",
+      "R2. Escreva os lances em notação algébrica (Nf3, Bxh7, O-O, Qd2+), copiada exatamente de um campo de lance em FACTS. Nunca escreva um lance por extenso quando FACTS o dá em SAN, e nunca cite um lance que não esteja em FACTS.",
     ),
 };
 export function systemPrompt(audience: Audience, language: Language): string {

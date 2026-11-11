@@ -11,7 +11,8 @@ import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { onlineUserIds } from '../ws/lobby.js';
 import { GLICKO_DEFAULTS, PROVISIONAL_RD_THRESHOLD, PROVISIONAL_GAMES } from '../chess/glicko.js';
-import type { TimeClass } from '../chess/timeClass.js';
+import { SCORING_VERSION } from '../chess/classifier.js';
+import { timeClassOrDerived, type TimeClass } from '../chess/timeClass.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -162,11 +163,21 @@ router.get('/:id', (c) => {
   for (const r of rRows) ratings[r.time_class] = shapeRating(r.time_class, r);
 
   // ── Recent games (public view) ───────────────────────────────────────────
+  // Same shape the Home list renders: both sides' accuracy, an `analyzed`
+  // flag and a derived time class. An analysis cached at an older
+  // scoring_version counts as not analyzed, exactly as /api/games does.
   const recent_games = db.prepare(`
-    SELECT id, white, black, result, user_color, time_control, time_class, opening_name, end_time, source
-    FROM games WHERE user_id = ? AND result IS NOT NULL
-    ORDER BY end_time DESC NULLS LAST, id DESC LIMIT 10
-  `).all(id);
+    SELECT g.id, g.white, g.black, g.result, g.user_color, g.time_control, g.time_class,
+           g.opening_name, g.end_time, g.source,
+           CASE WHEN a.game_id IS NOT NULL AND a.scoring_version >= ? THEN 1 ELSE 0 END AS analyzed,
+           CASE WHEN a.scoring_version >= ? THEN a.accuracy_white ELSE NULL END AS accuracy_white,
+           CASE WHEN a.scoring_version >= ? THEN a.accuracy_black ELSE NULL END AS accuracy_black
+    FROM games g LEFT JOIN analyses a ON a.game_id = g.id
+    WHERE g.user_id = ? AND g.result IS NOT NULL
+    ORDER BY g.end_time DESC NULLS LAST, g.id DESC LIMIT 10
+  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, id) as Array<{
+    time_control: string; time_class: TimeClass | null; [column: string]: unknown;
+  }>;
 
   // ── My head-to-head vs them (from my perspective) ────────────────────────
   let head_to_head: { total: number; wins: number; losses: number; draws: number } | null = null;
@@ -208,7 +219,10 @@ router.get('/:id', (c) => {
       streak: streakKind ? { kind: streakKind, count: streak } : null,
     },
     ratings,
-    recent_games,
+    recent_games: recent_games.map((row) => ({
+      ...row,
+      time_class: timeClassOrDerived(row.time_class, row.time_control),
+    })),
     head_to_head,
   });
 });

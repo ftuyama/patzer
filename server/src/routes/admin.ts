@@ -5,7 +5,7 @@ import { updateCheckEnabled, setUpdateCheckEnabled } from '../updates.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
 import { connectionHint } from '../coach/connectionHint.js';
-import { testConnection, testModel, llmUrl, llmStats, llmProvider, deepseekApiKey, type LlmProvider } from '../coach/llm.js';
+import { testConnection, testModel, llmUrl, llmStats, llmProvider, llmApiKey, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
 import {
@@ -20,7 +20,8 @@ import {
   type InviteRow,
 } from '../auth/invites.js';
 import { publicBaseUrl } from '../publicUrl.js';
-import type { Profile, Role } from '../types.js';
+import { coachExplain } from '../coach/explain.js';
+import type { Audience, Language, Profile, Role } from '../types.js';
 
 const router = new Hono();
 router.use('*', requireAdmin);
@@ -230,10 +231,14 @@ router.get('/system', async (c) => {
     vllm_model: getSetting('vllm_model'),
     deepseek_url: getSetting('deepseek_url') ?? '',
     deepseek_model: getSetting('deepseek_model') ?? '',
-    // The API key itself is never returned — only whether one is set (and
+    gemini_url: getSetting('gemini_url') ?? '',
+    gemini_model: getSetting('gemini_model') ?? '',
+    // The API keys themselves are never returned — only whether one is set (and
     // whether an env var is supplying it, in which case the UI field is read-only).
-    deepseek_key_set: !!deepseekApiKey(),
+    deepseek_key_set: !!llmApiKey('deepseek'),
     deepseek_env_override: !!process.env.DEEPSEEK_API_KEY,
+    gemini_key_set: !!llmApiKey('gemini'),
+    gemini_env_override: !!process.env.GEMINI_API_KEY,
     stockfish_path: getSetting('stockfish_path'),
     // Live runtime stats so admins can confirm which model the coach is
     // actually calling (the saved setting vs. what runtime resolved to may
@@ -266,16 +271,19 @@ router.get('/system', async (c) => {
 });
 
 const systemSchema = z.object({
-  llm_provider: z.enum(['ollama', 'vllm', 'deepseek']).optional(),
+  llm_provider: z.enum(['ollama', 'vllm', 'deepseek', 'gemini']).optional(),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
   vllm_url: z.string().url().or(z.literal('')).optional(),
   vllm_model: z.string().optional(),
   deepseek_url: z.string().url().or(z.literal('')).optional(),
   deepseek_model: z.string().optional(),
+  gemini_url: z.string().url().or(z.literal('')).optional(),
+  gemini_model: z.string().optional(),
   // Only written when a non-empty string is sent; empty/omitted leaves the
   // stored key untouched (so re-saving the form doesn't wipe it).
   deepseek_api_key: z.string().max(255).optional(),
+  gemini_api_key: z.string().max(255).optional(),
   stockfish_path: z.string().optional(),
   update_check_enabled: z.boolean().optional(),
   // Signup + email config
@@ -314,6 +322,9 @@ router.patch('/system', async (c) => {
   setStr('deepseek_url', d.deepseek_url);
   setStr('deepseek_model', d.deepseek_model);
   if (d.deepseek_api_key) setSetting('deepseek_api_key', d.deepseek_api_key);
+  setStr('gemini_url', d.gemini_url);
+  setStr('gemini_model', d.gemini_model);
+  if (d.gemini_api_key) setSetting('gemini_api_key', d.gemini_api_key);
   setStr('stockfish_path', d.stockfish_path);
 
   if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
@@ -358,7 +369,7 @@ router.post('/test/email', async (c) => {
 
 function bodyProvider(body: unknown): LlmProvider {
   const p = body && typeof body === 'object' && 'provider' in body ? (body as { provider?: unknown }).provider : undefined;
-  if (p === 'ollama' || p === 'vllm' || p === 'deepseek') return p;
+  if (p === 'ollama' || p === 'vllm' || p === 'deepseek' || p === 'gemini') return p;
   return llmProvider();
 }
 
@@ -391,6 +402,44 @@ router.post('/test/ollama-models', async (c) => {
     results.push({ model: m.name, ...r });
   }
   return c.json({ ok: true, results });
+});
+
+// The scholar's-mate blunder the coach has a regression test for (#37):
+// Black plays 3...Nf6?? and 4.Qxf7# follows. A canned position exercises the
+// whole chain — engine facts, prompt assembly, the model, the contradiction
+// guard — so an admin can check the coach without opening a game. No player
+// memory is read, since the move isn't theirs.
+const COACH_TEST = {
+  fen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3',
+  player: 'Black' as const,
+  played_san: 'Nf6',
+  best_san: 'g6',
+  classification: 'blunder' as const,
+  cp_loss: 9000,
+  user_perspective: false,
+};
+
+router.post('/test/coach', async (c) => {
+  const me = c.get('user');
+  const profile = db.prepare('SELECT language, audience FROM profiles WHERE user_id = ?')
+    .get(me.id) as { language: Language; audience: Audience } | undefined;
+  const lang: Language = profile?.language ?? 'en';
+  const aud: Audience = profile?.audience ?? 'intermediate';
+  const started = Date.now();
+  try {
+    const answer = await coachExplain({ ...COACH_TEST }, me.id, lang, aud);
+    return c.json({
+      ok: true,
+      ms: Date.now() - started,
+      source: answer.source,
+      model: llmStats().lastModelUsed,
+      language: lang,
+      text: answer.text,
+    });
+  } catch (err) {
+    // `llm_http_404: <provider's own message>`, `llm_not_configured`, timeouts.
+    return c.json({ ok: false, ms: Date.now() - started, error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
 router.post('/test/stockfish', async (c) => {

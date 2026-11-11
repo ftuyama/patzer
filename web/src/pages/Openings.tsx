@@ -12,10 +12,12 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Loader2, Search, Target } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import EvalBar from '../components/EvalBar';
 import BetaBadge from '../components/BetaBadge';
 import OpeningTrainer, { TRAINER_QUERY_KEY, fetchTrainer } from '../components/OpeningTrainer';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
+import { usePositionEval } from '../lib/usePositionEval';
 import type { TheoryGapPayload } from '../types';
 
 interface TreeNode {
@@ -123,6 +125,8 @@ function RepertoireTree({ data, onPractice, onTrainer }: {
     if (!root) return null;
     return findNodeByPath(root, selectedPath);
   }, [root, selectedPath]);
+  const boardFen = selectedNode?.fen || STARTING_FEN;
+  const evalWhite = usePositionEval(boardFen);
 
   function toggle(path: string) {
     setExpanded((prev) => {
@@ -196,11 +200,16 @@ function RepertoireTree({ data, onPractice, onTrainer }: {
       {/* Detail pane */}
       <aside className="space-y-3">
         <div className={`board-theme-${user?.profile.board_theme ?? 'green'}`}>
-          <ChessBoard
-            fen={selectedNode?.fen || STARTING_FEN}
-            movable={false}
-            size={undefined}
-          />
+          <div className="flex items-stretch gap-2">
+            <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} />
+            <div className="min-w-0 flex-1">
+              <ChessBoard
+                fen={boardFen}
+                movable={false}
+                size={undefined}
+              />
+            </div>
+          </div>
         </div>
 
         <DetailCard

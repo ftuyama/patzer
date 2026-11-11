@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, FileText, X, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, FileText, X, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2, LayoutDashboard } from 'lucide-react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import EvalBar from '../components/EvalBar';
@@ -57,7 +57,10 @@ function fmtCp(cp: number | null | undefined): string {
   return `${sign}${(Math.abs(cp) / 100).toFixed(2)}`;
 }
 
-type Tab = 'moves' | 'report' | 'moments';
+// The right rail used to be one long scroll (opening, eval graph, report card,
+// moves, AI report, key moments, engine lines, threats, explorer, meta, export).
+// Each of those now lives in one of four tabs, so only one slice is on screen.
+type Tab = 'overview' | 'moves' | 'report' | 'moments';
 
 export default function GameAnalyzer() {
   const { id } = useParams<{ id: string }>();
@@ -77,7 +80,7 @@ export default function GameAnalyzer() {
   const [requestedDepth, setRequestedDepth] = useState(16);
   const [showDepthControl, setShowDepthControl] = useState(false);
   const [reviewProse, setReviewProse] = useState<GameReviewProse | null>(null);
-  const [tab, setTab] = useState<Tab>('moves');
+  const [tab, setTab] = useState<Tab>('overview');
   // A category picked in the Game Report table (e.g. Black's misses): those
   // moves stand out in the move list and the arrows below step through them.
   const [pick, setPick] = useState<MovePick | null>(null);
@@ -414,10 +417,13 @@ export default function GameAnalyzer() {
 
         </div>
 
-        {/* RIGHT RAIL — scrolls inside itself on lg+ so the page stays fixed.
-            `min-h-0` lets the flex child shrink below content height; without it
-            flex would force the page to grow. */}
-        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        {/* RIGHT RAIL — four tabs in a single card: Overview (eval graph, report
+            card and the per-position tools), Moves, AI report, Key moments. The
+            meta toolbar stays pinned below the card so bookmark/flip/share/notes
+            are reachable from every tab. On lg+ the card fills the rail and its
+            panel scrolls inside itself (page-level scroll stays eliminated); on
+            mobile it flows with the page like any other card. */}
+        <div className="flex min-w-0 flex-col gap-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-hidden">
           {!analysis && (
             <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
               <Sparkles className="h-4 w-4" />
@@ -427,82 +433,112 @@ export default function GameAnalyzer() {
             </button>
           )}
 
+          {showDepthControl && analysis && (
+            <div className="card p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="label">{t('review.depth')}</label>
+                <span className="font-mono text-sm font-semibold tabular-nums">{requestedDepth}</span>
+              </div>
+              <input
+                type="range" min={8} max={22} step={1}
+                value={requestedDepth}
+                onChange={(e) => setRequestedDepth(Number(e.target.value))}
+                className="w-full"
+              />
+              <div className="mt-1 flex justify-between text-[11px] text-chesscom-400">
+                <span>{t('review.depthFast')}</span>
+                <span>{t('review.depthQuality')}</span>
+                <span>{t('review.depthDeep')}</span>
+              </div>
+              <button
+                onClick={() => analyze(requestedDepth, true)}
+                disabled={analyzing}
+                className="btn-primary mt-3 w-full text-sm"
+              >
+                <Sparkles className="h-4 w-4" />
+                {analyzing ? t('review.analyzing', { progress: '…' }) : `${t('review.reanalyze')} (depth ${requestedDepth})`}
+              </button>
+            </div>
+          )}
+
           {analysis && (
             <>
-              <OpeningBanner eco={eco} name={openingName} prose={reviewProse?.opening?.prose} />
-
-              {/* Eval graph lives here (moved from below the board) so the
-                  board column stays short enough to fit the fold. */}
-              <div className="card p-2">
-                <EvalGraph
-                  evals={analysis.moves.map((m) => ({ ply: m.ply, cp: m.eval_after_cp }))}
-                  current={ply}
-                  onClick={(p) => setPly(p)}
-                  markers={analysis.moves
-                    .filter((m) => ['blunder','mistake','inaccuracy','miss','brilliant','great'].includes(m.classification))
-                    .map((m) => ({ ply: m.ply, classification: m.classification }))}
-                />
-              </div>
-
-              <GameReportCard
-                whiteName={data.game.white}
-                blackName={data.game.black}
-                accuracyW={analysis.accuracy_white}
-                accuracyB={analysis.accuracy_black}
-                eloW={analysis.estimated_elo_white}
-                eloB={analysis.estimated_elo_black}
-                perfW={analysis.performance_white}
-                perfB={analysis.performance_black}
-                moves={analysis.moves}
-                phaseSplit={analysis.phase_split}
-                userColor={userColor}
-                onPick={onPick}
-                picked={pick}
-              />
-
-              {showDepthControl && (
-                <div className="card p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="label">{t('review.depth')}</label>
-                    <span className="font-mono text-sm font-semibold tabular-nums">{requestedDepth}</span>
-                  </div>
-                  <input
-                    type="range" min={8} max={22} step={1}
-                    value={requestedDepth}
-                    onChange={(e) => setRequestedDepth(Number(e.target.value))}
-                    className="w-full"
-                  />
-                  <div className="mt-1 flex justify-between text-[11px] text-chesscom-400">
-                    <span>{t('review.depthFast')}</span>
-                    <span>{t('review.depthQuality')}</span>
-                    <span>{t('review.depthDeep')}</span>
-                  </div>
-                  <button
-                    onClick={() => analyze(requestedDepth, true)}
-                    disabled={analyzing}
-                    className="btn-primary mt-3 w-full text-sm"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {analyzing ? t('review.analyzing', { progress: '…' }) : `${t('review.reanalyze')} (depth ${requestedDepth})`}
-                  </button>
-                </div>
-              )}
-
-              {/* Tabbed workspace — Moves / AI report / Key moments / Engine / Coach.
-                  This is the ONLY tabbed surface on the page: engine lines moved in
-                  here (previously a peer card) so there is one mental model, not three. */}
-              <div ref={tabsRef} className="card overflow-hidden scroll-mt-2">
-                <div className="flex items-center gap-0.5 border-b border-chesscom-100 bg-chesscom-50/40 px-1 dark:border-chesscom-700 dark:bg-chesscom-900/40 sm:gap-1 sm:px-2">
+              <div className="card flex flex-col overflow-hidden lg:min-h-0 lg:flex-1">
+                {/* The tab strip is the only fixed part; everything else lives in
+                    the scrollable panel, so switching tabs never moves the page. */}
+                <div
+                  ref={tabsRef}
+                  role="tablist"
+                  aria-label={t('review.title')}
+                  className="flex scroll-mt-2 items-center gap-0.5 overflow-x-auto border-b border-chesscom-100 bg-chesscom-50/40 px-1 dark:border-chesscom-700 dark:bg-chesscom-900/40 sm:gap-1 sm:px-2"
+                >
+                  <TabBtn active={tab === 'overview'} onClick={() => setTab('overview')} icon={LayoutDashboard} label={t('review.overview', { defaultValue: 'Overview' })} />
                   <TabBtn active={tab === 'moves'} onClick={() => setTab('moves')} icon={ListOrdered} label={t('review.moves', { defaultValue: 'Moves' })} />
-                  <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'AI report' })} />
+                  <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.report', { defaultValue: 'Report' })} />
                   <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key moments' })} />
-                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ml-auto p-1.5" title={t('review.depth')}>
+                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ml-auto shrink-0 p-1.5" title={t('review.depth')}>
                     <SettingsIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="p-3">
+                <div className="min-h-0 space-y-3 p-3 lg:flex-1 lg:overflow-y-auto">
+                  {tab === 'overview' && (
+                    <>
+                      <OpeningBanner eco={eco} name={openingName} prose={reviewProse?.opening?.prose} />
+
+                      {/* Eval graph lives here (moved from below the board) so the
+                          board column stays short enough to fit the fold. */}
+                      <div className="card p-2">
+                        <EvalGraph
+                          evals={analysis.moves.map((m) => ({ ply: m.ply, cp: m.eval_after_cp }))}
+                          current={ply}
+                          onClick={(p) => setPly(p)}
+                          markers={analysis.moves
+                            .filter((m) => ['blunder','mistake','inaccuracy','miss','brilliant','great'].includes(m.classification))
+                            .map((m) => ({ ply: m.ply, classification: m.classification }))}
+                        />
+                      </div>
+
+                      <GameReportCard
+                        whiteName={data.game.white}
+                        blackName={data.game.black}
+                        accuracyW={analysis.accuracy_white}
+                        accuracyB={analysis.accuracy_black}
+                        eloW={analysis.estimated_elo_white}
+                        eloB={analysis.estimated_elo_black}
+                        perfW={analysis.performance_white}
+                        perfB={analysis.performance_black}
+                        moves={analysis.moves}
+                        phaseSplit={analysis.phase_split}
+                        userColor={userColor}
+                        onPick={onPick}
+                        picked={pick}
+                      />
+
+                      <LinesPanel
+                        enabled={linesEnabled}
+                        onToggle={() => setLinesEnabled((s) => !s)}
+                        lines={lines}
+                        loading={linesLoading}
+                        error={linesError}
+                        playedUci={positions[ply + 1] ? (positions[ply + 1]!.from ?? '') + (positions[ply + 1]!.to ?? '') : null}
+                        onAdvance={() => setPly((p) => Math.min(positions.length - 1, p + 1))}
+                        onHover={setLinesHover}
+                      />
+
+                      <ThreatPanel fen={currentFen} currentCpWhite={currentEvalCp} />
+
+                      <ExplorerPanel fen={currentFen} onPreview={setExplorerHover} />
+
+                      <ExportRow
+                        pgn={data.game.pgn}
+                        fen={pos?.fen ?? ''}
+                        fileBase={`${(data.game.white || 'white').replace(/[^A-Za-z0-9]+/g, '_')}_vs_${(data.game.black || 'black').replace(/[^A-Za-z0-9]+/g, '_')}`}
+                      />
+                    </>
+                  )}
+
                   {tab === 'moves' && pick && (
-                    <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-gold-500/40 bg-gold-50/60 px-2 py-1.5 text-xs dark:bg-gold-700/10">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-gold-500/40 bg-gold-50/60 px-2 py-1.5 text-xs dark:bg-gold-700/10">
                       <span className="min-w-0 flex-1 truncate">
                         <span className="font-semibold">{t(`classification.${pick.classification}`)}</span>
                         <span className="text-chesscom-500"> · {pick.side === 'both' ? t('review.pickBoth', { defaultValue: 'both sides' }) : t(`review.${pick.side}`)}</span>
@@ -532,6 +568,7 @@ export default function GameAnalyzer() {
                       maxHeight={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 460}
                     />
                   )}
+
                   {tab === 'report' && (
                     <GameReportPanel
                       gameId={gameId}
@@ -541,6 +578,7 @@ export default function GameAnalyzer() {
                       userColor={data.game.user_color}
                     />
                   )}
+
                   {tab === 'moments' && (
                     <KeyMomentsList
                       items={analysis.key_moments.map((m) => {
@@ -565,21 +603,6 @@ export default function GameAnalyzer() {
                 </div>
               </div>
 
-              <LinesPanel
-                enabled={linesEnabled}
-                onToggle={() => setLinesEnabled((s) => !s)}
-                lines={lines}
-                loading={linesLoading}
-                error={linesError}
-                playedUci={positions[ply + 1] ? (positions[ply + 1]!.from ?? '') + (positions[ply + 1]!.to ?? '') : null}
-                onAdvance={() => setPly((p) => Math.min(positions.length - 1, p + 1))}
-                onHover={setLinesHover}
-              />
-
-              <ThreatPanel fen={currentFen} currentCpWhite={currentEvalCp} />
-
-              <ExplorerPanel fen={currentFen} onPreview={setExplorerHover} />
-
               <GameMetaToolbar
                 gameId={gameId}
                 bookmarked={!!data.game.bookmarked}
@@ -593,12 +616,6 @@ export default function GameAnalyzer() {
                     setTimeout(() => setLinkCopied(false), 1400);
                   }).catch(() => undefined);
                 }}
-              />
-
-              <ExportRow
-                pgn={data.game.pgn}
-                fen={pos?.fen ?? ''}
-                fileBase={`${(data.game.white || 'white').replace(/[^A-Za-z0-9]+/g, '_')}_vs_${(data.game.black || 'black').replace(/[^A-Za-z0-9]+/g, '_')}`}
               />
             </>
           )}
@@ -700,12 +717,17 @@ function PlayerHeader({ name, accuracy, elo, side, fen, highlighted }: { name: s
 function TabBtn({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: React.ElementType; label: string }) {
   return (
     <button
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`relative flex items-center gap-1 px-2 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 ${active ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500 hover:text-chesscom-900 dark:hover:text-chesscom-100'}`}
+      className={`relative flex shrink-0 items-center gap-1 whitespace-nowrap px-2 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 lg:px-1.5 ${active ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500 hover:text-chesscom-900 dark:hover:text-chesscom-100'}`}
     >
-      <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+      {/* The rail is only 380px wide on lg+, so the four labels share it alone;
+          below that the rail is full width and icons keep the strip readable
+          when the labels are hidden on phones. */}
+      <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5 lg:hidden" />
       <span className="hidden sm:inline">{label}</span>
       {active && <span className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-gold-500 sm:inset-x-2" />}
     </button>

@@ -10,9 +10,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
 import { hasAnyRating, RatingStrip, useMyRatings, type ExternalRatings, type RatingsMap } from '../components/UserRatings';
-import GameResultIcon from '../components/GameResultIcon';
-import TimeClassIcon from '../components/TimeClassIcon';
-import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
+import GameHistoryList from '../components/GameHistoryList';
 import { goalText } from '../lib/goalText';
 import type { GameRow } from '../types';
 import { LEARN_QUERY_KEY } from '../components/learn/LessonPlayer';
@@ -448,71 +446,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
           {t('home.viewAll', { defaultValue: 'View all →' })}
         </Link>
       </div>
-      <ul className="divide-y divide-chesscom-100 overflow-hidden rounded-xl border border-chesscom-200 bg-white shadow-soft dark:divide-chesscom-800 dark:border-chesscom-700 dark:bg-chesscom-800">
-        {games.map((g) => (
-          <li key={g.id}>
-            <Link
-              to={`/review/${g.id}`}
-              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40 sm:px-4 sm:py-3"
-            >
-              <TimeClassIcon
-                timeClass={g.time_class}
-                label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
-              />
-              <GameResultIcon result={g.result} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">
-                  {g.user_color === 'white' ? (
-                    <>
-                      <span className="text-chesscom-900 dark:text-chesscom-100">{g.white}</span>
-                      <span className="mx-1.5 text-chesscom-400">{t('players.vs')}</span>
-                      <span className="text-chesscom-500">{g.black}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-chesscom-500">{g.white}</span>
-                      <span className="mx-1.5 text-chesscom-400">{t('players.vs')}</span>
-                      <span className="text-chesscom-900 dark:text-chesscom-100">{g.black}</span>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-chesscom-500">
-                  <span>{new Date(g.end_time).toLocaleDateString()}</span>
-                  {!g.time_class && (
-                    <>
-                      <span className="text-chesscom-400">·</span>
-                      <span>{fmtTimeControl(g.time_control, t)}</span>
-                    </>
-                  )}
-                  {g.opening_name && (
-                    <span className="hidden min-w-0 items-center gap-1.5 sm:inline-flex">
-                      <span className="text-chesscom-400">·</span>
-                      <span className="truncate">{g.opening_name}</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                {g.analyzed ? (
-                  <div className="font-mono text-xs tabular-nums">
-                    <span className={g.user_color === 'white' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500'}>
-                      {fmtAccuracy(g.accuracy_white)}
-                    </span>
-                    <span className="mx-1 text-chesscom-400">/</span>
-                    <span className={g.user_color === 'black' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500'}>
-                      {fmtAccuracy(g.accuracy_black)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="badge bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
-                    <BookOpen className="h-3 w-3" /> {t('home.unreviewed', { defaultValue: 'unreviewed' })}
-                  </span>
-                )}
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <GameHistoryList games={games} hrefFor={(g) => `/review/${g.id}`} />
     </motion.section>
   );
 }

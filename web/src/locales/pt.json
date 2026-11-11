@@ -35,7 +35,8 @@
     "close": "Fechar",
     "viewChangelog": "Ver histórico de versões",
     "beta": "Beta",
-    "betaHint": "Ainda em refinamento — feedback é bem-vindo."
+    "betaHint": "Ainda em refinamento — feedback é bem-vindo.",
+    "unreviewed": "não revisada"
   },
   "setup": {
     "title": "Bem-vindo ao Patzer",
@@ -253,6 +254,8 @@
     "generating": "Gerando…",
     "runEngine": "Rodar o motor",
     "gameReport": "Relatório da partida",
+    "overview": "Visão geral",
+    "report": "Relatório",
     "keyMoments": "Momentos-chave",
     "coachIdleHint": "Clique em um lance para ver a explicação.",
     "source": {
@@ -598,6 +601,13 @@
     "noCoachCall": "— nenhuma chamada ao treinador ainda —",
     "coachCalls": "Chamadas ao treinador",
     "lastError": "Último erro",
+    "testCoach": "Testar o treinador",
+    "testCoachHint": "Roda o treinador em um erro de exemplo com as configurações salvas.",
+    "coachOk": "O treinador respondeu em {{ms}} ms com {{model}}",
+    "coachSource": {
+      "llm_retry": "A primeira resposta contradisse o veredito do motor, então foi pedida de novo.",
+      "fallback": "O modelo contradisse o motor duas vezes; a resposta acima foi montada a partir dos fatos do motor."
+    },
     "stockfishDesc": "Motor de xadrez nativo para análise e jogo contra bots.",
     "autoDetect": "(detecção automática)",
     "colUser": "Usuário",
@@ -611,6 +621,12 @@
     "deepseekKeyEnv": "Fornecida pela variável de ambiente DEEPSEEK_API_KEY — este campo é ignorado.",
     "deepseekKeySaved": "Uma chave está salva. Digite uma nova para substituí-la ou deixe em branco para mantê-la.",
     "deepseekKeyHint": "Salva nas configurações deste servidor. Salve antes de clicar em Testar.",
+    "geminiUrl": "URL do Gemini (opcional)",
+    "geminiModel": "Modelo Gemini",
+    "geminiKey": "Chave da API Gemini",
+    "geminiKeyEnv": "Fornecida pela variável de ambiente GEMINI_API_KEY — este campo é ignorado.",
+    "geminiKeySaved": "Uma chave está salva. Digite uma nova para substituí-la ou deixe em branco para mantê-la.",
+    "geminiKeyHint": "Salva nas configurações deste servidor. Salve antes de clicar em Testar. Chave gratuita em aistudio.google.com/apikey.",
     "engineBackendNote": "A Revisão de Partida usa o Stockfish local incluído por padrão. Para usar o motor hospedado chess-api.com, defina <code>ENGINE_BACKEND=chessapi</code> (env) ou a configuração <code>engine_backend</code> — por exemplo, para uma instância pública de demonstração (DEMO_MODE, #27).",
     "colSignIn": "Login",
     "signInSso": "SSO",
@@ -669,7 +685,7 @@
     "blackToMove": "Pretas jogam",
     "fromYourGame": "Da sua partida · {{w}} vs {{b}}",
     "taskTitle": "Encontre o lance que você perdeu",
-    "taskBody": "Na partida real você jogou {{played}}. Encontre um lance mais forte.",
+    "taskBody": "Encontre um lance mais forte do que o que você jogou.",
     "showHint": "Mostrar dica",
     "hideHint": "Esconder dica",
     "tryAgain": "Tentar de novo",
@@ -677,9 +693,18 @@
     "openInReview": "Abrir na revisão",
     "correct": "Correto!",
     "wrong": "Não é o lance.",
+    "wrongTitle": "Não é o lance correto",
+    "wrongAgain": "O tabuleiro voltou — tente de novo.",
+    "evalChecking": "O motor está analisando seu lance …",
+    "evalSide": "Avaliação depois do seu lance, do seu lado.",
+    "evalLoss": "pior que o melhor lance.",
+    "bestScore": "melhor lance",
+    "evalBefore": "Sua avaliação",
+    "evalDropHint": "Avaliação do motor do seu lado, antes e depois do lance. Quanto menor, pior para você.",
     "mine": {
       "review": "Revisar",
       "dueLabel": "Pendente",
+      "pendingLabel": "Pendente",
       "moves_one": "A solução tem {{count}} lance.",
       "moves_other": "A solução tem {{count}} lances.",
       "yourMove": "Sua vez. Encontre o melhor lance!",
@@ -689,12 +714,18 @@
       "learned": "Resolvido na primeira tentativa — este não volta mais.",
       "comesBack": "Não foi na primeira tentativa, então este puzzle volta amanhã.",
       "solution": "Solução:",
+      "solutionScoreHint": "Avaliação do motor com a solução, do seu lado.",
+      "inGame": "Na partida:",
+      "yourTry": "Sua tentativa:",
+      "pawns": "peões",
       "playedArrow": "Seta vermelha: o lance que você jogou na partida ({{played}})",
+      "playedThis": "Na partida você jogou",
       "coachTitle": "Por que {{best}} é melhor que {{played}}"
     },
     "tabs": {
       "mine": "Meus erros",
-      "puzzles": "Puzzles"
+      "puzzles": "Puzzles",
+      "patterns": "Exercícios por padrão"
     },
     "puzzles": {
       "intro": "Puzzles do banco público do Lichess.",
@@ -1707,6 +1738,33 @@
         "short": "Dama adiantada",
         "desc": "A dama saiu cedo, foi atacada por peças menores e você perdeu tempo ou material."
       }
+    },
+    "modes": {
+      "all": "Todas",
+      "aria": "Filtrar por ritmo de jogo"
+    },
+    "coach": {
+      "title": "A leitura do seu treinador",
+      "scope": "{{mode}} · {{games}} partidas analisadas",
+      "allModes": "Todos os ritmos",
+      "headline": "Seu hábito mais caro aqui é {{pattern}} — {{count}} vezes em {{games}} partidas, cerca de {{severity}}% de chance de vitória cada.",
+      "headlineClean": "Nenhum padrão caro se destaca nesta janela. Continue jogando e analisando — o treinador precisa de mais algumas partidas.",
+      "compare": "A velocidade é o que cobra caro: em {{worst}} você perde {{worstValue}} erros graves por partida, em {{best}} {{bestValue}}.",
+      "focusTitle": "Trabalhe nisto, em ordem",
+      "trainThis": "Treinar isto",
+      "start": "Começar com {{pattern}}",
+      "why": "Ordenado por chance de vitória perdida, não só por frequência."
+    },
+    "emptyMode": "Nenhuma partida analisada neste ritmo nesta janela",
+    "emptyModeDesc": "Jogue ou importe algumas partidas neste ritmo e analise-as — o treinador lê cada ritmo separadamente."
+  },
+  "nav": {
+    "menu": "Menu",
+    "groups": {
+      "play": "Jogar",
+      "review": "Revisão",
+      "progress": "Progresso",
+      "train": "Treino"
     }
   }
 }

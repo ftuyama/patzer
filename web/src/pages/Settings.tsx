@@ -364,7 +364,7 @@ export default function Settings() {
           mobile soft keyboard pushes the page (and the bar) up naturally rather
           than the bar floating over the focused input. The aria-live region
           announces "Saved" to screen readers without stealing focus. */}
-      <div className="sticky bottom-0 -mx-4 mt-4 border-t border-ink-200 bg-cream/95 px-4 py-3 backdrop-blur sm:-mx-0 sm:rounded-b-2xl dark:border-ink-700 dark:bg-ink-900/95"
+      <div className="sticky bottom-0 -mx-3 mt-4 border-t border-ink-200 bg-cream/95 px-3 py-3 backdrop-blur sm:mx-0 sm:rounded-b-2xl sm:px-4 dark:border-ink-700 dark:bg-ink-900/95"
            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <div className="text-sm text-ink-500" aria-live="polite">

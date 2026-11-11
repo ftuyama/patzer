@@ -73,6 +73,22 @@ function uciToSan(fen: string, uci: string): string | null {
 }
 
 /** An engine line (UCI) in words, stopping at the first move that won't play. */
+/** The same PV as SAN. The coach quotes moves the engine chose, so it needs
+ *  them the way a chess player writes them ("Nf6"), not spelled out. */
+function sanLine(fen: string, pv: string[], max: number): string[] {
+  const out: string[] = [];
+  let pos = fen;
+  for (const uci of pv.slice(0, max)) {
+    const san = uciToSan(pos, uci);
+    if (!san) break;
+    out.push(san);
+    const c = new Chess(pos);
+    c.move(san);
+    pos = c.fen();
+  }
+  return out;
+}
+
 function naturalLine(fen: string, pv: string[], max: number, lang: Language, aud: Audience): string[] {
   const out: string[] = [];
   let pos = fen;
@@ -478,9 +494,13 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
   // engine — a few plies, so a loss that takes an exchange to show (not just
   // one capture) still has a concrete "why".
   let opponentReply: string | null = null;
+  let opponentReplySan: string[] = [];
   if (after?.[0] && fenAfter) {
     const line = naturalLine(fenAfter, after[0].pv, 3, lang, aud);
-    if (line.length) opponentReply = P.opponentReply(line.join(", "));
+    if (line.length) {
+      opponentReply = P.opponentReply(line.join(", "));
+      opponentReplySan = sanLine(fenAfter, after[0].pv, 3);
+    }
   }
 
   // Better and alternative moves with what they achieve.
@@ -494,6 +514,7 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
   const betterMove = isBest ? null : describe(bestSan);
 
   const others: string[] = [];
+  const othersSan: string[] = [];
   if (before && before.length > 1) {
     const top = cpForMover(before[0]!, input.fen);
     for (const line of before.slice(1)) {
@@ -502,6 +523,7 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
       // Only moves that are nearly as good as the best one are alternatives.
       if (top - cpForMover(line, input.fen) > 60) continue;
       others.push(describe(san));
+      othersSan.push(san);
     }
   }
 
@@ -539,8 +561,14 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
       verdict: verdictPhrase(input.classification, lang),
       why,
       opponent_reply: tone === "correct" ? opponentReply : null,
+      // SAN of the same moves, so the coach can name them the way a player
+      // does. Kept next to the natural phrasing rather than replacing it:
+      // the fallback answer and the TTS read the natural text.
+      opponent_reply_san: tone === "correct" ? opponentReplySan : null,
       better_move: betterMove,
+      better_move_san: betterMove ? bestSan : null,
       other_good_moves: others,
+      other_good_moves_san: othersSan,
       takeaway: tone === "correct" ? P.takeaway[kind ?? "positional"] : null,
       player_history: history,
     },

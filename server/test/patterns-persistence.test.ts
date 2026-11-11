@@ -74,12 +74,12 @@ describe('pattern event persistence', () => {
     return id;
   }
 
-  function addGame(userId: number, opts: { endTime: string; startFen?: string | null; result?: string; color?: 'white' | 'black' }): number {
+  function addGame(userId: number, opts: { endTime: string; startFen?: string | null; result?: string; color?: 'white' | 'black'; timeClass?: string | null }): number {
     const id = nextGameId++;
     db.prepare(`
-      INSERT INTO games (id, user_id, source, pgn, white, black, result, end_time, user_color, start_fen)
-      VALUES (?, ?, 'imported', '', 'Me', 'Rival', ?, ?, ?, ?)
-    `).run(id, userId, opts.result ?? '1-0', opts.endTime, opts.color ?? 'white', opts.startFen ?? null);
+      INSERT INTO games (id, user_id, source, pgn, white, black, result, end_time, user_color, start_fen, time_class)
+      VALUES (?, ?, 'imported', '', 'Me', 'Rival', ?, ?, ?, ?, ?)
+    `).run(id, userId, opts.result ?? '1-0', opts.endTime, opts.color ?? 'white', opts.startFen ?? null, opts.timeClass ?? null);
     return id;
   }
 
@@ -254,8 +254,8 @@ describe('pattern event persistence', () => {
     expect(store.hasEventsForGame(fromPosition, patterns.PATTERN_VERSION)).toBe(false);
   });
 
-  async function diagnose(userCookie: string, games = 100): Promise<import('../src/patterns/contracts.js').DiagnosisPayload> {
-    const res = await router.request(`/?games=${games}`, { headers: { Cookie: userCookie } });
+  async function diagnose(cookie: string, games = 100, timeClass?: string): Promise<import('../src/patterns/contracts.js').DiagnosisPayload> {
+    const res = await router.request(`/?games=${games}${timeClass ? `&time_class=${timeClass}` : ''}`, { headers: { Cookie: cookie } });
     expect(res.status).toBe(200);
     return res.json() as Promise<import('../src/patterns/contracts.js').DiagnosisPayload>;
   }
@@ -292,8 +292,10 @@ describe('pattern event persistence', () => {
 
     const payload = await diagnose(cookieForUser);
     expect(Object.keys(payload).sort()).toEqual(
-      ['games_analyzed', 'generated_at', 'overview', 'patterns', 'pending_games', 'total_games', 'weekly', 'window_games'],
+      ['games_analyzed', 'generated_at', 'modes', 'overview', 'patterns', 'pending_games', 'time_class', 'total_games', 'weekly', 'window_games'],
     );
+    expect(payload.time_class).toBeNull();
+    expect(payload.modes.map((m) => m.time_class)).toEqual(['other']);
     expect(Object.keys(payload.overview).sort()).toEqual(
       ['accuracy', 'blunders_per_game', 'date_from', 'date_to', 'inaccuracies_per_game', 'mistakes_per_game'],
     );
@@ -331,5 +333,50 @@ describe('pattern event persistence', () => {
     expect(second.generated_at).toBe(first.generated_at);
     const other = await diagnose(cookieForUser, 60);
     expect(other.window_games).toBe(60);
+  });
+
+  it('splits the diagnosis by time class and honours the filter', async () => {
+    const user = addUser('modes');
+    const { createSession, SESSION_COOKIE_NAME } = await import('../src/auth/sessions.js');
+    const cookieForUser = `${SESSION_COOKIE_NAME}=${encodeURIComponent(createSession(user))}`;
+
+    // Two blitz games, one rapid, one with no time class at all.
+    for (const [i, tc] of [['1', 'blitz'], ['2', 'blitz'], ['3', 'rapid'], ['4', null]] as const) {
+      const gameId = addGame(user, { endTime: `2026-05-0${i} 10:00:00`, timeClass: tc });
+      addAnalysis(gameId, [userMove()], { accuracy: tc === 'blitz' ? 70 : 85 });
+    }
+
+    const all = await diagnose(cookieForUser);
+    expect(all.time_class).toBeNull();
+    expect(all.games_analyzed).toBe(4);
+    // Fastest class first, games outside the rated buckets land in 'other'.
+    expect(all.modes.map((m) => m.time_class)).toEqual(['blitz', 'rapid', 'other']);
+    expect(all.modes.map((m) => m.games)).toEqual([2, 1, 1]);
+    expect(all.modes[0]!.top_patterns.some((p) => p.key === 'missed_win')).toBe(true);
+
+    const blitz = await diagnose(cookieForUser, 100, 'blitz');
+    expect(blitz.time_class).toBe('blitz');
+    expect(blitz.games_analyzed).toBe(2);
+    expect(blitz.total_games).toBe(2);
+    expect(blitz.overview.accuracy).toBe(70);
+    expect(blitz.weekly).toHaveLength(1);
+    expect(blitz.weekly[0]!.games).toBe(2);
+    // The breakdowns stay comparable no matter which tab the client asks for.
+    expect(blitz.modes.map((m) => m.time_class)).toEqual(['blitz', 'rapid', 'other']);
+
+    const rapid = await diagnose(cookieForUser, 100, 'rapid');
+    expect(rapid.games_analyzed).toBe(1);
+    expect(rapid.overview.accuracy).toBe(85);
+
+    // A class with no analysed games is an empty page, not an error.
+    const bullet = await diagnose(cookieForUser, 100, 'bullet');
+    expect(bullet.games_analyzed).toBe(0);
+    expect(bullet.patterns).toEqual([]);
+    expect(bullet.modes).toHaveLength(3);
+
+    // Unknown values are ignored rather than rejected: the page keeps working.
+    const bogus = await diagnose(cookieForUser, 100, 'hyperbullet');
+    expect(bogus.time_class).toBeNull();
+    expect(bogus.games_analyzed).toBe(4);
   });
 });

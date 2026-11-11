@@ -4,6 +4,7 @@
 // appropriate voice when our preferred one isn't available.
 
 import { stripMarkdown, stripReasoning } from './markdown';
+import { sanToSpeech } from './speech';
 
 import { bcp47For, type Language } from './languages';
 
@@ -52,7 +53,8 @@ let generation = 0;
 
 export function speak(text: string, opts: SpeakOpts = {}): SpeechSynthesisUtterance | null {
   if (typeof speechSynthesis === 'undefined') return null;
-  const clean = stripMarkdown(stripReasoning(text));
+  // The coach speaks algebraic notation; a voice would spell it out.
+  const clean = sanToSpeech(stripMarkdown(stripReasoning(text)), opts.lang);
   if (!clean) return null;
 
   // Voices may not be ready yet on Windows; wait briefly then retry.

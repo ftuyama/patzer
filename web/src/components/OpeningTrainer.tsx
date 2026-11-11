@@ -8,10 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Eye, GitBranch, GraduationCap, Lightbulb, Repeat, RotateCcw, Target, Trash2, Trophy, X, Zap } from 'lucide-react';
 import ChessBoard from './ChessBoard';
+import EvalBar from './EvalBar';
 import OpeningProfilePanel from './OpeningProfilePanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
+import { usePositionEval } from '../lib/usePositionEval';
 import {
   type Branch, type DrillLine, type Side,
   branchDrills, formatMoves, isExpectedMove, isUserPly, localDay, moveLabel, moveSquares, positionAfter, sideOfPly, userMoveCount,
@@ -339,6 +341,7 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview, onBr
   const done = ply >= total;
   const userTurn = phase !== 'ask' && !done && isUserPly(ply, line.color);
   const { fen, lastMove } = useMemo(() => positionAfter(line.moves, ply), [line.moves, ply]);
+  const evalWhite = usePositionEval(fen);
   const ownTotal = userMoveCount(line.moves, line.color, start);
   const ownDone = userMoveCount(line.moves.slice(0, ply), line.color, start);
   const wrong = wrongAt === ply;
@@ -497,16 +500,21 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview, onBr
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       <div className={`mx-auto w-full lg:max-w-[600px] lg:flex-1 board-theme-${user?.profile.board_theme ?? 'green'}`}>
-        <ChessBoard
-          fen={fen}
-          orientation={line.color}
-          turnColor={sideOfPly(ply)}
-          movable={userTurn}
-          onMove={onMove}
-          lastMove={lastMove as never}
-          arrows={arrows as never}
-          resetKey={boardKey}
-        />
+        <div className="flex items-stretch gap-2">
+          <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={line.color} />
+          <div className="min-w-0 flex-1">
+            <ChessBoard
+              fen={fen}
+              orientation={line.color}
+              turnColor={sideOfPly(ply)}
+              movable={userTurn}
+              onMove={onMove}
+              lastMove={lastMove as never}
+              arrows={arrows as never}
+              resetKey={boardKey}
+            />
+          </div>
+        </div>
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">
@@ -622,6 +630,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     const uci = answer!.expected_uci;
     return [{ orig: uci.slice(0, 2), dest: uci.slice(2, 4), brush: 'green' }];
   }, [missed, replayed, answer]);
+  const evalWhite = usePositionEval(shown?.fen ?? null);
 
   async function submit(body: { uci: string; first?: boolean } | { reveal: true }) {
     if (!item) return;
@@ -711,16 +720,21 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       <div className={`mx-auto w-full lg:max-w-[600px] lg:flex-1 board-theme-${user?.profile.board_theme ?? 'green'}`}>
-        <ChessBoard
-          fen={shown.fen}
-          orientation={item.color}
-          turnColor={item.color}
-          movable={!busy && (!answer || (missed && !replayed))}
-          onMove={onMove}
-          lastMove={shown.lastMove as never}
-          arrows={arrows as never}
-          resetKey={boardKey}
-        />
+        <div className="flex items-stretch gap-2">
+          <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={item.color} />
+          <div className="min-w-0 flex-1">
+            <ChessBoard
+              fen={shown.fen}
+              orientation={item.color}
+              turnColor={item.color}
+              movable={!busy && (!answer || (missed && !replayed))}
+              onMove={onMove}
+              lastMove={shown.lastMove as never}
+              arrows={arrows as never}
+              resetKey={boardKey}
+            />
+          </div>
+        </div>
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">

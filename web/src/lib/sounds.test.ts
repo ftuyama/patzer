@@ -76,6 +76,14 @@ describe('sound sets', () => {
     for (const f of [784, 659, 523]) expect(started).toContain(f);
   });
 
+  it('a wrong move is a soft falling pair of notes, not an alarm', async () => {
+    const { playSound } = await import('./sounds');
+    playSound('error');
+    expect(started).toContain(220);
+    expect(started).toContain(175);
+    expect(started.some((f) => f > 1000)).toBe(false);
+  });
+
   it('an unknown set falls back to classic', async () => {
     const { playSound, setSoundSet } = await import('./sounds');
     setSoundSet('loud' as never);

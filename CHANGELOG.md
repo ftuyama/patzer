@@ -6,6 +6,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Coach
+
+- **Gemini is now a first-class coach provider.** *Admin → System* has a fourth
+  provider next to Ollama, vLLM and DeepSeek: paste a Gemini API key from Google
+  AI Studio (it has a free tier, no card required) and pick a model — leave the
+  URL empty unless you proxy the API. Test, Test all models and the runtime
+  panel work the same as for the other providers, and the key is stored like the
+  SMTP password: never returned by the API, optionally supplied by
+  `GEMINI_API_KEY`. Gemini charges its thinking tokens to the answer budget, so
+  the coach asks for a low reasoning effort and reserves headroom — otherwise a
+  short answer could come back empty.
+- **Test the coach from Admin → System.** The new button runs the whole coach
+  on a sample blunder — engine facts, prompt, model and the contradiction
+  guard — and prints the answer, the model that produced it and how long it
+  took, using whatever settings are saved. Failures now include the provider's
+  own message instead of a bare status: `llm_http_404: This model
+  models/gemini-2.5-flash-lite is no longer available to new users…` says what
+  to fix, and the same detail shows in *Test* and in the runtime panel.
+- **Gemini's default model is now `gemini-flash-lite-latest`.** Google still
+  lists retired models in `/models` but answers 404 when you use them, and
+  `gemini-2.5-*` is already retired for new keys; a `-latest` alias survives
+  that, and Flash-Lite's thinking fits the coach's answer budget.
+- **Shorter answers, moves in algebraic notation.** The coach now writes
+  `Nf6`, `Qxf7#` and `g6` — copied verbatim from the engine facts, so it can
+  never invent a move — instead of spelling each move out ("the knight from g8
+  to f6"). Answers are capped at three sentences and about fifty words; the
+  takeaway line is gone. Speech keeps working: the TTS layer reads notation
+  aloud ("queen takes f7, checkmate", "dama captura f7, xeque-mate"), including
+  localized piece letters like `Sf3` or `Фd2+`.
+- **Portuguese gets its own instructions.** The explain task and the hint
+  prompt were falling back to the English wording for `pt` (the answer came out
+  in Portuguese only because of the output-language rule). Both are now
+  written in Portuguese, like the personas and rules already were.
+
+### Players
+
+- **A player's recent games read like the Home list.** The profile row now
+  shows the speed badge, the result glyph, both players with the profile
+  owner's side emphasized, the date, the opening, and the accuracy pair (or
+  the *unreviewed* badge) — the same component Home uses, so the two cannot
+  drift apart again. Games are still only openable when they are your own.
+
+### Train
+
+- **Pattern drills are their own tab.** *Train* now opens on three tabs —
+  *From your games*, *Pattern drills* and *Puzzles* — instead of stacking the
+  drills under the puzzle queue. Each tab keeps its own header, so a drill
+  fills the page instead of appearing below the board you were working on.
+  Links from the diagnosis card (`/train?pattern=hung_piece`) still land on the
+  drills tab with that motif already selected and the first position loaded.
+- **The header's pending count matches its accuracy.** *Train → From your
+  games* showed the reviews due that day next to Solved and Accuracy, so after
+  a session of misses it read "Solved 5 · Due 0 · 38%" — three numbers that
+  contradicted each other, because the misses were scheduled for tomorrow. It
+  now shows the puzzles still unsolved, so Solved + Pending is the number of
+  puzzles tried, the same denominator as Accuracy.
+
+### Game Review
+
+- **The review sidebar is four tabs.** *Overview*, *Moves*, *Report* and *Key
+  moments* replace one long scrolling rail. Overview keeps the opening banner,
+  the eval graph, the report card and the per-position tools (engine lines,
+  threats, master stats, export); Moves keeps the move explanation and the move
+  list; the AI report and the key moments each get a tab of their own. The tab
+  strip stays put and only the panel scrolls, so the board never leaves the
+  fold. Bookmark, flip, share and notes stay pinned under the tabs.
+
+### Diagnosis
+
+- **A coach's read, per time control.** The Diagnosis page now has Bullet /
+  Blitz / Rapid / Daily tabs: the pattern ranking, the weekly series and the
+  cards under it are computed over just the games you played at that speed, so
+  a blitz leak no longer hides behind your rapid games. Above the patterns sits
+  a short coach's read — the one habit that costs you most at that speed, how
+  much win chance it gives away, a comparison of blunders per game between the
+  speeds you play, and the two or three fixes to work on in order. Each fix has
+  a **Train this** button that opens the pattern drill on that motif. All of it
+  is arithmetic over analyses you already have: no extra engine run, no LLM.
+
+### Navigation
+
+- **The top bar is grouped by area.** Twelve flat links became four menus —
+  *Play* (play, players), *Review* (game review, diagnosis, lab), *Progress*
+  (progress, insights, plan) and *Train* (tactics, openings, lessons) — with
+  Home still one click away. The group holding the current page keeps the gold
+  underline, so the bar still says where you are. Labels now fit on a laptop,
+  where the bar used to collapse to unlabelled icons, and the mobile drawer
+  shows the same sections instead of one long list. ⌘K and the `g` shortcuts
+  are unchanged.
+
 ### Opening trainer
 
 - **The trainer now reads your own games.** *Openings → Trainer* opens with
@@ -152,6 +242,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The locale tests now pin `pt` to full parity with English, like `de` and `ru`.
 - **Missing speed labels.** Added the `review.tc.*` strings (Bullet, Blitz,
   Rápido, Diário) that Portuguese was still falling back to English for.
+
+### Eval bar on every board
+
+- **The eval bar now sits next to every training board.** *Train → Puzzles* and
+  *Pattern drills*, the *Openings* repertoire board and trainer, and the *Lab*
+  all show Stockfish's score beside the board, following the position as it
+  changes and flipping with the side you play. Scores are shared and cached per
+  position, so the same position never costs a second engine run. Live games and
+  lessons stay without the bar, as before.
+
+### Tactic Trainer: eval bar
+
+- **The eval bar is back, and it follows the puzzle.** *Train → From your games*
+  shows Stockfish's evaluation next to the board, updated for every position in
+  the solution line as it is played, flipped the right way when you train as
+  Black. Answers are cached per position, so replaying a line costs no engine
+  time.
+
+### Tactic Trainer: what the solution was worth
+
+- **The result card now shows the score.** Next to the solution line is the
+  engine's evaluation from your side (for example **+2.4**), and the move you
+  played in the game is scored like a wrong try: its classification badge, its
+  evaluation and how many pawns it gave up. A wrong try from the same puzzle
+  stays on the card after you solve it, so the lesson is still there at the end.
+
+### Tactic Trainer: what the move you played cost you
+
+- **The puzzle now says what the mistake was worth.** Above the board, the
+  prompt repeats the move from your game with its classification (blunder,
+  mistake, miss …) and the engine's evaluation before and after it — for
+  example **+1.2 → −0.6** — plus how many pawns that was worth against the best
+  move. The same before → after score appears in the result card next to the
+  move you played, so "how bad was it?" is answered in numbers instead of only
+  by a label.
 
 ### Fixed
 

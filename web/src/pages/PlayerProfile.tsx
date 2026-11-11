@@ -11,8 +11,9 @@ import { ArrowLeft, Swords, Check, Loader2, Target, Flame, Calendar } from 'luci
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
-import { cn, fmtTimeControl } from '../lib/utils';
+import { cn } from '../lib/utils';
 import TimeClassIcon from '../components/TimeClassIcon';
+import GameHistoryList, { type GameHistoryRow } from '../components/GameHistoryList';
 
 const TIME_CONTROLS = ['untimed', 'bullet', 'blitz', 'rapid', 'classical'] as const;
 const TIME_CLASSES = ['bullet', 'blitz', 'rapid', 'daily'] as const;
@@ -25,23 +26,11 @@ interface Rating {
   last_played_at: string | null;
   provisional: boolean;
 }
-interface RecentGame {
-  id: number;
-  white: string;
-  black: string;
-  result: string;
-  user_color: 'white' | 'black' | null;
-  time_control: string;
-  time_class: string | null;
-  opening_name: string | null;
-  end_time: string;
-  source: string;
-}
 interface Profile {
   player: { id: number; username: string; display_name: string; avatar_emoji: string; created_at: string; online: boolean; is_me: boolean };
   stats: { total: number; wins: number; losses: number; draws: number; win_rate: number | null; avg_accuracy: number | null; streak: { kind: 'win' | 'loss' | 'draw'; count: number } | null };
   ratings: Record<string, Rating>;
-  recent_games: RecentGame[];
+  recent_games: GameHistoryRow[];
   head_to_head: { total: number; wins: number; losses: number; draws: number } | null;
 }
 
@@ -175,50 +164,12 @@ export default function PlayerProfile() {
                 {t('players.noRecent', { defaultValue: 'No games yet.' })}
               </div>
             ) : (
-              <ul className="divide-y divide-chesscom-100 overflow-hidden rounded-xl border border-chesscom-200 bg-white shadow-soft dark:divide-chesscom-800 dark:border-chesscom-700 dark:bg-chesscom-800">
-                {recent_games.map((g) => {
-                  const oppName = g.user_color === 'white' ? g.black : g.white;
-                  const row = (
-                    <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4">
-                      <ResultGlyph r={g.result} />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium text-chesscom-900 dark:text-chesscom-100">
-                          {t('players.vs', { defaultValue: 'vs' })} {oppName || t('players.unknownOpp', { defaultValue: '—' })}
-                        </div>
-                        <div className="flex items-center gap-0.5 text-xs text-chesscom-500">
-                          <span>{new Date(g.end_time).toLocaleDateString()}</span>
-                          <span className="mx-1.5 text-chesscom-400">·</span>
-                          {g.time_class ? (
-                            <TimeClassIcon
-                              timeClass={g.time_class}
-                              label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
-                              orientation="inline"
-                              iconClassName="h-3 w-3"
-                            />
-                          ) : (
-                            <span>{fmtTimeControl(g.time_control, t)}</span>
-                          )}
-                          {g.opening_name && (
-                            <span className="hidden sm:inline">
-                              <span className="mx-1.5 text-chesscom-400">·</span>
-                              <span>{g.opening_name}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                  // Only the viewer's own games are openable in the analyzer
-                  // (game rows are user-scoped; another player's id 404s).
-                  return (
-                    <li key={g.id}>
-                      {isMe ? (
-                        <Link to={`/review/${g.id}`} className="block transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40">{row}</Link>
-                      ) : row}
-                    </li>
-                  );
-                })}
-              </ul>
+              <GameHistoryList
+                games={recent_games}
+                // Only the viewer's own games are openable in the analyzer
+                // (game rows are user-scoped; another player's id 404s).
+                hrefFor={isMe ? (g) => `/review/${g.id}` : undefined}
+              />
             )}
           </section>
         </div>
@@ -356,15 +307,6 @@ function H2HCol({ value, label, tone }: { value: number; label: string; tone: st
       <div className="text-[11px] uppercase tracking-wide text-chesscom-400">{label}</div>
     </div>
   );
-}
-
-function ResultGlyph({ r }: { r: string }) {
-  const map: Record<string, { cls: string; ch: string }> = {
-    win: { cls: 'bg-green-500/15 text-green-500', ch: 'W' },
-    loss: { cls: 'bg-bad/15 text-bad', ch: 'L' },
-  };
-  const m = map[r] ?? { cls: 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300', ch: 'D' };
-  return <span className={cn('inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-bold', m.cls)}>{m.ch}</span>;
 }
 
 function BackLink() {

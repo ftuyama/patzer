@@ -27,6 +27,9 @@
     "test:ui": "tsx server/test/e2e/pvp-ui.ts",
     "test:resume-ui": "tsx server/test/e2e/resume-ui.ts",
     "test:oidc": "tsx server/test/e2e/oidc-sso.ts",
+    "tunnel:start": "node scripts/tunnel.mjs start",
+    "tunnel:stop": "node scripts/tunnel.mjs stop",
+    "tunnel:status": "node scripts/tunnel.mjs status",
     "verify:lessons": "node scripts/verify-lessons.mjs",
     "build:tactics": "node scripts/build-tactics-set.mjs"
   },

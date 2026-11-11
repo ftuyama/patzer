@@ -16,9 +16,11 @@ import {
   ArrowRight, BookOpen, Check, Eye, Loader2, Play, RotateCcw, Target, X,
 } from 'lucide-react';
 import ChessBoard from './ChessBoard';
+import EvalBar from './EvalBar';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { localDay } from '../lib/openingTrainer';
+import { usePositionEval } from '../lib/usePositionEval';
 import type { DrillPayload, DrillPosition, PatternKey } from '../types';
 
 /** The contract plus the context fields the route adds for the board header. */
@@ -90,6 +92,9 @@ export function DrillBoard({ position, current, total, onNext, isLast }: {
   const boardFen = showSolution && solved ? solved.fen : position.fen;
   const turnColor = boardFen.split(' ')[1] === 'b' ? 'black' : 'white';
   const yourTurn = status === 'play' || status === 'wrong';
+  // The bar follows what the board shows: the position to solve, and the
+  // solution's position once it is on the board.
+  const evalWhite = usePositionEval(boardFen);
 
   function record(ok: boolean, attempted?: string) {
     if (sent.current) return;
@@ -131,16 +136,21 @@ export function DrillBoard({ position, current, total, onNext, isLast }: {
             {t('train.drill.severity', { value: Math.round(position.severity) })}
           </span>
         </div>
-        <ChessBoard
-          fen={boardFen}
-          orientation={side}
-          turnColor={turnColor}
-          movable={yourTurn}
-          onMove={onMove}
-          lastMove={showSolution ? (solved?.lastMove as never) : undefined}
-          arrows={arrows as never}
-          resetKey={boardKey}
-        />
+        <div className="flex items-stretch gap-2">
+          <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={side} />
+          <div className="min-w-0 flex-1">
+            <ChessBoard
+              fen={boardFen}
+              orientation={side}
+              turnColor={turnColor}
+              movable={yourTurn}
+              onMove={onMove}
+              lastMove={showSolution ? (solved?.lastMove as never) : undefined}
+              arrows={arrows as never}
+              resetKey={boardKey}
+            />
+          </div>
+        </div>
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">
@@ -236,11 +246,13 @@ export function DrillBoard({ position, current, total, onNext, isLast }: {
  * diagnosed motifs (mixed = all of them, interleaved), fetches one set, then
  * walks it position by position.
  */
-export function PatternDrills() {
+export function PatternDrills({ initialPattern, standalone = false }: { initialPattern?: PatternKey | null; standalone?: boolean } = {}) {
   const { t } = useTranslation();
-  const [pattern, setPattern] = useState<PatternKey | 'mixed'>('mixed');
+  const [pattern, setPattern] = useState<PatternKey | 'mixed'>(initialPattern ?? 'mixed');
   const [mode, setMode] = useState<DrillMode>('find_best');
-  const [started, setStarted] = useState(false);
+  // A deep link (?pattern=hung_piece) means "train this now", not "open the
+  // picker and press Start again".
+  const [started, setStarted] = useState(!!initialPattern);
   const [run, setRun] = useState(0);
   const [index, setIndex] = useState(0);
 
@@ -263,7 +275,12 @@ export function PatternDrills() {
   });
 
   const topPatterns = (diagnosis?.patterns ?? []).map((p) => p.key);
-  const options: (PatternKey | 'mixed')[] = ['mixed', ...topPatterns.filter((k, i) => topPatterns.indexOf(k) === i)];
+  // Keep a deep-linked motif selectable even when it is outside the global
+  // top five (the diagnosis page filters by time class before ranking).
+  const merged: (PatternKey | 'mixed')[] = initialPattern
+    ? [initialPattern, ...topPatterns]
+    : topPatterns;
+  const options: (PatternKey | 'mixed')[] = ['mixed', ...merged.filter((k, i) => merged.indexOf(k) === i)];
   const currentPattern = options.includes(pattern) ? pattern : 'mixed';
 
   function reset() {
@@ -291,13 +308,15 @@ export function PatternDrills() {
 
   return (
     <section className="card p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
-            <Target className="h-4 w-4 text-gold-600" /> {t('train.drill.title')}
-          </h2>
-          <p className="mt-0.5 text-xs text-chesscom-500">{t('train.drill.sub')}</p>
-        </div>
+      <div className={`flex flex-col gap-3 sm:flex-row sm:items-start ${standalone ? 'sm:justify-end' : 'sm:justify-between'}`}>
+        {!standalone && (
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
+              <Target className="h-4 w-4 text-gold-600" /> {t('train.drill.title')}
+            </h2>
+            <p className="mt-0.5 text-xs text-chesscom-500">{t('train.drill.sub')}</p>
+          </div>
+        )}
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-[11px] text-chesscom-500">
             {t('train.drill.pattern')}

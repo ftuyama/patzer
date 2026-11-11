@@ -1,6 +1,8 @@
 // Train → "From your games": a puzzle is a position from one of your games
 // where you played a weaker move than the engine's (server/src/routes/train.ts).
 
+import { formatTryEval } from './moveVerdict';
+
 export interface GamePuzzle {
   game_id: number;
   ply: number;
@@ -30,6 +32,13 @@ export interface GamePuzzle {
 export function playedMoveArrow(p: GamePuzzle, atStart: boolean): { orig: string; dest: string; brush: 'red' } | null {
   if (!atStart || p.played_uci.length < 4) return null;
   return { orig: p.played_uci.slice(0, 2), dest: p.played_uci.slice(2, 4), brush: 'red' };
+}
+
+/** What the solution is worth, from your side ("+2.4"). The analysis stores
+ *  the eval of the puzzle position itself; the engine's best move keeps it.
+ *  Null when the analysis has no score there. */
+export function solutionScore(p: Pick<GamePuzzle, 'eval_before_cp' | 'side_to_move'>): string | null {
+  return p.eval_before_cp == null ? null : formatTryEval(p.eval_before_cp, null, p.side_to_move);
 }
 
 /** The coach's "why the engine's move beats yours" — the same request Game

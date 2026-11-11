@@ -13,23 +13,39 @@ import { Target, RotateCcw, ArrowRight, Lightbulb, Check, X, Trophy, BookOpen, Z
 import BetaBadge from '../components/BetaBadge';
 import TacticsPuzzles from '../components/TacticsPuzzles';
 import ChessBoard from '../components/ChessBoard';
+import EvalBar from '../components/EvalBar';
 import { PatternDrills } from '../components/DrillBoard';
+import WrongMoveVerdict from '../components/WrongMoveVerdict';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { localDay } from '../lib/openingTrainer';
 import { positionAt, sanAt, type TacticsPuzzle } from '../lib/tactics';
-import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
-import { coachRequest, playedMoveArrow, type GamePuzzle as Puzzle } from '../lib/gamePuzzle';
+import type { PatternKey } from '../types';
+import { usePositionEval } from '../lib/usePositionEval';
+import { playSound, soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
+import { type TriedMoveEval } from '../lib/moveVerdict';
+import { coachRequest, playedMoveArrow, solutionScore, type GamePuzzle as Puzzle } from '../lib/gamePuzzle';
 import CoachPanel from '../components/CoachPanel';
 
 
 interface Stats { total: number; solved: number; failed: number; accuracy: number; due: number }
 
+type Tab = 'mine' | 'patterns' | 'puzzles';
+
 export default function Train() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') === 'puzzles' ? 'puzzles' : 'mine';
-  const setTab = (next: 'mine' | 'puzzles') => setParams(next === 'puzzles' ? { tab: 'puzzles' } : {}, { replace: true });
+  const rawTab = params.get('tab');
+  const pattern = params.get('pattern');
+  // A deep link from the diagnosis card (\"/train?pattern=hung_piece\") is a
+  // request to train that motif, so it lands on the drills tab, not on the
+  // puzzle queue.
+  const tab: Tab = rawTab === 'puzzles' || rawTab === 'patterns' ? rawTab : pattern ? 'patterns' : 'mine';
+  const setTab = (next: Tab) => {
+    if (next === 'mine') setParams({}, { replace: true });
+    else if (next === 'patterns') setParams(pattern ? { tab: next, pattern } : { tab: next }, { replace: true });
+    else setParams({ tab: next }, { replace: true });
+  };
   const tabClass = (active: boolean) => `tab-pill flex items-center gap-1.5 ${active ? 'is-active' : ''}`;
 
   return (
@@ -37,6 +53,9 @@ export default function Train() {
       <div role="tablist" className="flex gap-1 border-b border-chesscom-200 dark:border-chesscom-700">
         <button role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')} className={tabClass(tab === 'mine')}>
           <Target className="h-4 w-4" /> {t('train.tabs.mine')}
+        </button>
+        <button role="tab" aria-selected={tab === 'patterns'} onClick={() => setTab('patterns')} className={tabClass(tab === 'patterns')}>
+          <Repeat className="h-4 w-4" /> {t('train.tabs.patterns')}
         </button>
         <button role="tab" aria-selected={tab === 'puzzles'} onClick={() => setTab('puzzles')} className={tabClass(tab === 'puzzles')}>
           <Zap className="h-4 w-4" /> {t('train.tabs.puzzles')}
@@ -58,12 +77,20 @@ export default function Train() {
             <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-chesscom-600 dark:hover:text-chesscom-200">database.lichess.org</a>
           </footer>
         </>
-      ) : <FromYourGames onPuzzles={() => setTab('puzzles')} />}
+      ) : tab === 'patterns' ? (
+        <>
+          <header>
+            <h1 className="page-h1 flex items-center gap-2"><Repeat className="h-6 w-6 text-gold-600" />{t('train.drill.title')}</h1>
+            <p className="page-sub">{t('train.drill.sub')}</p>
+          </header>
+          <PatternDrills initialPattern={pattern as PatternKey | null} standalone />
+        </>
+      ) : <FromYourGames />}
     </div>
   );
 }
 
-function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
+function FromYourGames() {
   const { t } = useTranslation();
   const [run, setRun] = useState(0);
 
@@ -90,7 +117,11 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
       {stats && stats.total > 0 && (
         <div className="flex items-center gap-3 text-xs text-chesscom-500">
           <Stat label={t('train.solved', { defaultValue: 'Solved' })} value={stats.solved} tone="text-board-dark" />
-          <Stat label={t('train.mine.dueLabel')} value={stats.due} tone={stats.due > 0 ? 'text-gold-600' : undefined} />
+          {/* Unsolved — including the misses that only come back tomorrow — so
+              Solved + Pending is the number of puzzles tried, and Accuracy
+              (solved ÷ total) is the same denominator. "Due today" made the
+              three numbers contradict each other after a failed attempt. */}
+          <Stat label={t('train.mine.pendingLabel', { defaultValue: 'Pending' })} value={stats.failed} tone={stats.failed > 0 ? 'text-gold-600' : undefined} />
           <Stat label={t('train.accuracy', { defaultValue: 'Accuracy' })} value={`${stats.accuracy}%`} />
         </div>
       )}
@@ -108,12 +139,12 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
           <div className="text-base font-semibold">{t('train.allClear', { defaultValue: "Nothing to train — you're caught up." })}</div>
           <p className="max-w-md text-sm text-chesscom-500">{t('train.allClearDesc', { defaultValue: 'Play more games and analyze them to unlock new puzzles. Every blunder you fix here is a pattern you stop repeating in real games.' })}</p>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
-            <button onClick={onPuzzles} className="btn-primary text-sm"><Zap className="h-4 w-4" /> {t('train.tabs.puzzles')}</button>
+            <Link to="/train?tab=patterns" className="btn-primary text-sm"><Repeat className="h-4 w-4" /> {t('train.tabs.patterns')}</Link>
+            <Link to="/train?tab=puzzles" className="btn-secondary text-sm"><Zap className="h-4 w-4" /> {t('train.tabs.puzzles')}</Link>
             <Link to="/play" className="btn-secondary text-sm">{t('home.playTitle')}</Link>
             <Link to="/review" className="btn-secondary text-sm">{t('review.title')}</Link>
           </div>
         </div>
-        <PatternDrills />
       </div>
     );
   }
@@ -122,9 +153,6 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
     <div className="mx-auto max-w-5xl">
       {header}
       <OwnPuzzle key={`${puzzle.game_id}:${puzzle.ply}:${run}`} puzzle={puzzle} onNext={() => setRun((r) => r + 1)} />
-      <div className="mt-4">
-        <PatternDrills />
-      </div>
     </div>
   );
 }
@@ -135,6 +163,10 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
 type Status = 'play' | 'checking' | 'wrong' | 'solved' | 'shown';
 
 interface AttemptResult { counted: boolean; done: boolean; due_on: string | null }
+
+/** POST /api/train/check: is the try as good as the line's move, and if not,
+ *  what was it worth? */
+interface CheckResult { ok: boolean; engine?: boolean; evaluation?: TriedMoveEval }
 
 function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
   const { t } = useTranslation();
@@ -155,6 +187,9 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
   // The move the engine is looking at stays on the board meanwhile.
   const [trying, setTrying] = useState<{ fen: string; lastMove: [string, string] } | null>(null);
   const [result, setResult] = useState<AttemptResult | null>(null);
+  // The wrong try the card talks about: the move, and the engine's score for it.
+  const [wrongSan, setWrongSan] = useState<string | null>(null);
+  const [wrongEval, setWrongEval] = useState<TriedMoveEval | null>(null);
 
   const pos = useMemo(() => positionAt(line, n), [line, n]);
   const done = n >= puzzle.line.length;
@@ -204,10 +239,13 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
     return chess.isCheckmate();
   }
 
-  function wrong(uci: string) {
+  function wrong(uci: string, san: string | null, evaluation: TriedMoveEval | null) {
     setTrying(null);
+    setWrongSan(san);
+    setWrongEval(evaluation);
     setBoardKey((k) => k + 1);
     setStatus('wrong');
+    playSound('error');
     lose(n === 0 ? uci : undefined);
   }
 
@@ -225,30 +263,32 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
       }
       return;
     }
-    // Your move from the game is never the answer.
-    if (n === 0 && uci === puzzle.played_uci) { wrong(uci); return; }
-    // Not the line's move — maybe just as good: ask the engine.
+    // Not the line's move — maybe just as good: ask the engine. (Your own move
+    // from the game is asked about too: it is never the answer, but the card
+    // still shows what it was worth.)
     const chess = new Chess(pos.fen);
     let m;
     try {
       m = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined });
     } catch {
-      wrong(uci);
+      wrong(uci, null, null);
       return;
     }
     const tried = { san: m.san, fen: chess.fen(), lastMove: [m.from, m.to] as [string, string] };
     setTrying(tried);
+    setWrongSan(tried.san);
+    setWrongEval(null);
     setStatus('checking');
-    api.post<{ ok: boolean }>('/api/train/check', { game_id: puzzle.game_id, ply: puzzle.ply, step: n, uci })
+    api.post<CheckResult>('/api/train/check', { game_id: puzzle.game_id, ply: puzzle.ply, step: n, uci })
       .then((r) => {
-        if (!r.ok) { wrong(uci); return; }
+        if (!r.ok) { wrong(uci, tried.san, r.evaluation ?? null); return; }
         soundForMove(inferMoveFlagsFromSan(tried.san));
         setTrying(null);
         setAlt(tried);
         setHint('none');
         solve();
       })
-      .catch(() => wrong(uci));
+      .catch(() => wrong(uci, tried.san, null));
   }
 
   function showHint() {
@@ -264,6 +304,20 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
 
   const finished = status === 'solved' || (status === 'shown' && done);
   const shown = alt ?? trying;
+  // What the solution is worth, from your side.
+  const score = solutionScore(puzzle);
+  // The move from your game, scored like a wrong try so the result card can
+  // show its classification and what it gave up next to the solution.
+  const playedEval: TriedMoveEval | null = puzzle.eval_after_cp != null
+    ? {
+        san: puzzle.played_san,
+        cp: puzzle.eval_after_cp,
+        mate: null,
+        cp_loss: puzzle.centipawn_loss,
+        win_drop: 0,
+        classification: puzzle.classification,
+      }
+    : null;
   // The move you played in the game stays on the board as a red arrow while
   // the puzzle position is, so you don't have to work out which move it was.
   const played = playedMoveArrow(puzzle, n === 0 && !shown);
@@ -285,6 +339,12 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
   const boardFen = shown?.fen ?? pos.fen;
   const lastMove = shown?.lastMove ?? pos.lastMove;
 
+  // The eval bar follows the solution's position — not a tentative try on the
+  // board — and the engine scores one position per ply. Answers are cached per
+  // FEN, so stepping back and forth costs nothing; the hook flips Stockfish's
+  // side-to-move score to white's point of view for the bar.
+  const evalWhite = usePositionEval(pos.fen);
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
       <div className={`mx-auto w-full lg:flex-1 lg:max-w-[640px] board-theme-${user?.profile.board_theme ?? 'green'}`}>
@@ -296,16 +356,21 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
             {t('train.fromYourGame', { defaultValue: 'From your game · {{w}} vs {{b}}', w: puzzle.white, b: puzzle.black })}
           </span>
         </div>
-        <ChessBoard
-          fen={boardFen}
-          orientation={puzzle.side_to_move}
-          turnColor={pos.turn}
-          movable={yourTurn}
-          onMove={onMove}
-          lastMove={lastMove as never}
-          arrows={arrows as never}
-          resetKey={boardKey}
-        />
+        <div className="flex items-stretch gap-2">
+          <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={puzzle.side_to_move} />
+          <div className="min-w-0 flex-1">
+            <ChessBoard
+              fen={boardFen}
+              orientation={puzzle.side_to_move}
+              turnColor={pos.turn}
+              movable={yourTurn}
+              onMove={onMove}
+              lastMove={lastMove as never}
+              arrows={arrows as never}
+              resetKey={boardKey}
+            />
+          </div>
+        </div>
       </div>
 
       <aside className="lg:w-[340px] space-y-3">
@@ -315,17 +380,26 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
             {puzzle.review && <span className="badge bg-gold-500/15 text-gold-700 dark:text-gold-400"><Repeat className="h-3 w-3" /> {t('train.mine.review')}</span>}
           </div>
           <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">
-            {t('train.taskBody', { defaultValue: 'In the actual game you played {{played}}. Find a stronger move.', played: puzzle.played_san })}
+            {t('train.taskBody', { defaultValue: 'Find a stronger move than the one you played.' })}
             {ownMoves > 1 && <> {t('train.mine.moves', { count: ownMoves })}</>}
+          </div>
+          {/* What actually happened in the game, spelled out: the move, its
+              label and the evaluation it cost. This is the puzzle's premise,
+              so it stays ahead of the engine's answers. */}
+          <div className="mt-3 space-y-1.5 rounded-md border border-move-mistake/25 bg-move-mistake/5 p-2.5">
+            <div className="text-[11px] uppercase tracking-wide text-chesscom-400">{t('train.mine.playedThis')}</div>
+            <WrongMoveVerdict
+              san={puzzle.played_san}
+              classification={puzzle.classification}
+              evaluation={playedEval}
+              beforeCp={puzzle.eval_before_cp}
+              side={puzzle.side_to_move}
+            />
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-chesscom-500">
             {/* The colour of the board's red arrow (chessground's `red` brush). */}
             <span aria-hidden="true" className="h-1 w-5 shrink-0 rounded bg-[#882020]" />
             {t('train.mine.playedArrow', { played: puzzle.played_san })}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-chesscom-500">
-            <span className={`badge ${tagTone(puzzle.classification)}`}>{puzzle.classification}</span>
-            {puzzle.centipawn_loss > 0 && <span>−{(puzzle.centipawn_loss / 100).toFixed(1)} pawn equivalent</span>}
           </div>
         </div>
 
@@ -341,8 +415,12 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
             </div>
           )}
           {status === 'wrong' && (
-            <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
-              <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> <span>{t('train.puzzles.wrong')}</span>
+            <div className="space-y-1.5">
+              <div className="flex items-start gap-2 text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> <span>{t('train.wrongTitle')}</span>
+              </div>
+              <WrongMoveVerdict san={wrongSan} evaluation={wrongEval} side={puzzle.side_to_move} />
+              <div className="text-xs text-chesscom-500">{t('train.wrongAgain')}</div>
             </div>
           )}
           {status === 'solved' && (
@@ -364,8 +442,29 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
           )}
 
           {finished && (
-            <div className="mt-2 text-xs text-chesscom-500">
-              {t('train.mine.solution')} <span className="font-mono">{puzzle.line_san.join(' ')}</span>
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-chesscom-500">
+                <span>{t('train.mine.solution')}</span>
+                <span className="font-mono text-chesscom-700 dark:text-chesscom-200">{puzzle.line_san.join(' ')}</span>
+                {score && (
+                  <span
+                    className="rounded bg-board-dark/10 px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums text-board-dark"
+                    title={t('train.mine.solutionScoreHint')}
+                  >
+                    {score}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className="text-[11px] uppercase tracking-wide text-chesscom-400">{t('train.mine.inGame')}</div>
+                <WrongMoveVerdict san={puzzle.played_san} evaluation={playedEval} beforeCp={puzzle.eval_before_cp} side={puzzle.side_to_move} compact />
+              </div>
+              {wrongEval && wrongSan && wrongSan !== puzzle.played_san && (
+                <div className="space-y-1">
+                  <div className="text-[11px] uppercase tracking-wide text-chesscom-400">{t('train.mine.yourTry')}</div>
+                  <WrongMoveVerdict san={wrongSan} evaluation={wrongEval} side={puzzle.side_to_move} compact />
+                </div>
+              )}
             </div>
           )}
 
@@ -382,7 +481,7 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
           {(finished || status === 'shown') && (
             <div className="mt-3 flex gap-2">
               {status === 'shown' && done && (
-                <button onClick={() => { setN(0); setStatus('play'); setBoardKey((k) => k + 1); }} className="btn-secondary flex-1 text-sm">
+                <button onClick={() => { setN(0); setStatus('play'); setWrongSan(null); setWrongEval(null); setBoardKey((k) => k + 1); }} className="btn-secondary flex-1 text-sm">
                   <RotateCcw className="h-4 w-4" /> {t('train.puzzles.tryIt')}
                 </button>
               )}
@@ -428,9 +527,3 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
   );
 }
 
-function tagTone(c: string): string {
-  if (c === 'blunder') return 'bg-mistake/15 text-mistake';
-  if (c === 'mistake') return 'bg-gold-500/15 text-gold-700 dark:text-gold-400';
-  if (c === 'miss') return 'bg-mistake/10 text-mistake';
-  return 'bg-chesscom-100 text-chesscom-600 dark:bg-chesscom-700/40 dark:text-chesscom-300';
-}

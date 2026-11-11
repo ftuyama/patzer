@@ -1,6 +1,6 @@
 import { getSetting } from '../db.js';
 
-export type LlmProvider = 'ollama' | 'vllm' | 'deepseek';
+export type LlmProvider = 'ollama' | 'vllm' | 'deepseek' | 'gemini';
 
 // Reasoning models (Qwen3 and friends) emit a chain-of-thought that isn't
 // part of `content` but does eat into `max_tokens`, so a tight budget leaves
@@ -9,10 +9,23 @@ export type LlmProvider = 'ollama' | 'vllm' | 'deepseek';
 // to the tokenizer's chat template; non-thinking models/templates ignore it.
 const VLLM_NO_THINK = { chat_template_kwargs: { enable_thinking: false } };
 
-// DeepSeek is a hosted OpenAI-compatible API. It's the "cloud LLM" option
-// alongside local Ollama / self-hosted vLLM. Unlike the local providers, its
-// URL has a sensible default and the API key is the real "configured" signal.
+// Gemini has the same problem, but it cannot be switched off: on Gemini 3 and
+// 4 thinking is always on, and thought tokens are charged to `max_tokens`. A
+// 220-token coach answer therefore came back empty. Ask for the cheapest
+// reasoning level and pay for headroom on top of the answer budget instead.
+const GEMINI_LOW_EFFORT = { reasoning_effort: 'low' };
+// `low` is a 1024-token thinking budget on Gemini 2.5 and can run past that on
+// 3.x, so reserve a couple of thousand on top of the answer budget. Output is
+// billed as generated, not as reserved, so the headroom costs nothing.
+const GEMINI_THINK_HEADROOM = 2048;
+
+// DeepSeek and Gemini are hosted OpenAI-compatible APIs. They are the "cloud
+// LLM" options alongside local Ollama / self-hosted vLLM. Unlike the local
+// providers, their URLs have sensible defaults and the API key is the real
+// "configured" signal.
 const DEEPSEEK_BASE = 'https://api.deepseek.com';
+// Gemini's OpenAI-compatible root (not the native `generateContent` API).
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai';
 
 export interface LlmModel { name: string; size: number; details?: { parameter_size?: string } }
 
@@ -20,32 +33,39 @@ export function llmProvider(): LlmProvider {
   const p = getSetting('llm_provider');
   if (p === 'vllm') return 'vllm';
   if (p === 'deepseek') return 'deepseek';
+  if (p === 'gemini') return 'gemini';
   return 'ollama';
 }
 
-// DeepSeek API key — env wins (Docker secrets), DB setting as fallback. Never
-// returned to the client; the admin surface only reports whether one is set.
-export function deepseekApiKey(): string | null {
-  return process.env.DEEPSEEK_API_KEY || getSetting('deepseek_api_key') || null;
+// API key of a hosted provider — env wins (Docker secrets), DB setting as
+// fallback. Never returned to the client; the admin surface only reports
+// whether one is set.
+export function llmApiKey(provider: LlmProvider = llmProvider()): string | null {
+  if (provider === 'deepseek') return process.env.DEEPSEEK_API_KEY || getSetting('deepseek_api_key') || null;
+  if (provider === 'gemini') return process.env.GEMINI_API_KEY || getSetting('gemini_api_key') || null;
+  return null;
 }
 
-// Ollama, vLLM and DeepSeek are configured independently (own URL + model
-// each), so switching the provider toggle doesn't clobber whichever one you
-// aren't currently using — e.g. an Ollama box for quick local models, a vLLM
-// server for a bigger one, and DeepSeek for a cloud model, configured once each.
+// Ollama, vLLM, DeepSeek and Gemini are configured independently (own URL +
+// model each), so switching the provider toggle doesn't clobber whichever one
+// you aren't currently using — e.g. an Ollama box for quick local models, a
+// vLLM server for a bigger one, and DeepSeek/Gemini for a cloud model,
+// configured once each.
 export function llmUrl(): string | null {
   const p = llmProvider();
   const url = p === 'vllm' ? getSetting('vllm_url')
     : p === 'deepseek' ? (getSetting('deepseek_url') || DEEPSEEK_BASE)
+    : p === 'gemini' ? (getSetting('gemini_url') || GEMINI_BASE)
     : getSetting('ollama_url');
   return url ? url.replace(/\/$/, '') : null;
 }
 
-// Whether the currently-selected LLM is actually usable. For DeepSeek the URL
-// always resolves to a default, so the API key is what makes it "configured";
-// the other two are configured once they have a URL.
+// Whether the currently-selected LLM is actually usable. For the hosted
+// providers the URL always resolves to a default, so the API key is what makes
+// them "configured"; the other two are configured once they have a URL.
 export function llmConfigured(): boolean {
-  if (llmProvider() === 'deepseek') return !!deepseekApiKey();
+  const p = llmProvider();
+  if (p === 'deepseek' || p === 'gemini') return !!llmApiKey(p);
   return !!llmUrl();
 }
 
@@ -53,6 +73,11 @@ export function llmModel(): string {
   const p = llmProvider();
   if (p === 'vllm') return getSetting('vllm_model') || '';
   if (p === 'deepseek') return getSetting('deepseek_model') || 'deepseek-chat';
+  // `-latest` aliases survive model retirements: `gemini-2.5-flash-lite`
+  // already answers 404 "no longer available to new users" and is still listed
+  // by /models, which is exactly how an admin picks a dead model. Flash-Lite
+  // is also the model whose thinking fits a coach-sized budget.
+  if (p === 'gemini') return getSetting('gemini_model') || 'gemini-flash-lite-latest';
   return getSetting('ollama_model') || 'gemma3:1b';
 }
 
@@ -85,18 +110,22 @@ export function llmStats(): { count: number; p95Ms: number | null; lastError: st
 let lastError: string | null = null;
 let lastModelUsed: string | null = null;
 
-// OpenAI-compatible providers (vLLM, DeepSeek) speak the same dialect; these
-// helpers centralize the two places they differ — where the API root is and
-// the auth header (DeepSeek needs a Bearer key, vLLM is usually unauthenticated).
+// OpenAI-compatible providers (vLLM, DeepSeek, Gemini) speak the same dialect;
+// these helpers centralize the two places they differ — where the API root is
+// and the auth header (hosted providers need a Bearer key, vLLM is usually
+// unauthenticated).
 //
 // The vLLM URL is the bare server (`http://host:8000`) and its routes live
 // under `/v1` — for models *and* chat. 7.15.0 dropped the `/v1` from the model
 // list, which broke "Test" on every existing vLLM setup, and adding `/v1` to
 // the URL as a workaround then broke chat (`/v1/v1/…`). A vLLM URL that already
 // ends in `/v1` is accepted, since that is how OpenAI base URLs are usually
-// written. DeepSeek's URL is already the API root. server/test/llm-providers
-// pins every route.
-type OpenAiLike = 'vllm' | 'deepseek';
+// written. DeepSeek's and Gemini's URLs are already API roots. server/test/
+// llm-providers pins every route.
+type OpenAiLike = 'vllm' | 'deepseek' | 'gemini';
+export function isOpenAiLike(provider: LlmProvider): provider is OpenAiLike {
+  return provider === 'vllm' || provider === 'deepseek' || provider === 'gemini';
+}
 export function openAiRoot(url: string, provider: OpenAiLike): string {
   const base = url.replace(/\/+$/, '');
   return provider === 'vllm' ? `${base.replace(/\/v1$/, '')}/v1` : base;
@@ -106,28 +135,66 @@ function openAiEndpoint(base: string, provider: OpenAiLike, path: 'models' | 'ch
 }
 function openAiHeaders(provider: OpenAiLike): Record<string, string> {
   const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (provider === 'deepseek') h.Authorization = `Bearer ${deepseekApiKey() ?? ''}`;
+  const key = llmApiKey(provider);
+  if (key) h.Authorization = `Bearer ${key}`;
   return h;
 }
 
+// Gemini's model list is the native one under the OpenAI-compatible skin, so
+// ids can come back as `models/gemini-…`. Chat only accepts the bare id, so
+// normalize what we hand to the admin picker.
+function normalizeModelName(provider: LlmProvider, id: string): string {
+  return provider === 'gemini' ? id.replace(/^models\//, '') : id;
+}
+
+// A provider that rejects a chat request explains why in the body — a retired
+// model ("…no longer available to new users, use X"), a wrong key, a quota.
+// `llm_http_404` on its own sends the admin hunting; keeping the provider's
+// sentence makes the error actionable in Admin → System.
+async function httpDetail(res: Response): Promise<string> {
+  let detail = '';
+  try {
+    const text = await res.text();
+    try {
+      // Gemini wraps the error in an array: `[{"error":{"message":"…"}}]`.
+      // DeepSeek, vLLM and Ollama send the object itself.
+      const parsed = JSON.parse(text) as
+        | { error?: string | { message?: string }; message?: string }
+        | Array<{ error?: string | { message?: string }; message?: string }>;
+      const body = Array.isArray(parsed) ? parsed[0] : parsed;
+      detail = typeof body?.error === 'string' ? body.error : (body?.error?.message ?? body?.message ?? '');
+    } catch {
+      detail = text;
+    }
+  } catch { /* empty or already-consumed body */ }
+  return detail.replace(/\s+/g, ' ').trim().slice(0, 300);
+}
+
+/** `llm_http_404: <why the provider said no>`. */
+async function httpError(res: Response, label = 'llm_http'): Promise<Error> {
+  const detail = await httpDetail(res);
+  return new Error(detail ? `${label}_${res.status}: ${detail}` : `${label}_${res.status}`);
+}
+
 /** List models available on the configured host, normalized across providers.
- *  Ollama exposes its native `/api/tags`; vLLM (`/v1/models`) and DeepSeek
- *  (`/models`) expose the OpenAI-compatible list (one entry per served model). */
+ *  Ollama exposes its native `/api/tags`; vLLM (`/v1/models`), DeepSeek
+ *  (`/models`) and Gemini (`/v1beta/openai/models`) expose the
+ *  OpenAI-compatible list (one entry per served model). */
 export async function testConnection(url: string, provider: LlmProvider = llmProvider()): Promise<{ ok: true; models: LlmModel[] } | { ok: false; error: string }> {
   const base = url.replace(/\/$/, '');
   try {
-    if (provider === 'vllm' || provider === 'deepseek') {
-      if (provider === 'deepseek' && !deepseekApiKey()) return { ok: false, error: 'deepseek_api_key_missing' };
+    if (isOpenAiLike(provider)) {
+      if (provider !== 'vllm' && !llmApiKey(provider)) return { ok: false, error: `${provider}_api_key_missing` };
       const res = await fetch(openAiEndpoint(base, provider, 'models'), {
-        headers: provider === 'deepseek' ? { Authorization: `Bearer ${deepseekApiKey() ?? ''}` } : undefined,
+        headers: provider === 'vllm' ? undefined : { Authorization: `Bearer ${llmApiKey(provider) ?? ''}` },
         signal: AbortSignal.timeout(8000),
       });
-      if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+      if (!res.ok) return { ok: false, error: httpStatus(await httpDetail(res), res.status) };
       const data = (await res.json()) as { data?: { id: string }[] };
-      return { ok: true, models: (data.data ?? []).map((m) => ({ name: m.id, size: 0 })) };
+      return { ok: true, models: (data.data ?? []).map((m) => ({ name: normalizeModelName(provider, m.id), size: 0 })) };
     }
     const res = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+    if (!res.ok) return { ok: false, error: httpStatus(await httpDetail(res), res.status) };
     const data = (await res.json()) as { models?: LlmModel[] };
     return { ok: true, models: data.models ?? [] };
   } catch (err) {
@@ -194,21 +261,23 @@ export async function chatStream(messages: ChatMessage[], onChunk: (text: string
   bumpIdle();
 
   try {
-    if (provider === 'vllm' || provider === 'deepseek') {
+    if (isOpenAiLike(provider)) {
       const body: Record<string, unknown> = {
         model, messages, stream: true,
         temperature: opts.temperature ?? 0.3,
         top_p: opts.topP ?? 0.9,
-        max_tokens: opts.numPredict ?? 220,
+        max_tokens: (opts.numPredict ?? 220) + (provider === 'gemini' ? GEMINI_THINK_HEADROOM : 0),
       };
       if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      if (provider === 'gemini') Object.assign(body, GEMINI_LOW_EFFORT);
       const res = await fetch(openAiEndpoint(url, provider), {
         method: 'POST',
         headers: openAiHeaders(provider),
         body: JSON.stringify(body),
         signal: ac.signal,
       });
-      if (!res.ok || !res.body) throw new Error(`llm_http_${res.status}`);
+      if (!res.ok) throw await httpError(res);
+      if (!res.body) throw new Error('llm_empty_body');
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
@@ -256,7 +325,8 @@ export async function chatStream(messages: ChatMessage[], onChunk: (text: string
         }),
         signal: ac.signal,
       });
-      if (!res.ok || !res.body) throw new Error(`llm_http_${res.status}`);
+      if (!res.ok) throw await httpError(res);
+      if (!res.body) throw new Error('llm_empty_body');
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
@@ -316,21 +386,22 @@ export async function chatJson<T = unknown>(
   const timer = setTimeout(() => ac.abort(new Error('llm_hard_timeout')), timeoutMs);
   try {
     let raw: string;
-    if (provider === 'vllm' || provider === 'deepseek') {
+    if (isOpenAiLike(provider)) {
       const body: Record<string, unknown> = {
         model, messages, stream: false,
         response_format: { type: 'json_object' },
         temperature: opts.temperature ?? 0.2,
-        max_tokens: opts.numPredict ?? 1500,
+        max_tokens: (opts.numPredict ?? 1500) + (provider === 'gemini' ? GEMINI_THINK_HEADROOM : 0),
       };
       if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      if (provider === 'gemini') Object.assign(body, GEMINI_LOW_EFFORT);
       const res = await fetch(openAiEndpoint(url, provider), {
         method: 'POST',
         headers: openAiHeaders(provider),
         body: JSON.stringify(body),
         signal: ac.signal,
       });
-      if (!res.ok) throw new Error(`llm_http_${res.status}`);
+      if (!res.ok) throw await httpError(res);
       const data = await res.json() as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
       if (data.error) throw new Error(`llm_${data.error.message ?? 'error'}`);
       raw = data.choices?.[0]?.message?.content ?? '';
@@ -349,7 +420,7 @@ export async function chatJson<T = unknown>(
         }),
         signal: ac.signal,
       });
-      if (!res.ok) throw new Error(`llm_http_${res.status}`);
+      if (!res.ok) throw await httpError(res);
       const data = await res.json() as { message?: { content?: string }; error?: string };
       if (data.error) throw new Error(`llm_${data.error}`);
       raw = data.message?.content ?? '';
@@ -390,12 +461,17 @@ export async function chatJsonRetry<T = unknown>(
   }
 }
 
+/** `HTTP 404: <why>` — the shape `testModel` reports. */
+function httpStatus(detail: string, status: number): string {
+  return detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`;
+}
+
 // Quick smoke test of a single model — sends a tiny prompt and reports timing.
 export async function testModel(url: string, model: string, timeoutMs = 30_000, provider: LlmProvider = llmProvider()): Promise<{ ok: boolean; latencyMs: number; sample?: string; error?: string }> {
   const base = url.replace(/\/$/, '');
   const start = Date.now();
   try {
-    if (provider === 'vllm' || provider === 'deepseek') {
+    if (isOpenAiLike(provider)) {
       const body: Record<string, unknown> = {
         model,
         messages: [{ role: 'user', content: 'Reply with exactly the word OK and nothing else.' }],
@@ -403,6 +479,7 @@ export async function testModel(url: string, model: string, timeoutMs = 30_000, 
         temperature: 0.1,
       };
       if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      if (provider === 'gemini') Object.assign(body, GEMINI_LOW_EFFORT);
       const res = await fetch(openAiEndpoint(base, provider), {
         method: 'POST',
         headers: openAiHeaders(provider),
@@ -410,7 +487,7 @@ export async function testModel(url: string, model: string, timeoutMs = 30_000, 
         signal: AbortSignal.timeout(timeoutMs),
       });
       const latencyMs = Date.now() - start;
-      if (!res.ok) return { ok: false, latencyMs, error: `HTTP ${res.status}` };
+      if (!res.ok) return { ok: false, latencyMs, error: httpStatus(await httpDetail(res), res.status) };
       const data = await res.json() as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
       if (data.error) return { ok: false, latencyMs, error: data.error.message };
       const sample = (data.choices?.[0]?.message?.content ?? '').trim().slice(0, 80);
@@ -428,7 +505,7 @@ export async function testModel(url: string, model: string, timeoutMs = 30_000, 
       signal: AbortSignal.timeout(timeoutMs),
     });
     const latencyMs = Date.now() - start;
-    if (!res.ok) return { ok: false, latencyMs, error: `HTTP ${res.status}` };
+    if (!res.ok) return { ok: false, latencyMs, error: httpStatus(await httpDetail(res), res.status) };
     const data = await res.json() as { message?: { content?: string }; error?: string };
     if (data.error) return { ok: false, latencyMs, error: data.error };
     const sample = (data.message?.content ?? '').trim().slice(0, 80);

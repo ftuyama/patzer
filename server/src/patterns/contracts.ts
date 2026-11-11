@@ -30,16 +30,45 @@ export interface DiagnosisOverview {
   date_to: string | null;
 }
 
-/** GET /api/diagnosis?games=100 */
+/** One motif's slice of a time class — enough for the coach's cross-mode read. */
+export interface DiagnosisModePattern {
+  key: PatternKey;
+  count: number;
+  games_affected: number;
+  score: number;
+  avg_severity: number;
+}
+
+/**
+ * One time class's slice of the window. Always computed over the whole window,
+ * even when the request filters to a single class, so the page can draw the
+ * tabs and compare blitz against rapid without a second request.
+ */
+export interface DiagnosisModeBreakdown {
+  /** 'bullet' | 'blitz' | 'rapid' | 'daily' | 'other' (games with no class). */
+  time_class: string;
+  games: number;
+  accuracy: number | null;
+  blunders_per_game: number;
+  mistakes_per_game: number;
+  /** Top three by severity × frequency, the same ranking as `patterns`. */
+  top_patterns: DiagnosisModePattern[];
+}
+
+/** GET /api/diagnosis?games=100&time_class=blitz */
 export interface DiagnosisPayload {
   generated_at: string;
-  /** Analysed games inside the selected window. */
+  /** Analysed games inside the selected window (and time class, when filtered). */
   games_analyzed: number;
   /** Every game the user has imported or played. */
   total_games: number;
   /** Games with no analysis, or only an analysis from an old scoring version. */
   pending_games: number;
   window_games: number;
+  /** The applied filter; null means every time class. */
+  time_class: string | null;
+  /** Every time class with analysed games in the window, ordered fastest first. */
+  modes: DiagnosisModeBreakdown[];
   overview: DiagnosisOverview;
   patterns: PatternSummary[];
   weekly: DiagnosisWeeklyBucket[];

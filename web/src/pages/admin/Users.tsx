@@ -48,7 +48,8 @@ export default function AdminUsers() {
       </div>
 
       <div className="card overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[40rem] text-sm">
           <thead className="bg-ink-50 text-xs uppercase tracking-wide text-ink-500 dark:bg-ink-900">
             <tr>
               <th className="px-4 py-2 text-left">{t('admin.colUser')}</th>
@@ -112,6 +113,7 @@ export default function AdminUsers() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <InvitesSection />

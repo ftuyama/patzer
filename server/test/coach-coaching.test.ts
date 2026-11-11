@@ -136,6 +136,7 @@ describe('explainCoaching — the facts behind a blunder', () => {
     expect(c.facts.tone).toBe('correct');
     expect((c.facts.why as string[]).join(' ')).toMatch(/checkmate at once: the queen takes the pawn on f7/);
     expect(c.facts.opponent_reply).toMatch(/queen takes the pawn on f7/);
+    expect(c.facts.opponent_reply_san as string[] | null).toEqual(['Qxf7#']);
   });
 
   it('shows the better move and the alternatives, each with what it achieves', async () => {
@@ -146,6 +147,9 @@ describe('explainCoaching — the facts behind a blunder', () => {
       'the queen from d8 to f6: it stops the checkmate threat',
     ]);
     expect(c.facts.takeaway).toMatch(/every check the opponent could give/);
+    // Same moves in SAN, so the coach can name them the way a player does.
+    expect(c.facts.better_move_san).toBe('g6');
+    expect(c.facts.other_good_moves_san).toEqual(['Qe7', 'Qf6']);
   });
 
   it('connects the move to the player\'s history and the opening trainer', async () => {

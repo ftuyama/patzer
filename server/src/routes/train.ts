@@ -10,13 +10,12 @@
 
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { Chess } from 'chess.js';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
-import { SCORING_VERSION, cpToWinPct, normalizeEval } from '../chess/classifier.js';
-import { createAnalysisEngine } from '../chess/engine.js';
+import { SCORING_VERSION } from '../chess/classifier.js';
 import { dayOf } from '../chess/openingTrainer.js';
 import { afterTry, isDue, isPuzzleMove, positionAfter, puzzleLine, type QueueState } from '../chess/gamePuzzles.js';
+import { reviewTry, uciSchema } from '../chess/moveReview.js';
 import type { AnalyzedMove } from '../types.js';
 
 const router = new Hono();
@@ -141,8 +140,6 @@ router.get('/next', (c) => {
   return c.json({ puzzle: null, due });
 });
 
-const uciSchema = z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i);
-
 // POST /api/train/attempt — the first try at a puzzle: solved or not. The
 // page checks the moves itself (it has the line); a second go the same day is
 // practice and isn't sent.
@@ -188,10 +185,9 @@ router.post('/attempt', async (c) => {
 // POST /api/train/check — is a move that isn't the line's just as good? The
 // engine compares the position after it with the position after the line's
 // move; within ALT_MAX_DROP win-chance points (Patzer calls that "excellent")
-// it counts as solved, so nobody is told a good move is wrong. Your own move
-// from the game never counts.
-const ALT_MAX_DROP = 2;
-const CHECK_DEPTH = 14;
+// it counts as solved, so nobody is told a good move is wrong. Anything worse
+// comes back with its score and classification, for the "not the answer" card.
+// Your own move from the game never counts.
 const checkInflight = new Set<number>();
 
 const checkSchema = z.object({
@@ -218,47 +214,23 @@ router.post('/check', async (c) => {
   if (!fen) return c.json({ error: 'not_found' }, 404);
   const expected = line[step]!;
   if (uci === expected || (expected.length === 5 && uci === expected.slice(0, 4) && expected.endsWith('q'))) return c.json({ ok: true });
-  if (step === 0 && uci === move.uci.toLowerCase()) return c.json({ ok: false });
-
-  const after = (u: string): Chess | null => {
-    const chess = new Chess(fen);
-    try {
-      chess.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.slice(4, 5) || undefined });
-      return chess;
-    } catch {
-      return null;
-    }
-  };
-  const alt = after(uci);
-  const want = after(expected);
-  if (!alt || !want) return c.json({ ok: false });
-  if (alt.isCheckmate()) return c.json({ ok: true });
-  if (want.isCheckmate() || alt.isGameOver()) return c.json({ ok: false });
 
   if (checkInflight.has(me.id)) return c.json({ error: 'already_analyzing' }, 429);
   checkInflight.add(me.id);
-  const engine = createAnalysisEngine();
   try {
-    await engine.start();
-    await engine.setOption('Threads', '2');
-    await engine.setOption('Hash', '64');
-    const mover = new Chess(fen).turn();
-    // Win chance for the side that moved, from the engine's view of the
-    // position after the move (where the other side is to move).
-    const winFor = async (chess: Chess) => {
-      const e = await engine.evaluateMulti(chess.fen(), CHECK_DEPTH, 1);
-      const white = normalizeEval(e.cp, e.mate, chess.turn());
-      return cpToWinPct(mover === 'w' ? white : -white);
-    };
-    const wantWin = await winFor(want);
-    const altWin = await winFor(alt);
-    return c.json({ ok: wantWin - altWin < ALT_MAX_DROP });
+    const review = await reviewTry({ fen, uci, bestUci: expected });
+    if (!review) return c.json({ ok: false });
+    // Your move from the game is never the answer, however well it scores.
+    const played = step === 0 && uci === move.uci.toLowerCase();
+    return c.json({
+      ok: review.ok && !played,
+      ...(review.evaluation ? { evaluation: review.evaluation } : {}),
+    });
   } catch {
     // No engine: the line's move is the only one we can vouch for.
     return c.json({ ok: false, engine: false });
   } finally {
     checkInflight.delete(me.id);
-    await engine.quit().catch(() => {});
   }
 });
 

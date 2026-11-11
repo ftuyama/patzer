@@ -11,10 +11,11 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, BookOpen, Crown, Crosshair,
-  GitFork, Hourglass, Minus, ShieldAlert, Sparkles, Stethoscope, Target, TrendingDown,
+  GitFork, Hourglass, Layers, Minus, ShieldAlert, Sparkles, Stethoscope, Target, TrendingDown,
 } from 'lucide-react';
 import { api } from '../api';
 import AnalyzeAllButton from '../components/AnalyzeAllButton';
+import TimeClassIcon from '../components/TimeClassIcon';
 import { cn } from '../lib/utils';
 
 type PatternKey =
@@ -65,12 +66,31 @@ interface WeeklyBucket {
   top_pattern: string | null;
 }
 
+interface ModePattern {
+  key: PatternKey;
+  count: number;
+  games_affected: number;
+  score: number;
+  avg_severity: number;
+}
+
+interface ModeBreakdown {
+  time_class: string;
+  games: number;
+  accuracy: number | null;
+  blunders_per_game: number;
+  mistakes_per_game: number;
+  top_patterns: ModePattern[];
+}
+
 interface DiagnosisData {
   generated_at: string;
   games_analyzed: number;
   total_games: number;
   pending_games: number;
   window_games: number;
+  time_class: string | null;
+  modes: ModeBreakdown[];
   overview: {
     accuracy: number | null;
     blunders_per_game: number;
@@ -82,6 +102,11 @@ interface DiagnosisData {
   patterns: PatternSummary[];
   weekly: WeeklyBucket[];
 }
+
+/** 'all' plus the four rated classes; 'other' (games with no time class) has
+ *  no tab of its own — those games still count in "all". */
+type ModeFilter = 'all' | 'bullet' | 'blitz' | 'rapid' | 'daily';
+const MODE_FILTERS: ModeFilter[] = ['all', 'bullet', 'blitz', 'rapid', 'daily'];
 
 const META: Record<PatternKey, { icon: React.ElementType; tone: string; bar: string }> = {
   hung_piece: { icon: ShieldAlert, tone: 'text-move-blunder', bar: 'bg-move-blunder' },
@@ -110,9 +135,12 @@ const FIX_DEFAULT: Record<PatternKey, string> = {
 export default function Diagnosis() {
   const { t } = useTranslation();
   const [windowGames, setWindowGames] = useState(100);
+  const [mode, setMode] = useState<ModeFilter>('all');
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['diagnosis', windowGames],
-    queryFn: () => api.get<DiagnosisData>(`/api/diagnosis?games=${windowGames}`),
+    queryKey: ['diagnosis', windowGames, mode],
+    queryFn: () => api.get<DiagnosisData>(
+      `/api/diagnosis?games=${windowGames}${mode === 'all' ? '' : `&time_class=${mode}`}`,
+    ),
   });
 
   if (isLoading) return <Skeleton />;
@@ -124,22 +152,36 @@ export default function Diagnosis() {
     );
   }
   if (!data || data.games_analyzed === 0) {
+    // Games at another speed do not make this tab "not started" — say what the
+    // empty window means and leave the tabs on screen to go back.
+    const hasElsewhere = (data?.modes.length ?? 0) > 0;
     return (
-      <div className="card flex flex-col items-center gap-2 p-10 text-center">
-        <Stethoscope className="h-8 w-8 text-chesscom-400" />
-        <div className="text-base font-semibold">{t('diagnosis.empty', { defaultValue: 'No diagnosis yet' })}</div>
-        <div className="max-w-md text-sm text-chesscom-500">
-          {t('diagnosis.emptyDesc', {
-            defaultValue: 'Analyze at least a few of your games with Stockfish. Your recurring error patterns will appear here, ranked by how much they cost you.',
-          })}
-        </div>
-        {data && data.pending_games > 0 ? (
-          <div className="mt-3">
-            <AnalyzeAllButton pending={data.pending_games} />
+      <div className="space-y-4">
+        {hasElsewhere && <ModeTabs modes={data!.modes} value={mode} onChange={setMode} />}
+        <div className="card flex flex-col items-center gap-2 p-10 text-center">
+          <Stethoscope className="h-8 w-8 text-chesscom-400" />
+          <div className="text-base font-semibold">
+            {hasElsewhere
+              ? t('diagnosis.emptyMode', { defaultValue: 'No analysed games at this speed in this window' })
+              : t('diagnosis.empty', { defaultValue: 'No diagnosis yet' })}
           </div>
-        ) : (
-          <Link to="/review" className="btn-primary mt-2 text-sm">{t('review.title')}</Link>
-        )}
+          <div className="max-w-md text-sm text-chesscom-500">
+            {hasElsewhere
+              ? t('diagnosis.emptyModeDesc', {
+                defaultValue: 'Play or import a few games at this time control, then analyse them — the coach reads each speed on its own.',
+              })
+              : t('diagnosis.emptyDesc', {
+                defaultValue: 'Analyze at least a few of your games with Stockfish. Your recurring error patterns will appear here, ranked by how much they cost you.',
+              })}
+          </div>
+          {data && data.pending_games > 0 ? (
+            <div className="mt-3">
+              <AnalyzeAllButton pending={data.pending_games} />
+            </div>
+          ) : (
+            <Link to="/review" className="btn-primary mt-2 text-sm">{t('review.title')}</Link>
+          )}
+        </div>
       </div>
     );
   }
@@ -176,7 +218,11 @@ export default function Diagnosis() {
         </div>
       </header>
 
+      <ModeTabs modes={data.modes} value={mode} onChange={setMode} />
+
       <Overview data={data} />
+
+      <CoachRead data={data} />
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
@@ -206,6 +252,155 @@ export default function Diagnosis() {
         })}
       </p>
     </div>
+  );
+}
+
+function ModeTabs({ modes, value, onChange }: {
+  modes: ModeBreakdown[];
+  value: ModeFilter;
+  onChange: (next: ModeFilter) => void;
+}) {
+  const { t } = useTranslation();
+  const countFor = (m: ModeFilter) => (m === 'all'
+    ? modes.reduce((n, x) => n + x.games, 0)
+    : modes.find((x) => x.time_class === m)?.games ?? 0);
+  // A class with no analysed games would only ever show an empty page.
+  const available = MODE_FILTERS.filter((m) => m === 'all' || countFor(m) > 0);
+  if (available.length < 2) return null;
+
+  const label = (m: ModeFilter) => (m === 'all'
+    ? t('diagnosis.modes.all', { defaultValue: 'All' })
+    : t(`review.tc.${m}`, { defaultValue: m }));
+
+  return (
+    <div role="tablist" aria-label={t('diagnosis.modes.aria', { defaultValue: 'Filter by time control' })} className="flex flex-wrap gap-1">
+      {available.map((m) => (
+        <button
+          key={m}
+          role="tab"
+          aria-selected={value === m}
+          onClick={() => onChange(m)}
+          className={cn('tab-pill flex items-center gap-1.5', value === m && 'is-active')}
+        >
+          {m === 'all'
+            ? <Layers className="h-3.5 w-3.5 text-chesscom-400" aria-hidden />
+            : <TimeClassIcon timeClass={m} orientation="inline" iconClassName="h-3.5 w-3.5" />}
+          {label(m)}
+          <span className="tabular-nums text-[10px] text-chesscom-400">{countFor(m)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The coach's plain-language read of the selected time class. Everything here
+ * is arithmetic over the payload — the ranking, the cross-mode comparison and
+ * the fix come from the server, so this never invents a chess fact.
+ */
+function CoachRead({ data }: { data: DiagnosisData }) {
+  const { t } = useTranslation();
+  const top = data.patterns[0];
+  const focus = data.patterns.slice(0, 3);
+
+  // Compare only classes with enough games for a per-game rate to mean
+  // something; two games of bullet must not become a headline.
+  const ranked = [...data.modes]
+    .filter((m) => m.games >= 3)
+    .sort((a, b) => b.blunders_per_game - a.blunders_per_game);
+  const worst = ranked[0];
+  const best = ranked[ranked.length - 1];
+  const compare = worst && best && worst.time_class !== best.time_class
+    && worst.blunders_per_game - best.blunders_per_game >= 0.2
+    ? { worst, best }
+    : null;
+
+  const patternName = (key: PatternKey) => t(`diagnosis.patterns.${key}.title`, { defaultValue: key });
+  const fixText = (key: PatternKey) => t(`diagnosis.fixes.${key}`, { defaultValue: FIX_DEFAULT[key] });
+  const scope = data.time_class
+    ? t(`review.tc.${data.time_class}`, { defaultValue: data.time_class })
+    : t('diagnosis.coach.allModes', { defaultValue: 'All time controls' });
+
+  return (
+    <section className="card overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-chesscom-100 px-4 py-3 dark:border-chesscom-700/60">
+        <Stethoscope className="h-4 w-4 text-gold-600" />
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+          {t('diagnosis.coach.title', { defaultValue: "Your coach's read" })}
+        </h2>
+        <span className="ml-auto text-[11px] font-medium text-chesscom-500">
+          {t('diagnosis.coach.scope', {
+            defaultValue: '{{mode}} · {{games}} analysed games',
+            mode: scope,
+            games: data.games_analyzed,
+          })}
+        </span>
+      </div>
+
+      <div className="space-y-3 p-4 text-sm leading-relaxed text-chesscom-700 dark:text-chesscom-200">
+        {top ? (
+          <p>
+            {t('diagnosis.coach.headline', {
+              defaultValue: 'Your most expensive habit here is {{pattern}} — {{count}} times across {{games}} games, worth about {{severity}}% win chance each.',
+              pattern: patternName(top.key),
+              count: top.count,
+              games: data.games_analyzed,
+              severity: top.avg_severity,
+            })}
+          </p>
+        ) : (
+          <p>{t('diagnosis.coach.headlineClean', {
+            defaultValue: 'No costly pattern stands out in this window. Keep playing and analysing — the coach needs a few more games to find a thread.',
+          })}</p>
+        )}
+
+        {compare && (
+          <p className="text-chesscom-600 dark:text-chesscom-300">
+            {t('diagnosis.coach.compare', {
+              defaultValue: 'Speed is where it costs you: {{worst}} loses {{worstValue}} blunders per game, {{best}} {{bestValue}}.',
+              worst: t(`review.tc.${compare.worst.time_class}`, { defaultValue: compare.worst.time_class }),
+              worstValue: compare.worst.blunders_per_game.toFixed(2),
+              best: t(`review.tc.${compare.best.time_class}`, { defaultValue: compare.best.time_class }),
+              bestValue: compare.best.blunders_per_game.toFixed(2),
+            })}
+          </p>
+        )}
+
+        {focus.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-400">
+              {t('diagnosis.coach.focusTitle', { defaultValue: 'Work on these, in order' })}
+            </div>
+            {focus.map((p, i) => (
+              <div key={p.key} className="flex flex-wrap items-start gap-x-2 gap-y-1 rounded-md bg-chesscom-50 px-2.5 py-2 dark:bg-chesscom-900/40">
+                <span className="font-mono text-[11px] font-semibold text-chesscom-400">{i + 1}.</span>
+                <span className="font-semibold text-chesscom-800 dark:text-chesscom-100">{patternName(p.key)}</span>
+                <span className="w-full text-xs text-chesscom-600 dark:text-chesscom-300">{fixText(p.key)}</span>
+                <Link
+                  to={`/train?pattern=${p.key}`}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-gold-700 hover:underline dark:text-gold-500"
+                >
+                  <Target className="h-3 w-3" />
+                  {t('diagnosis.coach.trainThis', { defaultValue: 'Train this' })}
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {top && (
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Link to={`/train?pattern=${top.key}`} className="btn-primary inline-flex items-center gap-1.5 text-sm">
+              <Sparkles className="h-4 w-4" />
+              {t('diagnosis.coach.start', { defaultValue: 'Start with {{pattern}}', pattern: patternName(top.key) })}
+            </Link>
+            <span className="text-[11px] text-chesscom-400">
+              {t('diagnosis.coach.why', { defaultValue: 'Ranked by win chance lost, not just how often it happens.' })}
+            </span>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

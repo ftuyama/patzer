@@ -11,7 +11,7 @@
 import boardMoveUrl from '../assets/sounds/board-move.wav';
 import boardCaptureUrl from '../assets/sounds/board-capture.wav';
 
-type SoundKind = 'move' | 'capture' | 'check' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click';
+type SoundKind = 'move' | 'capture' | 'check' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click' | 'error';
 /** 'classic' = the original bells; 'soft' swaps check and game-end for
  *  marimba-style wooden bars that sit closer to the wood-knock move sounds. */
 export type SoundSet = 'classic' | 'soft';
@@ -383,6 +383,14 @@ function playNow(kind: SoundKind) {
     case 'click':
       // Short, soft UI tick.
       pluck(b, t, { freq: 880, duration: 0.08, gain: 0.08 });
+      break;
+    case 'error':
+      // A wrong move: two soft falling notes (A3 → F3) with a dull thump
+      // underneath. Deliberately not a harsh alarm beep — you'll hear it on
+      // every miss, and it plays over the move you just made.
+      damped(b, t, { freq: 220, freqEnd: 175, duration: 0.17, gain: 0.10, type: 'triangle', wet: 0.22 });
+      damped(b, t + 0.11, { freq: 175, freqEnd: 120, duration: 0.30, gain: 0.11, type: 'triangle', wet: 0.3 });
+      noiseClick(b, t, { duration: 0.05, gain: 0.10, cutoff: 900, highpass: 180, wet: 0.3 });
       break;
   }
 }

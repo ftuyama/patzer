@@ -32,7 +32,8 @@
     "download": "Descargar",
     "saved": "Guardado",
     "email": "Correo electrónico",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "unreviewed": "sin revisar"
   },
   "setup": {
     "title": "Bienvenido a Patzer",
@@ -241,6 +242,8 @@
     },
     "pickMoves": "Mostrar estas jugadas",
     "pickBoth": "ambos bandos",
+    "overview": "Resumen",
+    "report": "Informe",
     "why": {
       "yourMove": "Tu jugada",
       "opponentMove": "Jugada del rival",
@@ -404,6 +407,12 @@
     "ollamaUrl": "URL de Ollama",
     "ollamaModel": "Modelo por defecto",
     "ollamaTest": "Probar conexión",
+    "geminiUrl": "URL de Gemini (opcional)",
+    "geminiModel": "Modelo de Gemini",
+    "geminiKey": "Clave de API de Gemini",
+    "geminiKeyEnv": "La proporciona la variable de entorno GEMINI_API_KEY — este campo se ignora.",
+    "geminiKeySaved": "Hay una clave guardada. Escribe otra para reemplazarla o déjalo en blanco para conservarla.",
+    "geminiKeyHint": "Se guarda en los ajustes de este servidor. Guarda antes de probar. Clave gratuita en aistudio.google.com/apikey.",
     "stockfishConfig": "Stockfish (Motor de ajedrez)",
     "stockfishPath": "Ruta de Stockfish",
     "stockfishPathHelp": "Deja en blanco para autodetectar",
@@ -443,7 +452,14 @@
     "signInSsoHint": "Creada al iniciar sesión con inicio de sesión único",
     "signInPasswordHint": "Creada con nombre de usuario y contraseña",
     "ssoLinked": "vinculada a SSO",
-    "modelMissing": "{{model}} (no está en este servidor)"
+    "modelMissing": "{{model}} (no está en este servidor)",
+    "testCoach": "Probar al entrenador",
+    "testCoachHint": "Ejecuta el entrenador sobre un error de ejemplo con la configuración guardada.",
+    "coachOk": "El entrenador respondió en {{ms}} ms con {{model}}",
+    "coachSource": {
+      "llm_retry": "La primera respuesta contradijo el veredicto del motor, así que se pidió otra vez.",
+      "fallback": "El modelo contradijo al motor dos veces; la respuesta anterior se construyó con los datos del motor."
+    }
   },
   "palette": {
     "switchLanguage": "Cambiar a",
@@ -488,7 +504,7 @@
     "blackToMove": "Juegan las negras",
     "fromYourGame": "De tu partida · {{w}} vs. {{b}}",
     "taskTitle": "Encuentra la jugada que omitiste",
-    "taskBody": "En la partida real jugaste {{played}}. Encuentra una jugada mejor.",
+    "taskBody": "Encuentra una jugada mejor que la que hiciste.",
     "showHint": "Mostrar flecha de pista",
     "hideHint": "Ocultar pista",
     "tryAgain": "Intentar de nuevo",
@@ -496,6 +512,14 @@
     "openInReview": "Abrir esta posición en el análisis completo",
     "correct": "¡Correcto!",
     "wrong": "Casi — el motor prefiere",
+    "wrongTitle": "No es la jugada correcta",
+    "wrongAgain": "El tablero volvió atrás: inténtalo otra vez.",
+    "evalChecking": "El motor está mirando tu jugada…",
+    "evalSide": "Evaluación tras tu jugada, desde tu lado.",
+    "evalLoss": "peor que la mejor jugada.",
+    "bestScore": "mejor jugada",
+    "evalBefore": "Tu evaluación",
+    "evalDropHint": "Evaluación del motor desde tu lado, antes y después de la jugada. Cuanto más baja, peor para ti.",
     "puzzles": {
       "allDone": "Has probado todos los problemas de aquí – ¡impresionante!",
       "daily": {
@@ -507,6 +531,7 @@
     "mine": {
       "review": "Repaso",
       "dueLabel": "Para hoy",
+      "pendingLabel": "Pendientes",
       "moves_one": "La solución tiene {{count}} jugada.",
       "moves_other": "La solución tiene {{count}} jugadas.",
       "yourMove": "Te toca. ¡Encuentra la mejor jugada!",
@@ -516,8 +541,18 @@
       "learned": "Resuelto al primer intento: este problema no volverá.",
       "comesBack": "No al primer intento, así que este problema vuelve mañana.",
       "solution": "Solución:",
+      "solutionScoreHint": "Evaluación del motor con la solución, desde tu lado.",
+      "inGame": "En la partida:",
+      "yourTry": "Tu intento:",
+      "pawns": "peones",
       "playedArrow": "Flecha roja: la jugada que hiciste en la partida ({{played}})",
+      "playedThis": "En la partida jugaste",
       "coachTitle": "Por qué {{best}} es mejor que {{played}}"
+    },
+    "tabs": {
+      "mine": "De tus partidas",
+      "patterns": "Ejercicios por patrón",
+      "puzzles": "Problemas"
     }
   },
   "insights": {
@@ -863,5 +898,34 @@
     "thanks": "¡Gracias por la estrella!",
     "starTitle": "Dale una estrella a Patzer en GitHub — es el único agradecimiento que el proyecto pide",
     "changelogCta": "Patzer es gratuito y lo alojas tú."
+  },
+  "nav": {
+    "menu": "Menú",
+    "groups": {
+      "play": "Jugar",
+      "review": "Revisión",
+      "progress": "Progreso",
+      "train": "Entrenamiento"
+    }
+  },
+  "diagnosis": {
+    "modes": {
+      "all": "Todas",
+      "aria": "Filtrar por ritmo de juego"
+    },
+    "coach": {
+      "title": "La lectura de tu entrenador",
+      "scope": "{{mode}} · {{games}} partidas analizadas",
+      "allModes": "Todos los ritmos",
+      "headline": "Tu hábito más caro aquí es {{pattern}}: {{count}} veces en {{games}} partidas, unos {{severity}}% de probabilidad de victoria cada una.",
+      "headlineClean": "En esta ventana no destaca ningún patrón costoso. Sigue jugando y analizando: el entrenador necesita unas partidas más.",
+      "compare": "La velocidad es lo que te cuesta: en {{worst}} pierdes {{worstValue}} errores graves por partida, en {{best}} {{bestValue}}.",
+      "focusTitle": "A trabajar, por orden",
+      "trainThis": "Entrenar esto",
+      "start": "Empezar con {{pattern}}",
+      "why": "Ordenado por probabilidad de victoria perdida, no solo por frecuencia."
+    },
+    "emptyMode": "Sin partidas analizadas a este ritmo en esta ventana",
+    "emptyModeDesc": "Juega o importa unas partidas con este ritmo y analízalas: el entrenador lee cada ritmo por separado."
   }
 }

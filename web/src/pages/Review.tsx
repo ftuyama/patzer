@@ -101,7 +101,7 @@ export default function Review() {
 
       {/* Filter bar — search + starred-only toggle. */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1">
+        <div className="relative min-w-0 basis-full sm:flex-1 sm:basis-auto">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-chesscom-400" />
           <input
             value={q}
@@ -195,8 +195,8 @@ function GameCard({ g }: { g: GameRow }) {
   const isStarred = !!g.bookmarked;
 
   return (
-    <div className="card-hover group relative flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
-      <Link to={`/review/${g.id}`} className="flex flex-1 items-center gap-3 sm:gap-4">
+    <div className="card-hover group relative flex min-w-0 items-center gap-3 p-3 sm:gap-4 sm:p-4">
+      <Link to={`/review/${g.id}`} className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
         <TimeClassIcon
           timeClass={g.time_class}
           label={g.time_control && g.time_control !== '-' ? fmtTimeControl(g.time_control, t) : undefined}
@@ -210,16 +210,33 @@ function GameCard({ g }: { g: GameRow }) {
             {!g.time_class && <span className="text-xs text-chesscom-400">· {fmtTimeControl(g.time_control, t)}</span>}
             {g.opening_name && <span className="hidden truncate text-xs text-chesscom-400 sm:inline">· {g.opening_name}</span>}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-chesscom-500">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-chesscom-500">
             <span>{new Date(g.end_time).toLocaleDateString()}</span>
             <span>·</span>
             <span>{t(`review.source.${g.source}`, { defaultValue: g.source })}</span>
             {!!g.from_position && <span className="rounded-full bg-chesscom-100 px-2 py-0.5 text-[11px] dark:bg-chesscom-800">{t('review.fromPosition')}</span>}
             {g.notes && <span className="ml-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
+            {/* Phones have no room for a right-hand accuracy column without
+                squeezing the player names, so the numbers ride here instead. */}
+            {g.analyzed ? (
+              <span className="font-mono tabular-nums sm:hidden">
+                <span className={cn(g.user_color === 'white' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500')}>
+                  {fmtAccuracy(g.accuracy_white)}
+                </span>
+                <span className="mx-1 text-chesscom-400">/</span>
+                <span className={cn(g.user_color === 'black' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500')}>
+                  {fmtAccuracy(g.accuracy_black)}
+                </span>
+              </span>
+            ) : (
+              <span className="badge gap-1 bg-chesscom-100 text-chesscom-500 sm:hidden dark:bg-chesscom-700 dark:text-chesscom-300">
+                <BookOpen className="h-3 w-3" /> review
+              </span>
+            )}
           </div>
         </div>
         {g.analyzed ? (
-          <div className="text-right text-xs">
+          <div className="hidden shrink-0 text-right text-xs sm:block">
             <div className="text-[11px] uppercase tracking-wider text-chesscom-400">{t('review.accuracy')}</div>
             {/* Your side is the bold one — the opponent's number is context. */}
             <div className="font-mono text-sm tabular-nums">
@@ -233,7 +250,7 @@ function GameCard({ g }: { g: GameRow }) {
             </div>
           </div>
         ) : (
-          <span className="badge gap-1 bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
+          <span className="badge hidden shrink-0 gap-1 bg-chesscom-100 text-chesscom-500 sm:inline-flex dark:bg-chesscom-700 dark:text-chesscom-300">
             <BookOpen className="h-3 w-3" /> review
           </span>
         )}
@@ -242,10 +259,10 @@ function GameCard({ g }: { g: GameRow }) {
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); star.mutate(!isStarred); }}
         title={isStarred ? 'Unstar' : 'Star'}
         className={cn(
-          'rounded-md p-1.5 transition-colors',
+          'shrink-0 rounded-md p-1.5 transition-colors',
           isStarred
             ? 'text-gold-500 hover:bg-gold-500/15'
-            : 'text-chesscom-300 opacity-0 hover:bg-chesscom-100 hover:text-gold-500 group-hover:opacity-100 dark:hover:bg-chesscom-700',
+            : 'text-chesscom-300 hover:bg-chesscom-100 hover:text-gold-500 dark:hover:bg-chesscom-700 sm:opacity-0 sm:group-hover:opacity-100',
         )}
       >
         <Star className={cn('h-4 w-4', isStarred && 'fill-gold-500')} />

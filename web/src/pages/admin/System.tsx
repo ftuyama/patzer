@@ -4,7 +4,7 @@ import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, 
 import { api } from '../../api';
 
 interface SysSettings {
-  llm_provider?: 'ollama' | 'vllm' | 'deepseek';
+  llm_provider?: 'ollama' | 'vllm' | 'deepseek' | 'gemini';
   ollama_url: string | null;
   ollama_model: string | null;
   vllm_url?: string | null;
@@ -13,6 +13,10 @@ interface SysSettings {
   deepseek_model?: string | null;
   deepseek_key_set?: boolean;
   deepseek_env_override?: boolean;
+  gemini_url?: string | null;
+  gemini_model?: string | null;
+  gemini_key_set?: boolean;
+  gemini_env_override?: boolean;
   stockfish_path: string | null;
   last_model_used?: string | null;
   last_error?: string | null;
@@ -50,6 +54,11 @@ interface MailState {
   smtp_from: string;
 }
 
+interface CoachTestResult {
+  ok: boolean; ms: number; source?: 'llm' | 'llm_retry' | 'fallback';
+  model?: string | null; language?: string; text?: string; error?: string;
+}
+
 export default function AdminSystem() {
   const { t } = useTranslation();
   const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '' });
@@ -62,6 +71,9 @@ export default function AdminSystem() {
   const [hydrated, setHydrated] = useState(false);
   const [allTesting, setAllTesting] = useState(false);
   const [allResults, setAllResults] = useState<Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> | null>(null);
+  // End-to-end coach check: engine facts + prompt + model + contradiction guard.
+  const [coachTesting, setCoachTesting] = useState(false);
+  const [coachTest, setCoachTest] = useState<CoachTestResult | null>(null);
 
   // Signup + email (v7.7.0)
   const [mail, setMail] = useState<MailState>({
@@ -78,21 +90,30 @@ export default function AdminSystem() {
   const [testTo, setTestTo] = useState('');
   const [testStatus, setTestStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [testing, setTesting] = useState(false);
-  // DeepSeek (cloud LLM) — the API key is a secret, handled like the SMTP
-  // password: never returned by the API, only "is one set" + "env override".
+  // DeepSeek / Gemini (cloud LLMs) — the API key is a secret, handled like the
+  // SMTP password: never returned by the API, only "is one set" + "env override".
   const [deepseekKey, setDeepseekKey] = useState('');
   const [deepseekKeySet, setDeepseekKeySet] = useState(false);
   const [deepseekEnvOverride, setDeepseekEnvOverride] = useState(false);
+  const [geminiKey, setGeminiKey] = useState('');
+  const [geminiKeySet, setGeminiKeySet] = useState(false);
+  const [geminiEnvOverride, setGeminiEnvOverride] = useState(false);
 
   function loadSettings() {
     return api.get<SysSettings>('/api/admin/system').then((d) => {
       setS({
-        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : 'ollama',
+        llm_provider: d.llm_provider === 'vllm' ? 'vllm'
+          : d.llm_provider === 'deepseek' ? 'deepseek'
+          : d.llm_provider === 'gemini' ? 'gemini'
+          : 'ollama',
         ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '',
         vllm_url: d.vllm_url ?? '', vllm_model: d.vllm_model ?? '',
         deepseek_url: d.deepseek_url ?? '', deepseek_model: d.deepseek_model ?? '',
         deepseek_key_set: !!d.deepseek_key_set,
         deepseek_env_override: !!d.deepseek_env_override,
+        gemini_url: d.gemini_url ?? '', gemini_model: d.gemini_model ?? '',
+        gemini_key_set: !!d.gemini_key_set,
+        gemini_env_override: !!d.gemini_env_override,
         stockfish_path: d.stockfish_path ?? '',
       });
       setRuntime({
@@ -120,6 +141,9 @@ export default function AdminSystem() {
       setDeepseekKeySet(!!d.deepseek_key_set);
       setDeepseekEnvOverride(!!d.deepseek_env_override);
       setDeepseekKey('');
+      setGeminiKeySet(!!d.gemini_key_set);
+      setGeminiEnvOverride(!!d.gemini_env_override);
+      setGeminiKey('');
       setHydrated(true);
     });
   }
@@ -158,20 +182,54 @@ export default function AdminSystem() {
   }
 
   const provider = s.llm_provider ?? 'ollama';
-  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
-  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
-  // DeepSeek's URL is optional — empty means the official https://api.deepseek.com.
-  const activeUrlForTest = provider === 'deepseek' ? (activeUrl || 'https://api.deepseek.com') : activeUrl;
-  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : 'DeepSeek');
-  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl') : provider === 'deepseek' ? t('admin.deepseekUrl') : t('admin.ollamaUrl');
-  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'deepseek' ? 'https://api.deepseek.com' : 'http://localhost:11434';
-  const modelLabel = provider === 'vllm' ? t('admin.vllmModel') : provider === 'deepseek' ? t('admin.deepseekModel') : t('admin.ollamaModel');
-  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'deepseek' ? 'deepseek-chat' : 'gemma3:27b';
+  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '')
+    : provider === 'deepseek' ? (s.deepseek_url ?? '')
+    : provider === 'gemini' ? (s.gemini_url ?? '')
+    : (s.ollama_url ?? '');
+  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '')
+    : provider === 'deepseek' ? (s.deepseek_model ?? '')
+    : provider === 'gemini' ? (s.gemini_model ?? '')
+    : (s.ollama_model ?? '');
+  // The hosted providers' URLs are optional — empty means their official API.
+  const activeUrlForTest = provider === 'deepseek' ? (activeUrl || 'https://api.deepseek.com')
+    : provider === 'gemini' ? (activeUrl || 'https://generativelanguage.googleapis.com/v1beta/openai')
+    : activeUrl;
+  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : p === 'deepseek' ? 'DeepSeek' : 'Gemini');
+  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl')
+    : provider === 'deepseek' ? t('admin.deepseekUrl')
+    : provider === 'gemini' ? t('admin.geminiUrl')
+    : t('admin.ollamaUrl');
+  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000'
+    : provider === 'deepseek' ? 'https://api.deepseek.com'
+    : provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta/openai'
+    : 'http://localhost:11434';
+  const modelLabel = provider === 'vllm' ? t('admin.vllmModel')
+    : provider === 'deepseek' ? t('admin.deepseekModel')
+    : provider === 'gemini' ? t('admin.geminiModel')
+    : t('admin.ollamaModel');
+  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B'
+    : provider === 'deepseek' ? 'deepseek-chat'
+    : provider === 'gemini' ? 'gemini-flash-lite-latest'
+    : 'gemma3:27b';
+  // The two cloud providers share one form: whichever is selected owns the key
+  // field, so the admin never sees (or edits) the key of a provider they aren't
+  // using.
+  const cloudKey = provider === 'gemini' ? geminiKey : deepseekKey;
+  const setCloudKey = provider === 'gemini' ? setGeminiKey : setDeepseekKey;
+  const cloudKeySet = provider === 'gemini' ? geminiKeySet : deepseekKeySet;
+  const cloudKeyEnv = provider === 'gemini' ? geminiEnvOverride : deepseekEnvOverride;
+  const keyPrefix = provider === 'gemini' ? 'gemini' : 'deepseek';
   function setActiveUrl(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : { ...cur, ollama_url: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v }
+      : provider === 'deepseek' ? { ...cur, deepseek_url: v }
+      : provider === 'gemini' ? { ...cur, gemini_url: v }
+      : { ...cur, ollama_url: v });
   }
   function setActiveModel(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : { ...cur, ollama_model: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v }
+      : provider === 'deepseek' ? { ...cur, deepseek_model: v }
+      : provider === 'gemini' ? { ...cur, gemini_model: v }
+      : { ...cur, ollama_model: v });
   }
 
   useEffect(() => { void loadSettings(); }, []);
@@ -208,6 +266,21 @@ export default function AdminSystem() {
     }
   }
 
+  async function testCoach() {
+    setCoachTesting(true);
+    setCoachTest(null);
+    try {
+      const r = await api.post<CoachTestResult>('/api/admin/test/coach', {});
+      setCoachTest(r);
+      // The runtime panel reports the call the coach actually made.
+      void loadSettings();
+    } catch (err) {
+      setCoachTest({ ok: false, ms: 0, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setCoachTesting(false);
+    }
+  }
+
   async function testStockfish() {
     setStockfishStatus(null);
     const r = await api.post<{ ok: boolean; name?: string; error?: string }>('/api/admin/test/stockfish', { path: s.stockfish_path });
@@ -220,8 +293,10 @@ export default function AdminSystem() {
       // Only send the API key when the admin typed a new one — empty leaves the
       // stored secret untouched (same contract as the SMTP password).
       ...(deepseekKey ? { deepseek_api_key: deepseekKey } : {}),
+      ...(geminiKey ? { gemini_api_key: geminiKey } : {}),
     });
     if (deepseekKey) { setDeepseekKeySet(true); setDeepseekKey(''); }
+    if (geminiKey) { setGeminiKeySet(true); setGeminiKey(''); }
     // This is the button people reach for. It used to save only the coach and
     // engine fields, so a changed signup mode was silently lost unless "Save
     // email settings" further down was clicked instead.
@@ -260,7 +335,7 @@ export default function AdminSystem() {
         </div>
         <div className="space-y-4 p-5">
           <div className="inline-flex rounded-xl border border-ink-200 p-1 dark:border-ink-700">
-            {(['ollama', 'vllm', 'deepseek'] as const).map((p) => (
+            {(['ollama', 'vllm', 'deepseek', 'gemini'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setS({ ...s, llm_provider: p })}
@@ -288,17 +363,17 @@ export default function AdminSystem() {
             )}
             {ollamaStatus?.hint && <p className="mt-1 text-xs text-ink-500">{t(`setup.llmHint.${ollamaStatus.hint}`)}</p>}
           </div>
-          {provider === 'deepseek' && (
+          {(provider === 'deepseek' || provider === 'gemini') && (
             <div>
-              <label className="label mb-1 block">{t('admin.deepseekKey')}</label>
-              <input className="input" type="password" autoComplete="new-password" value={deepseekKey}
-                onChange={(e) => setDeepseekKey(e.target.value)} placeholder={deepseekKeySet ? '••••••••' : 'sk-…'} />
-              {deepseekEnvOverride ? (
-                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><AlertCircle className="h-3.5 w-3.5" /> {t('admin.deepseekKeyEnv')}</p>
-              ) : deepseekKeySet && !deepseekKey ? (
-                <p className="mt-1 text-xs text-ink-400">{t('admin.deepseekKeySaved')}</p>
+              <label className="label mb-1 block">{t(`admin.${keyPrefix}Key`)}</label>
+              <input className="input" type="password" autoComplete="new-password" value={cloudKey}
+                onChange={(e) => setCloudKey(e.target.value)} placeholder={cloudKeySet ? '••••••••' : 'sk-…'} />
+              {cloudKeyEnv ? (
+                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><AlertCircle className="h-3.5 w-3.5" /> {t(`admin.${keyPrefix}KeyEnv`)}</p>
+              ) : cloudKeySet && !cloudKey ? (
+                <p className="mt-1 text-xs text-ink-400">{t(`admin.${keyPrefix}KeySaved`)}</p>
               ) : (
-                <p className="mt-1 text-xs text-ink-400">{t('admin.deepseekKeyHint')}</p>
+                <p className="mt-1 text-xs text-ink-400">{t(`admin.${keyPrefix}KeyHint`)}</p>
               )}
             </div>
           )}
@@ -378,6 +453,34 @@ export default function AdminSystem() {
               </div>
             </div>
           )}
+          {/* A save-then-test order matters: this runs whatever is *stored*, so
+              the hint says so instead of silently testing a stale model. */}
+          <div className="rounded-xl border border-ink-200 p-3 dark:border-ink-700">
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={() => void testCoach()} disabled={coachTesting} className="btn-secondary text-xs">
+                {coachTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {t('admin.testCoach')}
+              </button>
+              <span className="text-xs text-ink-400">{t('admin.testCoachHint')}</span>
+            </div>
+            {coachTest && (coachTest.ok ? (
+              <div className="mt-2 space-y-1 text-xs">
+                <div className="flex flex-wrap items-center gap-1 text-accent-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {t('admin.coachOk', { ms: coachTest.ms, model: coachTest.model ?? '—' })}
+                </div>
+                <p className="whitespace-pre-wrap text-ink-700 dark:text-ink-200">{coachTest.text}</p>
+                {coachTest.source && coachTest.source !== 'llm' && (
+                  <p className="text-ink-400">{t(`admin.coachSource.${coachTest.source}`)}</p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2 flex items-start gap-1 text-xs text-bad">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span className="break-all font-mono">{coachTest.error ?? t('admin.failed')}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

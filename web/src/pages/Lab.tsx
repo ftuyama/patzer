@@ -11,10 +11,12 @@ import {
   Microscope, RotateCcw, FlipVertical2, Wand2, Loader2, Swords,
 } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import EvalBar from '../components/EvalBar';
 import ThreatPanel from '../components/ThreatPanel';
 import ExplorerPanel from '../components/ExplorerPanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
+import { usePositionEval } from '../lib/usePositionEval';
 import { parseFromPosition, playFromPosition, playFromUrl } from '../lib/fromPosition';
 
 interface AnalyzeLine {
@@ -69,6 +71,8 @@ export default function Lab() {
 
   const fen = chessRef.current.fen();
   const turn = chessRef.current.turn() === 'w' ? 'white' : 'black';
+  // The bar scores every position the board lands on, in the background.
+  const evalWhite = usePositionEval(fen);
 
   // "Play from here": you play the side at the bottom of the board (the Play
   // page lets you switch). A game from a position starts with white to move
@@ -187,16 +191,21 @@ export default function Lab() {
         {/* Board pane */}
         <section className="space-y-3">
           <div className={`mx-auto w-full max-w-[640px] board-theme-${user?.profile.board_theme ?? 'green'}`}>
-            <ChessBoard
-              key={tick === 0 ? 'init' : 'live'}
-              fen={fen}
-              orientation={orientation}
-              turnColor={turn}
-              movable
-              onMove={onMove}
-              arrows={arrows as never}
-              resetKey={tick}
-            />
+            <div className="flex items-stretch gap-2">
+              <EvalBar cp={evalWhite?.cp ?? null} mate={evalWhite?.mate ?? null} orientation={orientation} />
+              <div className="min-w-0 flex-1">
+                <ChessBoard
+                  key={tick === 0 ? 'init' : 'live'}
+                  fen={fen}
+                  orientation={orientation}
+                  turnColor={turn}
+                  movable
+                  onMove={onMove}
+                  arrows={arrows as never}
+                  resetKey={tick}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="card space-y-2 p-3">

@@ -8,6 +8,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Allow dev-server access through ngrok tunnels (e.g. `ngrok http 5173`).
+    allowedHosts: ['.ngrok-free.dev'],
     proxy: {
       '/api': { target: SERVER_TARGET, changeOrigin: true },
       '/ws':  { target: SERVER_TARGET, ws: true, changeOrigin: true },

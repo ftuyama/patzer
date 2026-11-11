@@ -139,7 +139,9 @@ describe('/api/train', () => {
   it('accepts the line, never your own game move', async () => {
     expect(await call('/check', { game_id: 1, ply: 1, step: 0, uci: 'd2d8' })).toEqual({ ok: true });
     expect(await call('/check', { game_id: 1, ply: 1, step: 2, uci: 'd1d8' })).toEqual({ ok: true });
-    expect(await call('/check', { game_id: 1, ply: 1, step: 0, uci: 'd2d3' })).toEqual({ ok: false });
+    // A wrong try also comes back with its score and classification when the
+    // engine is there; the move is still never the answer.
+    expect(await call('/check', { game_id: 1, ply: 1, step: 0, uci: 'd2d3' })).toMatchObject({ ok: false });
     expect(await call('/check', { game_id: 1, ply: 1, step: 0, uci: 'a1a8' })).toEqual({ ok: false });
     expect((await call<{ error: string }>('/check', { game_id: 1, ply: 1, step: 1, uci: 'f6d8' })).error).toBe('invalid_input');
   });

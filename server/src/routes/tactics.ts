@@ -2,18 +2,21 @@
 //
 //   GET  /api/tactics/next?theme=fork   the next puzzle for you (or null)
 //   POST /api/tactics/attempt           { id, solved } — your first try rates
+//   POST /api/tactics/eval              { fen, uci, best } — what a wrong try was worth
 //   GET  /api/tactics/stats             your puzzle rating and counts
 //   GET  /api/tactics/daily?today=      the puzzle of the day, done or not, your streak
 //
 // The page checks your moves itself (it has the solution, like the Learn
-// section); the server only keeps what has to outlive the page: which puzzles
-// you tried, and your rating.
+// section); the server only keeps what has to outlive the page — which puzzles
+// you tried and your rating — and scores the moves you got wrong, so the card
+// can say how bad the try was instead of just "no".
 
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requireAuth } from '../auth/middleware.js';
 import { THEME_FILTERS, dailyDone, dailyPuzzle, dailyStreak, nextPuzzle, recordAttempt, statsOf } from '../chess/tactics.js';
 import { dayOf } from '../chess/openingTrainer.js';
+import { reviewTry, uciSchema } from '../chess/moveReview.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -51,6 +54,37 @@ router.get('/daily', (c) => {
   const me = c.get('user');
   const day = dayOf(c.req.query('today') ?? null);
   return c.json({ day, puzzle: dailyPuzzle(me.id, day), done: dailyDone(me.id, day), streak: dailyStreak(me.id, day) });
+});
+
+const evalSchema = z.object({
+  fen: z.string().min(1).max(120),
+  uci: uciSchema,
+  best: uciSchema,
+});
+
+const evalInflight = new Set<number>();
+
+// POST /api/tactics/eval — score a wrong try against the puzzle's move, for the
+// "not the best move" card (see chess/moveReview.ts).
+router.post('/eval', async (c) => {
+  const me = c.get('user');
+  const parsed = evalSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  if (evalInflight.has(me.id)) return c.json({ error: 'already_analyzing' }, 429);
+  evalInflight.add(me.id);
+  try {
+    const review = await reviewTry({
+      fen: parsed.data.fen,
+      uci: parsed.data.uci.toLowerCase(),
+      bestUci: parsed.data.best.toLowerCase(),
+    });
+    if (!review) return c.json({ error: 'invalid_move' }, 400);
+    return c.json(review);
+  } catch {
+    return c.json({ error: 'engine_unavailable' }, 503);
+  } finally {
+    evalInflight.delete(me.id);
+  }
 });
 
 router.get('/stats', (c) => {

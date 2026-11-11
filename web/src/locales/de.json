@@ -35,7 +35,8 @@
     "close": "Schließen",
     "viewChangelog": "Änderungsprotokoll anzeigen",
     "beta": "Beta",
-    "betaHint": "Wird noch verfeinert — Rückmeldungen sind willkommen."
+    "betaHint": "Wird noch verfeinert — Rückmeldungen sind willkommen.",
+    "unreviewed": "nicht analysiert"
   },
   "setup": {
     "title": "Willkommen bei Patzer",
@@ -239,6 +240,8 @@
     "generating": "KI-Bericht wird geschrieben…",
     "runEngine": "Engine-Analyse starten",
     "gameReport": "KI-Bericht",
+    "overview": "Übersicht",
+    "report": "Bericht",
     "keyMoments": "Schlüsselmomente",
     "coachIdleHint": "Wähle einen Zug aus, um zu hören, was der Coach dazu sagt.",
     "source": {
@@ -575,6 +578,13 @@
     "noCoachCall": "— noch keine Coach-Anfrage —",
     "coachCalls": "Coach-Anfragen",
     "lastError": "Letzter Fehler",
+    "testCoach": "Trainer testen",
+    "testCoachHint": "Führt den Trainer mit den gespeicherten Einstellungen an einem Beispielpatzer aus.",
+    "coachOk": "Der Trainer antwortete in {{ms}} ms mit {{model}}",
+    "coachSource": {
+      "llm_retry": "Die erste Antwort widersprach dem Engine-Urteil, deshalb wurde erneut gefragt.",
+      "fallback": "Das Modell widersprach der Engine zweimal; die Antwort oben wurde aus den Engine-Fakten gebaut."
+    },
     "stockfishDesc": "Native Schach-Engine für Analysen und Bot-Partien.",
     "autoDetect": "(automatisch erkennen)",
     "colUser": "Benutzer",
@@ -588,6 +598,12 @@
     "deepseekKeyEnv": "Kommt aus der Umgebungsvariable DEEPSEEK_API_KEY — dieses Feld wird ignoriert.",
     "deepseekKeySaved": "Ein Schlüssel ist gespeichert. Gib einen neuen ein, um ihn zu ersetzen, oder lass das Feld leer, um ihn zu behalten.",
     "deepseekKeyHint": "Wird in den Einstellungen dieses Servers gespeichert. Vor „Testen“ zuerst speichern.",
+    "geminiUrl": "Gemini-URL (optional)",
+    "geminiModel": "Gemini-Modell",
+    "geminiKey": "Gemini-API-Schlüssel",
+    "geminiKeyEnv": "Wird von der Umgebungsvariable GEMINI_API_KEY gesetzt — dieses Feld wird ignoriert.",
+    "geminiKeySaved": "Ein Schlüssel ist gespeichert. Gib einen neuen ein, um ihn zu ersetzen, oder lasse das Feld leer.",
+    "geminiKeyHint": "Wird in den Einstellungen dieses Servers gespeichert. Vor „Testen“ zuerst speichern. Ein kostenloser Schlüssel liegt auf aistudio.google.com/apikey.",
     "engineBackendNote": "Die Partieanalyse nutzt standardmäßig das mitgelieferte lokale Stockfish. Für die gehostete Engine von chess-api.com setze stattdessen <code>ENGINE_BACKEND=chessapi</code> (Umgebungsvariable) oder die Einstellung <code>engine_backend</code> — z. B. für eine öffentliche Test-Instanz (DEMO_MODE, #27).",
     "colSignIn": "Anmeldung",
     "signInSso": "SSO",
@@ -646,7 +662,7 @@
     "blackToMove": "Schwarz am Zug",
     "fromYourGame": "Aus deiner Partie · {{w}} gegen {{b}}",
     "taskTitle": "Finde den Zug, den du verpasst hast",
-    "taskBody": "In der Partie hast du {{played}} gespielt. Finde einen stärkeren Zug.",
+    "taskBody": "Finde einen stärkeren Zug als den, den du gespielt hast.",
     "showHint": "Tipp-Pfeil zeigen",
     "hideHint": "Tipp ausblenden",
     "tryAgain": "Nochmal versuchen",
@@ -654,9 +670,18 @@
     "openInReview": "Diese Stellung in der vollen Analyse öffnen",
     "correct": "Richtig!",
     "wrong": "Nicht ganz — die Engine bevorzugt",
+    "wrongTitle": "Nicht der richtige Zug",
+    "wrongAgain": "Das Brett ist zurückgesprungen — versuch es noch einmal.",
+    "evalChecking": "Die Engine prüft deinen Zug …",
+    "evalSide": "Bewertung nach deinem Zug, aus deiner Sicht.",
+    "evalLoss": "schlechter als der beste Zug.",
+    "bestScore": "bester Zug",
+    "evalBefore": "Deine Bewertung",
+    "evalDropHint": "Engine-Bewertung aus deiner Sicht, vor und nach dem Zug. Niedriger ist schlechter für dich.",
     "mine": {
       "review": "Wiederholung",
       "dueLabel": "Fällig",
+      "pendingLabel": "Ausstehend",
       "moves_one": "Die Lösung hat {{count}} Zug.",
       "moves_other": "Die Lösung hat {{count}} Züge.",
       "yourMove": "Du bist am Zug. Finde den besten Zug!",
@@ -666,12 +691,18 @@
       "learned": "Im ersten Versuch gelöst – diese Aufgabe kommt nicht wieder.",
       "comesBack": "Nicht im ersten Versuch – deshalb kommt diese Aufgabe morgen noch einmal.",
       "solution": "Lösung:",
+      "solutionScoreHint": "Bewertung mit der Lösung, aus deiner Sicht.",
+      "inGame": "In der Partie:",
+      "yourTry": "Dein Versuch:",
+      "pawns": "Bauern",
       "playedArrow": "Roter Pfeil: dein Zug in der Partie ({{played}})",
+      "playedThis": "In der Partie spieltest du",
       "coachTitle": "Warum {{best}} besser ist als {{played}}"
     },
     "tabs": {
       "mine": "Aus deinen Partien",
-      "puzzles": "Taktikaufgaben"
+      "puzzles": "Taktikaufgaben",
+      "patterns": "Muster-Training"
     },
     "puzzles": {
       "intro": "Taktikaufgaben aus der Lichess-Puzzle-Datenbank, passend zu deiner Puzzle-Wertung ausgesucht. Der erste Versuch zählt: Löst du sie, steigt deine Wertung.",
@@ -1505,5 +1536,34 @@
       "accuracy": "Durchschnittliche Zuggenauigkeit der analysierten Partien dieser Woche.",
       "errors": "Schweregradgewichtete Fehler pro Partie: ein grober Fehler wiegt mehr als mehrere Ungenauigkeiten."
     }
+  },
+  "nav": {
+    "menu": "Menü",
+    "groups": {
+      "play": "Spielen",
+      "review": "Analyse",
+      "progress": "Fortschritt",
+      "train": "Training"
+    }
+  },
+  "diagnosis": {
+    "modes": {
+      "all": "Alle",
+      "aria": "Nach Bedenkzeit filtern"
+    },
+    "coach": {
+      "title": "Einschaetzung deines Trainers",
+      "scope": "{{mode}} · {{games}} analysierte Partien",
+      "allModes": "Alle Bedenkzeiten",
+      "headline": "Deine teuerste Angewohnheit hier ist {{pattern}} — {{count}} Mal in {{games}} Partien, jeweils etwa {{severity}}% Gewinnchance.",
+      "headlineClean": "In diesem Fenster sticht kein teures Muster heraus. Spiel und analysiere weiter — der Trainer braucht noch ein paar Partien.",
+      "compare": "Die Geschwindigkeit kostet dich: In {{worst}} verlierst du {{worstValue}} Patzer pro Partie, in {{best}} {{bestValue}}.",
+      "focusTitle": "Daran arbeiten, in dieser Reihenfolge",
+      "trainThis": "Das üben",
+      "start": "Mit {{pattern}} anfangen",
+      "why": "Sortiert nach verlorener Gewinnchance, nicht nur nach Häufigkeit."
+    },
+    "emptyMode": "Keine analysierten Partien dieser Bedenkzeit in diesem Fenster",
+    "emptyModeDesc": "Spiel oder importiere ein paar Partien mit dieser Bedenkzeit und analysiere sie — der Trainer liest jede Bedenkzeit für sich."
   }
 }

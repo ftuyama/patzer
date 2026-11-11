@@ -24,6 +24,83 @@ interface LayoutProps {
   onOpenShortcuts?: () => void;
 }
 
+interface NavEntry {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+}
+
+interface NavGroupDef {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+  items: NavEntry[];
+}
+
+// `/review/123` is still "Review"; `/players/7` is still "Players". Kept in one
+// place so the desktop group underline and the mobile drawer agree.
+function isPathActive(pathname: string, to: string): boolean {
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+// Twelve flat pills stopped fitting a laptop with labels showing, and the
+// fallback (icons + tooltips) hid every destination behind a hover. Grouping
+// related pages keeps the labels readable and the bar self-explanatory.
+function NavGroup({ group, open, compact, onToggle }: {
+  group: NavGroupDef;
+  open: boolean;
+  compact: boolean;
+  onToggle: () => void;
+}) {
+  const { pathname } = useLocation();
+  const active = group.items.some((item) => isPathActive(pathname, item.to));
+  const Icon = group.icon;
+  return (
+    <div className="relative shrink-0" data-nav-menu>
+      <button
+        type="button"
+        onClick={onToggle}
+        title={group.label}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={cn(
+          'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors 2xl:px-3',
+          active ? 'text-white' : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
+          open && 'bg-chesscom-800 text-white',
+          active && 'after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold-500',
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className={compact ? 'hidden' : 'inline'}>{group.label}</span>
+        <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full mt-1 min-w-52 rounded-lg border border-chesscom-700 bg-chesscom-900 p-1 shadow-lg"
+        >
+          {group.items.map(({ to, icon: ItemIcon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              role="menuitem"
+              className={({ isActive }) => cn(
+                'flex items-center gap-2 rounded-md px-3 py-2 text-sm',
+                isActive
+                  ? 'bg-chesscom-800 text-white'
+                  : 'text-chesscom-200 hover:bg-chesscom-800 hover:text-white',
+              )}
+            >
+              <ItemIcon className="h-4 w-4" />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
   const { t, i18n } = useTranslation();
   const { user, refresh } = useAuth();
@@ -33,8 +110,17 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  // One open menu at a time: a second group (or Admin) replaces the first
+  // rather than stacking panels under the bar.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [showChangelog, setShowChangelog] = useState(false);
   const [version, setVersion] = useState<string>('');
+  // Mobile-first chrome: the top bar is 56px of permanently-pinned real estate
+  // on a phone. Collapse it after a few idle seconds and whenever the page is
+  // scrolled down; scrolling back up (the natural "where am I?" gesture)
+  // brings it right back. Desktop keeps the bar pinned.
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const navOpenRef = useRef(false);
 
   useEffect(() => {
     api.get<{ version: string }>('/api/meta')
@@ -42,11 +128,107 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
       .catch(() => setVersion(''));
   }, []);
 
-  // Auto-close mobile drawer and the admin menu on route change
+  // Auto-close mobile drawer and the admin menu on route change. A new page
+  // starts with the navigation available.
   useEffect(() => {
     setNavOpen(false);
     setAdminOpen(false);
+    setOpenGroup(null);
+    setHeaderHidden(false);
   }, [location.pathname]);
+
+  // A nav dropdown is not a modal, but it must not stay open under a click
+  // somewhere else on the page — the next click should do what it looks like.
+  useEffect(() => {
+    if (!openGroup) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest?.('[data-nav-menu]')) setOpenGroup(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenGroup(null);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [openGroup]);
+
+  useEffect(() => {
+    navOpenRef.current = navOpen;
+    if (navOpen) setHeaderHidden(false);
+  }, [navOpen]);
+
+  useEffect(() => {
+    const mobile = window.matchMedia('(max-width: 767px)');
+    const IDLE_MS = 4000;
+    const SCROLL_SLOP = 8;
+    let idleTimer: number | undefined;
+    let lastY = window.scrollY;
+    let hidden = false;
+
+    const setHidden = (next: boolean) => {
+      if (next === hidden) return;
+      hidden = next;
+      setHeaderHidden(next);
+    };
+
+    const armIdle = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        if (mobile.matches && !navOpenRef.current) setHidden(true);
+      }, IDLE_MS);
+    };
+    const disarmIdle = () => window.clearTimeout(idleTimer);
+
+    const show = (arm: boolean) => {
+      setHidden(false);
+      if (arm) armIdle(); else disarmIdle();
+    };
+
+    const onScroll = () => {
+      if (!mobile.matches) return;
+      const y = window.scrollY;
+      if (y <= 24) {
+        show(true);
+      } else if (y > lastY + SCROLL_SLOP) {
+        // Reading downwards: get the bar out of the way.
+        if (!navOpenRef.current) { setHidden(true); disarmIdle(); }
+      } else if (y < lastY - SCROLL_SLOP) {
+        // Scrolling back up means "I want the controls"; stay visible while
+        // the thumb keeps moving and re-arm idle once it stops.
+        show(true);
+      }
+      lastY = y;
+    };
+
+    const onMediaChange = () => {
+      show(true);
+    };
+
+    // Any interaction buys another idle window; without this the bar would
+    // collapse mid-typing, shifting the form under the user's finger.
+    const onActivity = () => {
+      if (mobile.matches && !hidden && !navOpenRef.current) armIdle();
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointerdown', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity);
+    mobile.addEventListener('change', onMediaChange);
+    if (mobile.matches) armIdle();
+    else disarmIdle();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointerdown', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      mobile.removeEventListener('change', onMediaChange);
+      disarmIdle();
+    };
+  }, []);
 
   async function logout() {
     if (await endSession()) return;
@@ -86,6 +268,52 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
     return () => ro.disconnect();
   }, [compactNav, user?.role, i18n.language]);
   const navLabelClass = compactNav ? 'hidden' : 'inline';
+
+  // The bar's information architecture. Play is a group rather than a lone
+  // pill because its sibling (Players) is the other half of the live loop;
+  // Review owns the analysis tools, Progress the numbers about you, and Train
+  // everything you practise away from the board.
+  const navGroups: NavGroupDef[] = [
+    {
+      id: 'play',
+      icon: Swords,
+      label: t('nav.groups.play', { defaultValue: 'Play' }),
+      items: [
+        { to: '/play', icon: Swords, label: t('home.playTitle') },
+        { to: '/players', icon: Users, label: t('players.nav', { defaultValue: 'Players' }) },
+      ],
+    },
+    {
+      id: 'review',
+      icon: BookOpen,
+      label: t('nav.groups.review', { defaultValue: 'Review' }),
+      items: [
+        { to: '/review', icon: BookOpen, label: t('home.reviewTitle') },
+        { to: '/diagnosis', icon: Stethoscope, label: t('diagnosis.title', { defaultValue: 'Diagnosis' }) },
+        { to: '/lab', icon: Microscope, label: t('lab.nav', { defaultValue: 'Lab' }) },
+      ],
+    },
+    {
+      id: 'progress',
+      icon: LineChart,
+      label: t('nav.groups.progress', { defaultValue: 'Progress' }),
+      items: [
+        { to: '/progress', icon: LineChart, label: t('progress.nav', { defaultValue: 'Progress' }) },
+        { to: '/insights', icon: BarChart3, label: t('insights.title', { defaultValue: 'Insights' }) },
+        { to: '/plan', icon: ListChecks, label: t('plan.nav', { defaultValue: 'Plan' }) },
+      ],
+    },
+    {
+      id: 'train',
+      icon: Target,
+      label: t('nav.groups.train', { defaultValue: 'Train' }),
+      items: [
+        { to: '/train', icon: Target, label: t('train.nav', { defaultValue: 'Train' }) },
+        { to: '/openings', icon: BookMarked, label: t('openings.nav', { defaultValue: 'Openings' }) },
+        { to: '/learn', icon: GraduationCap, label: t('learn.nav') },
+      ],
+    },
+  ];
 
   function NavPill({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
     return (
@@ -132,9 +360,18 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   return (
     <div className="flex min-h-screen flex-col bg-panel dark:bg-chesscom-950">
       <UpdateNotice />
-      {/* Top bar — dark sage, horizontal nav. */}
-      <header className="sticky top-0 z-30 bg-chesscom-900 text-white shadow-soft">
-        <div className="mx-auto flex h-14 max-w-[1920px] items-center gap-2 px-3 sm:px-6">
+      {/* Top bar — dark sage, horizontal nav. On phones it collapses to zero
+          height (instead of just sliding away) so no dead gap is left above
+          the page content. */}
+      <header
+        className={cn(
+          'sticky top-0 z-30 bg-chesscom-900 text-white transition-[height] duration-300 ease-out',
+          // `overflow-hidden` only while collapsed: desktop's admin dropdown
+          // hangs below the bar and must stay visible otherwise.
+          headerHidden ? 'h-0 overflow-hidden shadow-none' : 'h-14 shadow-soft',
+        )}
+      >
+        <div className={cn('mx-auto flex h-14 max-w-[1920px] items-center gap-2 px-3 transition-transform duration-300 ease-out sm:px-6', headerHidden && '-translate-y-full')}>
           <NavLink to="/" className="flex shrink-0 items-center gap-2">
             <LogoMark size={28} />
             <span className="hidden text-base font-bold tracking-tight sm:inline">{t('app.name')}</span>
@@ -143,24 +380,28 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
           {/* Desktop nav */}
           <nav ref={navRef} data-compact={compactNav ? '1' : '0'} className="ml-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
             <NavPill to="/" icon={Home} label={t('app.home')} />
-            <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
-            <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
-            <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
-            <NavPill to="/diagnosis" icon={Stethoscope} label={t('diagnosis.title', { defaultValue: 'Diagnosis' })} />
-            <NavPill to="/progress" icon={LineChart} label={t('progress.nav', { defaultValue: 'Progress' })} />
-            <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
-            <NavPill to="/learn" icon={GraduationCap} label={t('learn.nav')} />
-            <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
-            <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
-            <NavPill to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
-            <NavPill to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
+            {navGroups.map((group) => (
+              <NavGroup
+                key={group.id}
+                group={group}
+                compact={compactNav}
+                open={openGroup === group.id}
+                onToggle={() => {
+                  setAdminOpen(false);
+                  setOpenGroup((current) => (current === group.id ? null : group.id));
+                }}
+              />
+            ))}
             {user?.role === 'admin' && (
               <>
                 <span className="mx-2 h-5 w-px bg-chesscom-700" />
-                <div className="relative shrink-0">
+                <div className="relative shrink-0" data-nav-menu>
                   <button
                     type="button"
-                    onClick={() => setAdminOpen((open) => !open)}
+                    onClick={() => {
+                      setOpenGroup(null);
+                      setAdminOpen((open) => !open);
+                    }}
                     title={t('common.admin', { defaultValue: 'Admin' })}
                     aria-expanded={adminOpen}
                     aria-haspopup="menu"
@@ -280,6 +521,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             {/* Mobile menu button */}
             <button
               onClick={() => setNavOpen(true)}
+              aria-label={t('nav.menu', { defaultValue: 'Menu' })}
+              title={t('nav.menu', { defaultValue: 'Menu' })}
               className="rounded-lg p-2 text-chesscom-200 hover:bg-chesscom-800 md:hidden"
             >
               <Menu className="h-5 w-5" />
@@ -313,18 +556,21 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             )}
             <nav className="space-y-1">
               <MobileNavItem to="/" icon={Home} label={t('app.home')} />
-              <MobileNavItem to="/play" icon={Swords} label={t('home.playTitle')} />
-              <MobileNavItem to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
-              <MobileNavItem to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
-              <MobileNavItem to="/diagnosis" icon={Stethoscope} label={t('diagnosis.title', { defaultValue: 'Diagnosis' })} />
-              <MobileNavItem to="/progress" icon={LineChart} label={t('progress.nav', { defaultValue: 'Progress' })} />
-              <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
-              <MobileNavItem to="/learn" icon={GraduationCap} label={t('learn.nav')} />
-              <MobileNavItem to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
-              <MobileNavItem to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
-              <MobileNavItem to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
-              <MobileNavItem to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
-              <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
+              {navGroups.map((group) => (
+                <div key={group.id}>
+                  <div className="px-3 pb-1 pt-3 text-[11px] uppercase tracking-wide text-chesscom-400">
+                    {group.label}
+                  </div>
+                  <div className="space-y-1">
+                    {group.items.map((item) => (
+                      <MobileNavItem key={item.to} {...item} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="pt-3">
+                <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
+              </div>
               {user?.role === 'admin' && (
                 <>
                   <div className="px-3 pt-4 pb-1 text-[11px] uppercase tracking-wide text-chesscom-400">{t('common.admin')}</div>

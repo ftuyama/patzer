@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coachRequest, playedMoveArrow, type GamePuzzle } from './gamePuzzle';
+import { coachRequest, playedMoveArrow, solutionScore, type GamePuzzle } from './gamePuzzle';
 
 // Black to move in your game: you played Qd6, the engine wanted Qxd2+.
 const puzzle: GamePuzzle = {
@@ -16,6 +16,18 @@ describe('the move you played, on the board', () => {
 
   it('is gone once the board shows anything else', () => {
     expect(playedMoveArrow(puzzle, false)).toBeNull();
+  });
+});
+
+describe('what the solution was worth', () => {
+  it('is the puzzle eval from your side', () => {
+    // −3.0 for White is +3.0 for Black, who is to move.
+    expect(solutionScore(puzzle)).toBe('+3.0');
+    expect(solutionScore({ ...puzzle, side_to_move: 'white' })).toBe('−3.0');
+  });
+
+  it('is absent when the analysis has no score there', () => {
+    expect(solutionScore({ ...puzzle, eval_before_cp: null })).toBeNull();
   });
 });
 

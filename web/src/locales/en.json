@@ -33,6 +33,7 @@
     "saved": "Saved",
     "email": "Email",
     "close": "Close",
+    "unreviewed": "unreviewed",
     "viewChangelog": "View changelog",
     "beta": "Beta",
     "betaHint": "Still being refined — feedback is welcome."
@@ -239,6 +240,8 @@
     "generating": "Writing AI report…",
     "runEngine": "Run engine analysis",
     "gameReport": "AI report",
+    "overview": "Overview",
+    "report": "Report",
     "keyMoments": "Key moments",
     "coachIdleHint": "Step into a move to see what the coach has to say.",
     "source": {
@@ -575,6 +578,13 @@
     "noCoachCall": "— no coach call yet —",
     "coachCalls": "Coach calls",
     "lastError": "Last error",
+    "testCoach": "Test the coach",
+    "testCoachHint": "Runs the coach on a sample blunder using the saved settings.",
+    "coachOk": "The coach answered in {{ms}} ms with {{model}}",
+    "coachSource": {
+      "llm_retry": "The first answer contradicted the engine verdict, so it was asked again.",
+      "fallback": "The model contradicted the engine twice; the answer above was built from the engine facts."
+    },
     "stockfishDesc": "Native chess engine for analysis and bot play.",
     "autoDetect": "(auto-detect)",
     "colUser": "User",
@@ -588,6 +598,12 @@
     "deepseekKeyEnv": "Supplied by the DEEPSEEK_API_KEY environment variable — this field is ignored.",
     "deepseekKeySaved": "A key is saved. Type a new one to replace it, or leave blank to keep it.",
     "deepseekKeyHint": "Saved in this server's settings. Save before clicking Test.",
+    "geminiUrl": "Gemini URL (optional)",
+    "geminiModel": "Gemini model",
+    "geminiKey": "Gemini API key",
+    "geminiKeyEnv": "Supplied by the GEMINI_API_KEY environment variable — this field is ignored.",
+    "geminiKeySaved": "A key is saved. Type a new one to replace it, or leave blank to keep it.",
+    "geminiKeyHint": "Saved in this server's settings. Save before clicking Test. A free key is at aistudio.google.com/apikey.",
     "engineBackendNote": "Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code>ENGINE_BACKEND=chessapi</code> (env) or the <code>engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27).",
     "colSignIn": "Sign-in",
     "signInSso": "SSO",
@@ -646,7 +662,7 @@
     "blackToMove": "Black to move",
     "fromYourGame": "From your game · {{w}} vs {{b}}",
     "taskTitle": "Find the move you missed",
-    "taskBody": "In the actual game you played {{played}}. Find a stronger move.",
+    "taskBody": "Find a stronger move than the one you played.",
     "showHint": "Show hint arrow",
     "hideHint": "Hide hint",
     "tryAgain": "Try again",
@@ -654,9 +670,18 @@
     "openInReview": "Open this position in the full review",
     "correct": "Correct!",
     "wrong": "Not quite — the engine prefers",
+    "wrongTitle": "Not the correct move",
+    "wrongAgain": "The board went back — try again.",
+    "evalChecking": "The engine is looking at your move …",
+    "evalSide": "Evaluation after your move, from your side.",
+    "evalLoss": "worse than the best move.",
+    "bestScore": "best move",
+    "evalBefore": "Your evaluation",
+    "evalDropHint": "Engine evaluation from your side, before and after the move. Lower is worse for you.",
     "mine": {
       "review": "Review",
       "dueLabel": "Due",
+      "pendingLabel": "Pending",
       "moves_one": "The solution has {{count}} move.",
       "moves_other": "The solution has {{count}} moves.",
       "yourMove": "Your move. Find the best one!",
@@ -666,12 +691,18 @@
       "learned": "Solved at the first try — this one won't come back.",
       "comesBack": "Not at the first try, so this puzzle comes back tomorrow.",
       "solution": "Solution:",
+      "solutionScoreHint": "Engine score with the solution, from your side.",
+      "inGame": "In the game:",
+      "yourTry": "Your try:",
+      "pawns": "pawns",
       "playedArrow": "Red arrow: the move you played in the game ({{played}})",
+      "playedThis": "In the game you played",
       "coachTitle": "Why {{best}} is better than {{played}}"
     },
     "tabs": {
       "mine": "From your games",
-      "puzzles": "Puzzles"
+      "puzzles": "Puzzles",
+      "patterns": "Pattern drills"
     },
     "puzzles": {
       "intro": "Tactic puzzles from the Lichess puzzle database, chosen to match your puzzle rating. The first try counts: solve it and your rating goes up.",
@@ -1505,5 +1536,34 @@
       "accuracy": "Average move accuracy across the week's analysed games.",
       "errors": "Severity-weighted errors per game: one blunder weighs more than several inaccuracies."
     }
+  },
+  "nav": {
+    "menu": "Menu",
+    "groups": {
+      "play": "Play",
+      "review": "Review",
+      "progress": "Progress",
+      "train": "Train"
+    }
+  },
+  "diagnosis": {
+    "modes": {
+      "all": "All",
+      "aria": "Filter by time control"
+    },
+    "coach": {
+      "title": "Your coach's read",
+      "scope": "{{mode}} · {{games}} analysed games",
+      "allModes": "All time controls",
+      "headline": "Your most expensive habit here is {{pattern}} — {{count}} times across {{games}} games, worth about {{severity}}% win chance each.",
+      "headlineClean": "No costly pattern stands out in this window. Keep playing and analysing — the coach needs a few more games to find a thread.",
+      "compare": "Speed is where it costs you: {{worst}} loses {{worstValue}} blunders per game, {{best}} {{bestValue}}.",
+      "focusTitle": "Work on these, in order",
+      "trainThis": "Train this",
+      "start": "Start with {{pattern}}",
+      "why": "Ranked by win chance lost, not just how often it happens."
+    },
+    "emptyMode": "No analysed games at this speed in this window",
+    "emptyModeDesc": "Play or import a few games at this time control, then analyse them — the coach reads each speed on its own."
   }
 }

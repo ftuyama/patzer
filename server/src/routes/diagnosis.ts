@@ -14,16 +14,20 @@
 // per-game classification counts are not part of a pattern event), so the
 // payload shape is unchanged.
 //
-// Cached for 60 s per user; `games` is part of the cache key so changing the
-// window recomputes immediately.
+// Cached for 60 s per user; `games` and `time_class` are part of the cache key
+// so changing either recomputes immediately.
 
 import { Hono } from 'hono';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { detectGamePatterns, summarizePatterns, type GameMeta, type PatternEvent } from '../chess/patterns.js';
-import { analysedGameCount, hasEventsForGame, listEvents, type StoredPatternEvent } from '../patterns/store.js';
-import type { DiagnosisPayload, DiagnosisWeeklyBucket } from '../patterns/contracts.js';
+import { hasEventsForGame, listEvents, type StoredPatternEvent } from '../patterns/store.js';
+import type {
+  DiagnosisModeBreakdown,
+  DiagnosisPayload,
+  DiagnosisWeeklyBucket,
+} from '../patterns/contracts.js';
 import type { AnalyzedMove, PhaseSplit } from '../types.js';
 
 const router = new Hono();
@@ -37,6 +41,7 @@ interface Row {
   accuracy_white: number | null;
   accuracy_black: number | null;
   end_time: string | null;
+  time_class: string | null;
   eco: string | null;
   opening_name: string | null;
   white: string | null;
@@ -46,8 +51,25 @@ interface Row {
 
 interface WeeklyBucket extends DiagnosisWeeklyBucket {}
 
+/** Fastest first — the tab order the page draws, and the tie-break for the
+ *  coach's "which mode is worst" comparison. */
+const MODE_ORDER = ['bullet', 'blitz', 'rapid', 'daily', 'other'] as const;
+type ModeKey = typeof MODE_ORDER[number];
+
+function modeOf(timeClass: string | null): ModeKey {
+  return (MODE_ORDER as readonly string[]).includes(timeClass ?? '')
+    ? (timeClass as ModeKey)
+    : 'other';
+}
+
+/** The four rated classes are valid filters; anything else means "no filter". */
+function parseMode(raw: string | undefined): ModeKey | null {
+  if (!raw) return null;
+  return raw === 'bullet' || raw === 'blitz' || raw === 'rapid' || raw === 'daily' ? raw : null;
+}
+
 const CACHE_TTL_MS = 60_000;
-const cache = new Map<number, { at: number; payload: DiagnosisPayload }>();
+const cache = new Map<string, { at: number; pending: number; payload: DiagnosisPayload }>();
 
 function isoWeekStart(d: Date): string {
   const copy = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -56,14 +78,18 @@ function isoWeekStart(d: Date): string {
   return copy.toISOString().slice(0, 10);
 }
 
-function countGames(userId: number): { total: number; pending: number } {
+/** Mirrors `modeOf` in SQL, so counts and breakdowns bucket games the same way. */
+const MODE_SQL = `CASE WHEN g.time_class IN ('bullet', 'blitz', 'rapid', 'daily')
+  THEN g.time_class ELSE 'other' END`;
+
+function countGames(userId: number, timeClass: ModeKey | null): { total: number; pending: number } {
   const row = db.prepare(`
     SELECT COUNT(*) AS total,
            COALESCE(SUM(CASE WHEN a.game_id IS NULL OR a.scoring_version < ? THEN 1 ELSE 0 END), 0) AS pending
       FROM games g
       LEFT JOIN analyses a ON a.game_id = g.id
-     WHERE g.user_id = ?
-  `).get(SCORING_VERSION, userId) as { total: number; pending: number };
+     WHERE g.user_id = ? AND (? IS NULL OR ${MODE_SQL} = ?)
+  `).get(SCORING_VERSION, userId, timeClass, timeClass) as { total: number; pending: number };
   return { total: row.total, pending: row.pending };
 }
 
@@ -133,11 +159,146 @@ function gameEventsFor(
   return detectGamePatterns(moves, metaFor(r), split);
 }
 
-function build(userId: number, windowGames: number, counts: { total: number; pending: number }): DiagnosisPayload {
+/** Everything one bucket of games contributes to a payload. Keeping the
+ *  accumulation in a value (instead of a closure per bucket) is what lets a
+ *  single pass feed the "all modes" view and each time class at once. */
+interface Acc {
+  games: number;
+  accuracySum: number;
+  accuracyN: number;
+  blunders: number;
+  mistakes: number;
+  inaccuracies: number;
+  events: PatternEvent[];
+  weekly: Map<string, WeeklyBucket>;
+  dates: string[];
+}
+
+function emptyAcc(): Acc {
+  return {
+    games: 0, accuracySum: 0, accuracyN: 0,
+    blunders: 0, mistakes: 0, inaccuracies: 0,
+    events: [], weekly: new Map(), dates: [],
+  };
+}
+
+/** Average of per-game values already accumulated, one decimal. */
+function mean(sum: number, n: number): number | null {
+  return n ? Math.round((sum / n) * 10) / 10 : null;
+}
+
+function perGame(total: number, games: number): number {
+  return games ? Math.round((total / games) * 100) / 100 : 0;
+}
+
+function absorb(
+  acc: Acc,
+  r: Row,
+  gameEvents: PatternEvent[],
+  accuracy: number | null,
+  counts: { blunders: number; mistakes: number; inaccuracies: number },
+): void {
+  acc.games++;
+  if (accuracy != null) { acc.accuracySum += accuracy; acc.accuracyN++; }
+  acc.blunders += counts.blunders;
+  acc.mistakes += counts.mistakes;
+  acc.inaccuracies += counts.inaccuracies;
+  acc.events.push(...gameEvents);
+
+  const day = (r.end_time ?? '').slice(0, 10);
+  if (!day) return;
+  acc.dates.push(day);
+  const start = isoWeekStart(new Date(`${day}T12:00:00Z`));
+  const b = acc.weekly.get(start) ?? {
+    week_start: start, games: 0, wins: 0, draws: 0, losses: 0,
+    accuracy: null, mistakes_per_game: 0, blunders_per_game: 0, top_pattern: null,
+  };
+  b.games++;
+  const color = r.user_color ?? 'white';
+  const res = (r.result ?? '').toLowerCase();
+  const won = res === '1-0' ? color === 'white' : res === '0-1' ? color === 'black' : false;
+  const drew = res.includes('1/2') || res === 'draw' || res === '½-½';
+  if (drew) b.draws++;
+  else if (won) b.wins++;
+  else b.losses++;
+  b.accuracy = accuracy != null
+    ? Math.round((((b.accuracy ?? 0) * (b.games - 1) + accuracy) / b.games) * 10) / 10
+    : b.accuracy;
+  b.mistakes_per_game = Math.round(((b.mistakes_per_game * (b.games - 1) + counts.mistakes) / b.games) * 100) / 100;
+  b.blunders_per_game = Math.round(((b.blunders_per_game * (b.games - 1) + counts.blunders) / b.games) * 100) / 100;
+  const top = [...gameEvents].sort((x, y) => y.severity - x.severity)[0];
+  if (top) b.top_pattern = b.top_pattern ?? top.motif;
+  acc.weekly.set(start, b);
+}
+
+function payloadFor(
+  acc: Acc,
+  counts: { total: number; pending: number },
+  windowGames: number,
+  timeClass: ModeKey | null,
+  modes: DiagnosisModeBreakdown[],
+): DiagnosisPayload {
+  const weeklyRows = [...acc.weekly.values()]
+    .sort((a, b) => a.week_start.localeCompare(b.week_start))
+    .slice(-8);
+  const dates = [...acc.dates].sort();
+
+  return {
+    generated_at: new Date().toISOString(),
+    games_analyzed: acc.games,
+    total_games: counts.total,
+    pending_games: counts.pending,
+    window_games: windowGames,
+    time_class: timeClass,
+    modes,
+    overview: {
+      accuracy: mean(acc.accuracySum, acc.accuracyN),
+      blunders_per_game: perGame(acc.blunders, acc.games),
+      mistakes_per_game: perGame(acc.mistakes + acc.inaccuracies, acc.games),
+      inaccuracies_per_game: perGame(acc.inaccuracies, acc.games),
+      date_from: dates[0] ?? null,
+      date_to: dates[dates.length - 1] ?? null,
+    },
+    patterns: summarizePatterns(acc.events, Math.max(1, acc.games)).slice(0, 5),
+    weekly: weeklyRows,
+  };
+}
+
+function breakdownFor(key: ModeKey, acc: Acc): DiagnosisModeBreakdown {
+  const summaries = summarizePatterns(acc.events, Math.max(1, acc.games)).slice(0, 3);
+  return {
+    time_class: key,
+    games: acc.games,
+    accuracy: mean(acc.accuracySum, acc.accuracyN),
+    blunders_per_game: perGame(acc.blunders, acc.games),
+    mistakes_per_game: perGame(acc.mistakes + acc.inaccuracies, acc.games),
+    top_patterns: summaries.map((s) => ({
+      key: s.key,
+      count: s.count,
+      games_affected: s.games_affected,
+      score: s.score,
+      avg_severity: s.avg_severity,
+    })),
+  };
+}
+
+/**
+ * One query, one pass, one payload per time class. The window is always the
+ * most recent N analysed games *overall*; a mode filter only picks which
+ * bucket the payload is read from, so switching tabs costs no extra query and
+ * the breakdowns stay comparable to each other.
+ */
+function build(
+  userId: number,
+  windowGames: number,
+  timeClass: ModeKey | null,
+  counts: { total: number; pending: number },
+): DiagnosisPayload {
   const rows = db.prepare(`
     SELECT a.game_id, g.user_color, a.moves_json, a.phase_split_json,
            a.accuracy_white, a.accuracy_black,
-           g.end_time, a.opening_eco AS eco, a.opening_name, g.white, g.black, g.result
+           g.end_time, g.time_class,
+           a.opening_eco AS eco, a.opening_name, g.white, g.black, g.result
     FROM analyses a JOIN games g ON g.id = a.game_id
     WHERE g.user_id = ? AND a.scoring_version >= ? AND (g.start_fen IS NULL OR g.start_fen = '')
     ORDER BY COALESCE(g.end_time, g.created_at) DESC, g.id DESC
@@ -145,112 +306,60 @@ function build(userId: number, windowGames: number, counts: { total: number; pen
   `).all(userId, SCORING_VERSION, windowGames) as Row[];
 
   const stored = eventsByGame(userId, windowGames);
-  const events: PatternEvent[] = [];
-  const weekly = new Map<string, WeeklyBucket>();
-  let accuracySum = 0;
-  let accuracyN = 0;
-  let blunders = 0;
-  let mistakes = 0;
-  let inaccuracies = 0;
-  let userMoves = 0;
-  const dates: string[] = [];
+  const all = emptyAcc();
+  const byMode = new Map<ModeKey, Acc>();
 
   for (const r of rows) {
     const color = r.user_color ?? 'white';
     const accuracy = color === 'white' ? r.accuracy_white : r.accuracy_black;
-    if (accuracy != null) { accuracySum += accuracy; accuracyN++; }
 
     let moves: AnalyzedMove[] = [];
     try { moves = JSON.parse(r.moves_json) as AnalyzedMove[]; } catch { moves = []; }
     const split = r.phase_split_json ? (JSON.parse(r.phase_split_json) as PhaseSplit) : null;
 
-    let gameBlunders = 0;
-    let gameMistakes = 0;
-    let gameInaccuracies = 0;
+    const gameCounts = { blunders: 0, mistakes: 0, inaccuracies: 0 };
     for (const m of moves) {
       const side = m.ply % 2 === 1 ? 'white' : 'black';
       if (side !== color) continue;
-      userMoves++;
-      if (m.classification === 'blunder') gameBlunders++;
-      else if (m.classification === 'mistake' || m.classification === 'miss') gameMistakes++;
-      else if (m.classification === 'inaccuracy') gameInaccuracies++;
+      if (m.classification === 'blunder') gameCounts.blunders++;
+      else if (m.classification === 'mistake' || m.classification === 'miss') gameCounts.mistakes++;
+      else if (m.classification === 'inaccuracy') gameCounts.inaccuracies++;
     }
-    blunders += gameBlunders;
-    mistakes += gameMistakes;
-    inaccuracies += gameInaccuracies;
 
     const gameEvents = gameEventsFor(r, moves, split, stored);
-    events.push(...gameEvents);
+    absorb(all, r, gameEvents, accuracy, gameCounts);
 
-    const day = (r.end_time ?? '').slice(0, 10);
-    if (day) dates.push(day);
-    const start = day ? isoWeekStart(new Date(`${day}T12:00:00Z`)) : null;
-    if (start) {
-      const b = weekly.get(start) ?? {
-        week_start: start, games: 0, wins: 0, draws: 0, losses: 0,
-        accuracy: null, mistakes_per_game: 0, blunders_per_game: 0, top_pattern: null,
-      };
-      b.games++;
-      const res = (r.result ?? '').toLowerCase();
-      const won = res === '1-0' ? color === 'white' : res === '0-1' ? color === 'black' : false;
-      const drew = res.includes('1/2') || res === 'draw' || res === '½-½';
-      if (drew) b.draws++;
-      else if (won) b.wins++;
-      else b.losses++;
-      b.accuracy = accuracy != null
-        ? Math.round((((b.accuracy ?? 0) * (b.games - 1) + accuracy) / b.games) * 10) / 10
-        : b.accuracy;
-      b.mistakes_per_game = Math.round(((b.mistakes_per_game * (b.games - 1) + gameMistakes) / b.games) * 100) / 100;
-      b.blunders_per_game = Math.round(((b.blunders_per_game * (b.games - 1) + gameBlunders) / b.games) * 100) / 100;
-      const top = [...gameEvents].sort((a, b2) => b2.severity - a.severity)[0];
-      if (top) b.top_pattern = b.top_pattern ?? top.motif;
-      weekly.set(start, b);
-    }
+    const key = modeOf(r.time_class);
+    const acc = byMode.get(key) ?? emptyAcc();
+    absorb(acc, r, gameEvents, accuracy, gameCounts);
+    byMode.set(key, acc);
   }
 
-  const gamesAnalyzed = analysedGameCount(userId, windowGames);
-  const patterns = summarizePatterns(events, Math.max(1, gamesAnalyzed));
-  const weeklyRows = [...weekly.values()].sort((a, b) => a.week_start.localeCompare(b.week_start)).slice(-8);
+  const modes = MODE_ORDER
+    .filter((k) => (byMode.get(k)?.games ?? 0) > 0)
+    .map((k) => breakdownFor(k, byMode.get(k)!));
 
-  dates.sort();
-  return {
-    generated_at: new Date().toISOString(),
-    games_analyzed: gamesAnalyzed,
-    total_games: counts.total,
-    pending_games: counts.pending,
-    window_games: windowGames,
-    overview: {
-      accuracy: accuracyN ? Math.round((accuracySum / accuracyN) * 10) / 10 : null,
-      blunders_per_game: rows.length ? Math.round((blunders / rows.length) * 100) / 100 : 0,
-      mistakes_per_game: rows.length ? Math.round(((mistakes + inaccuracies) / rows.length) * 100) / 100 : 0,
-      inaccuracies_per_game: rows.length ? Math.round((inaccuracies / rows.length) * 100) / 100 : 0,
-      date_from: dates[0] ?? null,
-      date_to: dates[dates.length - 1] ?? null,
-    },
-    patterns: patterns.slice(0, 5),
-    weekly: weeklyRows,
-  };
+  const source = timeClass ? byMode.get(timeClass) ?? emptyAcc() : all;
+  return payloadFor(source, counts, windowGames, timeClass, modes);
 }
 
 router.get('/', (c) => {
   const me = c.get('user');
   const requested = Number(c.req.query('games') ?? 100);
   const windowGames = Math.min(200, Math.max(20, Number.isFinite(requested) ? requested : 100));
+  const timeClass = parseMode(c.req.query('time_class'));
 
   // Include the pending count in the cache key: a background "analyze all"
   // changes it without touching `analyses` through this route, and a stale
   // cache would keep telling the user there is nothing left to analyze.
-  const counts = countGames(me.id);
-  const hit = cache.get(me.id);
-  if (
-    hit && Date.now() - hit.at < CACHE_TTL_MS
-    && hit.payload.window_games === windowGames
-    && hit.payload.pending_games === counts.pending
-  ) {
+  const counts = countGames(me.id, timeClass);
+  const cacheKey = `${me.id}|${windowGames}|${timeClass ?? 'all'}`;
+  const hit = cache.get(cacheKey);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS && hit.pending === counts.pending) {
     return c.json(hit.payload);
   }
-  const payload = build(me.id, windowGames, counts);
-  cache.set(me.id, { at: Date.now(), payload });
+  const payload = build(me.id, windowGames, timeClass, counts);
+  cache.set(cacheKey, { at: Date.now(), pending: counts.pending, payload });
   return c.json(payload);
 });
 
