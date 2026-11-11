@@ -44,7 +44,7 @@ const MAX_GAPS = 50;
 
 const DEFAULT_BASE = 'https://explorer.lichess.ovh';
 const USER_AGENT =
-  'patzer (opening theory gaps; +https://github.com/SikamikanikoBG/patzer; contact: admin@example.com)';
+  'patzer-opening-theory/1.0 (+https://github.com/SikamikanikoBG/patzer)';
 
 export type FetchLike = (
   url: string,

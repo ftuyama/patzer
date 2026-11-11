@@ -166,6 +166,7 @@ export interface WeeklyProgressWeek {
   errors_per_game: number;
   top_patterns: { key: PatternKey; count: number; score: number }[];
   partial: boolean;
+  summary_text?: string | null;
 }
 
 export interface WeeklyProgressPayload {

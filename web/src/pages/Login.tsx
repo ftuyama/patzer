@@ -141,7 +141,7 @@ export default function Login() {
           {LANGUAGES.map((l, i) => (
             <Fragment key={l.code}>
               {i > 0 && <span>·</span>}
-              <button type="button" onClick={() => i18n.changeLanguage(l.code)} className={`px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>{l.short}</button>
+              <button type="button" onClick={() => i18n.changeLanguage(l.code)} title={l.native} aria-label={l.native} className={`inline-flex items-center gap-1 px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}><span aria-hidden>{l.flag}</span>{l.short}</button>
             </Fragment>
           ))}
         </div>

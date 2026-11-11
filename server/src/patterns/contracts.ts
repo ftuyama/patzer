@@ -71,6 +71,8 @@ export interface WeeklyProgressWeek {
   top_patterns: WeeklyPatternCount[];
   /** True for the week currently in progress — never frozen. */
   partial: boolean;
+  /** Templated narrative, frozen with the week. */
+  summary_text?: string | null;
 }
 
 export interface WeeklyProgressPayload {
