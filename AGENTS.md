@@ -80,7 +80,22 @@ web/src/lib/            sounds, TTS, markdown, helpers
 scripts/                setup, lesson verification, tactics build, backfills
 data/                   runtime SQLite DB — user data, never commit or delete
 bin/                    Stockfish binary — installed by npm run setup
+worktrees/              agent checkouts, gitignored (see below)
 ```
+
+## Worktrees
+
+Keep every worktree inside the checkout, never as a sibling directory:
+
+```bash
+git worktree add worktrees/<name> -b <branch>
+```
+
+`worktrees/` is gitignored. Agent tooling is configured to put new worktrees
+there too (`worktree.directory` in the OpenCode config). Each worktree gets its
+own `data/` SQLite DB, which is user state — do not delete it when removing a
+worktree, and remove with `git worktree remove <path>` (ask first if the DB has
+real data).
 
 ## Invariants (do not break these)
 
