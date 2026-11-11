@@ -90,6 +90,15 @@ const BAD: Classification[] = ['inaccuracy', 'mistake', 'blunder', 'miss'];
 const COSTLY: Classification[] = ['mistake', 'blunder', 'miss'];
 
 /**
+ * A back-rank weakness only exists if the opponent still has something to
+ * invade with: a bare own back rank and no enemy rook/queen is not a motif.
+ */
+function hasHeavyPiece(fen: string, color: 'white' | 'black'): boolean {
+  const board = fen.split(' ')[0];
+  return color === 'white' ? /[RQ]/.test(board) : /[rq]/.test(board);
+}
+
+/**
  * Detect every pattern event in one game. Only the player's moves are scanned,
  * and only moves that already cost something (inaccuracy or worse) — checking
  * good moves for "what did this blunder allow" is meaningless and expensive.
@@ -136,7 +145,8 @@ export function detectGamePatterns(
     if (m.classification === 'miss' && !motifs.has('allowed_mate')) motifs.add('missed_win');
 
     if ((m.classification === 'blunder' || m.classification === 'mistake')
-      && hasBackRankSignature(m.fen_after, color)) {
+      && hasBackRankSignature(m.fen_after, color)
+      && hasHeavyPiece(m.fen_after, color === 'white' ? 'black' : 'white')) {
       motifs.add('back_rank');
     }
 
@@ -158,10 +168,10 @@ export function detectGamePatterns(
     }
 
     if (motifs.size === 0) {
-      // A costly move that matches nothing specific is still worth counting as
-      // a hung piece when material actually left the board.
-      if (cpLoss >= 200) motifs.add('hung_piece');
-      else continue;
+      // A costly move that matches no specific motif is left unclassified on
+      // purpose: labelling it "hung piece" sent users to a drill about
+      // material when the real loss was positional (see patterns-quality.md).
+      continue;
     }
 
     for (const motif of motifs) {

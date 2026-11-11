@@ -120,20 +120,25 @@ plausible numbers.
 ## Known weaknesses / false-positive risks
 
 These are properties of the current heuristics (`PATTERN_VERSION = 1`), found
-while labelling the fixtures. The two reproduced bugs are marked `it.fails` in
-`detection-quality.test.ts`.
+while labelling the fixtures. The two reproduced bugs below were fixed before
+any backfill shipped and are now normal regression tests in
+`detection-quality.test.ts` ("detector regressions").
+
+### Fixed in v1 (regressions)
+* **`back_rank` without an attacker** — the signature now also requires the
+  opponent to still have a rook or queen on the board (`hasHeavyPiece`).
+* **`hung_piece` fallback** — a costly move that matches no specific motif is
+  no longer labelled `hung_piece`; it produces no event. Sending someone to a
+  material drill for a positional blunder was worse than saying nothing.
 
 ### `hung_piece`
-* **False positive, reproduced:** when no specific motif fires and
-  `cp_loss >= 200`, the fallback labels the move `hung_piece` even if nothing
-  was actually hanging. Repro: a quiet `h3` positional blunder worth 260 cp in
-  `1r4k1/5ppp/8/8/8/8/5PPP/1R4K1 w - - 0 1`.
+* *(Fixed)* the old `cp_loss >= 200` fallback no longer exists; see above.
 * "Hanging" is attacker/defender counting, not a static exchange: a piece that
   is attacked by something cheaper counts as hanging even when recapturing is
   fine, and pinned/overloaded defenders are not modelled.
 * Only pieces attacked *immediately after* the move are seen. A piece lost to a
-  two-move fork or a discovered attack is not `hung_piece`; it may fall through
-  to the `cp_loss >= 200` fallback instead.
+  two-move fork or a discovered attack is not `hung_piece` and now produces no
+  event at all.
 * A piece that was already hanging at its origin and moves while still hanging
   is explicitly excluded (`wasHanging` filter), so "ignored a hanging piece"
   can produce no event at all.
@@ -163,11 +168,8 @@ while labelling the fixtures. The two reproduced bugs are marked `it.fails` in
   and allowed mate is only reported as the latter.
 
 ### `back_rank`
-* **False positive, reproduced:** the signature only checks whether the
-  player's own back rank contains nothing but the king. It never checks that
-  the opponent has a rook/queen to exploit it. Repro: `Nb5` in
-  `6k1/5ppp/p7/8/3N4/8/5PPP/6K1 w - - 0 1`, where neither side owns a heavy
-  piece, still emits `back_rank`.
+* *(Fixed)* an opponent rook/queen must still be on the board, on top of the
+  bare own back rank.
 * Conversely, a real back-rank weakness with one friendly piece left on the
   rank (pinned or overloaded) is missed.
 * Requires `blunder` or `mistake`; an inaccuracy that exposes the rank does not

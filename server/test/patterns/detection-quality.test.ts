@@ -238,15 +238,12 @@ describe('regression guard', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Known detector limitations.
-//
-// These are real, reproducible false positives that were found while labelling
-// the fixtures. They are marked `it.fails` so the suite stays green while the
-// bug is documented; when patterns.ts is fixed, `it.fails` will turn red and
-// the test should be promoted to a normal `it` and the reproduction moved into
-// labelled.ts. See docs/patterns-quality.md § Known weaknesses.
+// Regression tests for detector bugs found while labelling the fixtures.
+// Both were false positives reported by workstream F and fixed in patterns.ts
+// (v1, before any backfill shipped): back_rank needed an enemy heavy piece, and
+// the "no motif + 200 cp" fallback was removed. See docs/patterns-quality.md.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('known detector limitations (it.fails until patterns.ts is fixed)', () => {
+describe('detector regressions', () => {
   function fixtureFor(fen: string, san: string, ply: number, expected: PatternKey[]): Fixture {
     return {
       id: 'known-bug-repro',
@@ -266,8 +263,8 @@ describe('known detector limitations (it.fails until patterns.ts is fixed)', () 
     };
   }
 
-  it.fails(
-    'back_rank fires without any opponent heavy piece (bare own back rank is not a weakness)',
+  it(
+    'does not fire back_rank without any opponent heavy piece',
     () => {
       // White has no rook/queen on the board at all and Black has no rook or
       // queen either — there is no back-rank mate to allow. The detector still
@@ -289,12 +286,13 @@ describe('known detector limitations (it.fails until patterns.ts is fixed)', () 
         }],
       };
       const events = detectGamePatterns(toAnalyzedMoves(fixture), metaFor(fixture), null);
+      // Nb5 does hang the knight to the a6 pawn — the *only* correct motif.
       expect(events.map((e) => e.motif)).toEqual(['hung_piece']);
     },
   );
 
-  it.fails(
-    'hung_piece fallback fires on a pure positional blunder with nothing hanging',
+  it(
+    'does not fire the old hung_piece fallback on a positional blunder with nothing hanging',
     () => {
       // h3 loses 260 cp to a king-safety/positional idea, but no white piece is
       // attacked after it. The `motifs.size === 0 && cpLoss >= 200` fallback
