@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowDownRight, ArrowUpRight, CalendarDays, LineChart, Minus, RefreshCw,
-  Sparkles, Trophy,
+  Sparkles, TrendingUp, Trophy,
 } from 'lucide-react';
 import { api } from '../api';
 import { cn } from '../lib/utils';
@@ -188,6 +188,8 @@ export default function Progress() {
         </div>
       </div>
 
+      <EvolutionChart weeks={data.weeks} fmt={fmt} />
+
       <section className="card p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <CalendarDays className="h-4 w-4 text-chesscom-500" />
@@ -275,6 +277,197 @@ export default function Progress() {
         })}
       </p>
     </div>
+  );
+}
+
+/* ───── Evolution chart ───────────────────────────────────────────────── */
+//
+// Inline SVG (no chart dependency). Works with a single week: the point is
+// centred and drawn against a dashed level line, so the card never looks
+// broken while the history is still one column wide.
+type Metric = 'accuracy' | 'errors';
+
+function EvolutionChart({ weeks, fmt }: { weeks: ProgressWeek[]; fmt: (iso: string) => string }) {
+  const { t } = useTranslation();
+  const [metric, setMetric] = useState<Metric>('accuracy');
+
+  const values = weeks.map((w) => (metric === 'accuracy' ? w.accuracy : w.errors_per_game));
+  const points = values
+    .map((value, index) => ({ value, index, week: weeks[index] }))
+    .filter((p): p is { value: number; index: number; week: ProgressWeek } => p.value != null);
+
+  const color = metric === 'accuracy' ? '#e0a02b' : '#c63b3a';
+  const format = (v: number) =>
+    metric === 'accuracy' ? `${v.toFixed(1)}%` : v.toFixed(2);
+
+  const W = 520, H = 180, padL = 38, padR = 14, padT = 16, padB = 26;
+  let min = 0;
+  let max = 1;
+
+  if (points.length > 0) {
+    if (metric === 'accuracy') {
+      min = Math.min(...points.map((p) => p.value));
+      max = Math.max(...points.map((p) => p.value));
+      if (min === max) { min = Math.max(0, min - 5); max = Math.min(100, max + 5); }
+      const pad = Math.max(2, (max - min) * 0.12);
+      min = Math.max(0, min - pad);
+      max = Math.min(100, max + pad);
+    } else {
+      min = 0;
+      max = Math.max(0.5, ...points.map((p) => p.value)) * 1.15;
+    }
+  }
+
+  const n = weeks.length;
+  const xScale = (i: number) =>
+    n <= 1
+      ? (padL + W - padR) / 2
+      : padL + (i / (n - 1)) * (W - padL - padR);
+  const yScale = (v: number) =>
+    H - padB - ((v - min) / Math.max(0.0001, max - min)) * (H - padT - padB);
+
+  const path = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.index).toFixed(1)},${yScale(p.value).toFixed(1)}`)
+    .join(' ');
+  const avg = points.length >= 2
+    ? points.reduce((sum, p) => sum + p.value, 0) / points.length
+    : null;
+
+  const ticks = [min, (min + max) / 2, max];
+  const labelEvery = Math.max(1, Math.ceil(n / 6));
+
+  const metrics: { key: Metric; label: string; color: string }[] = [
+    { key: 'accuracy', label: t('progress.accuracy', { defaultValue: 'Accuracy' }), color: '#e0a02b' },
+    { key: 'errors', label: t('progress.errorsPerGame', { defaultValue: 'Errors / game' }), color: '#c63b3a' },
+  ];
+
+  return (
+    <section className="card p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-gold-600" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+            {t('progress.evolution.title', { defaultValue: 'Evolution' })}
+          </h2>
+        </div>
+        <div className="inline-flex rounded-md border border-chesscom-200 p-0.5 dark:border-chesscom-700">
+          {metrics.map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => setMetric(m.key)}
+              className={cn(
+                'rounded px-2 py-0.5 text-[11px] font-medium transition-colors',
+                metric === m.key
+                  ? 'bg-chesscom-800 text-white dark:bg-chesscom-100 dark:text-chesscom-900'
+                  : 'text-chesscom-500 hover:text-chesscom-700 dark:hover:text-chesscom-200',
+              )}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {points.length === 0 ? (
+        <div className="py-10 text-center text-xs text-chesscom-400">
+          {t('progress.evolution.noMetric', { defaultValue: 'No data for this metric yet.' })}
+        </div>
+      ) : (
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full"
+          role="img"
+          aria-label={t('progress.evolution.title', { defaultValue: 'Evolution' })}
+        >
+          {ticks.map((v, i) => (
+            <g key={i}>
+              <line
+                x1={padL} x2={W - padR} y1={yScale(v)} y2={yScale(v)}
+                className="stroke-chesscom-200 dark:stroke-chesscom-700"
+                strokeWidth={0.5}
+                strokeDasharray="2 3"
+              />
+              <text
+                x={padL - 6} y={yScale(v) + 3}
+                textAnchor="end" fontSize={9}
+                className="fill-chesscom-400"
+              >
+                {metric === 'accuracy' ? `${Math.round(v)}%` : v.toFixed(1)}
+              </text>
+            </g>
+          ))}
+
+          {avg != null && (
+            <line
+              x1={padL} x2={W - padR} y1={yScale(avg)} y2={yScale(avg)}
+              stroke={color} strokeWidth={0.7} strokeDasharray="3 3" opacity={0.55}
+            />
+          )}
+
+          {points.length === 1 && (
+            <line
+              x1={padL} x2={W - padR}
+              y1={yScale(points[0].value)} y2={yScale(points[0].value)}
+              stroke={color} strokeWidth={1} strokeDasharray="1 3" opacity={0.6}
+            />
+          )}
+
+          {points.length >= 2 && (
+            <path d={path} fill="none" stroke={color} strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" />
+          )}
+
+          {points.map((p) => (
+            <circle
+              key={p.week.week_start}
+              cx={xScale(p.index)}
+              cy={yScale(p.value)}
+              r={p.week.partial ? 3 : 2.6}
+              fill={p.week.partial ? 'transparent' : color}
+              stroke={color}
+              strokeWidth={p.week.partial ? 1.6 : 0}
+            >
+              <title>
+                {`${fmt(p.week.week_start)} · ${format(p.value)}`}
+                {p.week.partial ? ` · ${t('progress.partial', { defaultValue: 'in progress' })}` : ''}
+              </title>
+            </circle>
+          ))}
+
+          {weeks.map((w, i) => {
+            if (i % labelEvery !== 0 && i !== n - 1) return null;
+            if (n === 1) return null;
+            return (
+              <text
+                key={w.week_start}
+                x={xScale(i)}
+                y={H - 8}
+                fontSize={9}
+                textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
+                className="fill-chesscom-400"
+              >
+                {fmt(w.week_start)}
+              </text>
+            );
+          })}
+        </svg>
+      )}
+
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-chesscom-400">
+        <span>
+          {t('progress.evolution.hint', {
+            defaultValue: 'Accuracy or severity-weighted errors, week by week. Dashed line = average.',
+          })}
+        </span>
+        {points.length === 1 || n === 1 ? (
+          <span>
+            {t('progress.evolution.singleWeek', {
+              defaultValue: 'Only one week so far — the line grows as you keep playing.',
+            })}
+          </span>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

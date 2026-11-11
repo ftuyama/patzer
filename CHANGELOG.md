@@ -81,6 +81,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings, setup and admin forms save the language on submit (`apply={false}`)
   rather than switching the interface mid-edit.
 
+### Progress: accuracy week by week
+
+- **Evolution chart.** Progress plots accuracy or errors per game across the
+  weeks — inline SVG, no chart dependency — with a dashed average line and a
+  hollow marker for the week still in progress. A one-week history is centred
+  against its own level line instead of showing an empty card.
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better

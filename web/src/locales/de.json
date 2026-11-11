@@ -1448,6 +1448,12 @@
     "trend_up": "schlechter",
     "trend_down": "besser",
     "trend_flat": "stabil",
+    "evolution": {
+      "title": "Entwicklung",
+      "hint": "Genauigkeit oder nach Schwere gewichtete Fehler, Woche für Woche. Gestrichelte Linie = Durchschnitt.",
+      "singleWeek": "Bisher nur eine Woche — die Linie wächst, während du weiterspielst.",
+      "noMetric": "Für diese Kennzahl gibt es noch keine Daten."
+    },
     "report": {
       "title": "Wochenbericht",
       "generate": "Bericht erstellen",

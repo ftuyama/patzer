@@ -1545,6 +1545,12 @@
     "trend_up": "piorando",
     "trend_down": "melhorando",
     "trend_flat": "estável",
+    "evolution": {
+      "title": "Evolução",
+      "hint": "Precisão ou erros ponderados pela gravidade, semana a semana. Linha tracejada = média.",
+      "singleWeek": "Só uma semana por enquanto — a linha cresce conforme você continua jogando.",
+      "noMetric": "Ainda não há dados para esta métrica."
+    },
     "report": {
       "title": "Relatório semanal",
       "generate": "Gerar relatório",

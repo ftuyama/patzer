@@ -1448,6 +1448,12 @@
     "trend_up": "worse",
     "trend_down": "better",
     "trend_flat": "stable",
+    "evolution": {
+      "title": "Evolution",
+      "hint": "Accuracy or severity-weighted errors, week by week. Dashed line = average.",
+      "singleWeek": "Only one week so far — the line grows as you keep playing.",
+      "noMetric": "No data for this metric yet."
+    },
     "report": {
       "title": "Weekly report",
       "generate": "Generate report",
