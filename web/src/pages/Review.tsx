@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
 import { api } from '../api';
+import AnalyzeAllButton from '../components/AnalyzeAllButton';
 import { useAuth } from '../state/auth';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
@@ -71,20 +72,19 @@ export default function Review() {
           <h1 className="page-h1">{t('review.title')}</h1>
           <p className="page-sub">{t('review.subtitle', { defaultValue: 'Browse, analyze and learn from your games.' })}</p>
         </div>
-        {linked.length > 0 ? (
-          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
-            {linked.map((s) => (
-              <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
-                <Download className="h-4 w-4" />
-                {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Link to="/settings" className="btn-secondary text-sm">
-            <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <AnalyzeAllButton />
+          {linked.length > 0 ? linked.map((s) => (
+            <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-secondary">
+              <Download className="h-4 w-4" />
+              {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
+            </button>
+          )) : (
+            <Link to="/settings" className="btn-secondary text-sm">
+              <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
+            </Link>
+          )}
+        </div>
       </header>
 
       {importMsg && (

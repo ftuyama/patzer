@@ -69,6 +69,16 @@ interface BulkGameRow {
 
 const bulkJobs = new Map<number, BulkJob>();
 
+function countPendingGames(userId: number): number {
+  const row = db.prepare(`
+    SELECT COUNT(*) AS pending
+      FROM games g
+      LEFT JOIN analyses a ON a.game_id = g.id
+     WHERE g.user_id = ? AND (a.game_id IS NULL OR a.scoring_version < ?)
+  `).get(userId, SCORING_VERSION) as { pending: number };
+  return row.pending;
+}
+
 function idleBulkJob(): BulkJob {
   return {
     running: false,
@@ -126,9 +136,9 @@ export function rowToAnalysis(row: AnalysisRow): AnalysisResult {
 }
 
 // Analyze every game that has no current analysis yet. Games are processed
-// oldest-first? No — newest-first, matching the rest of the app, so the games
-// the user cares about most land first even on a large backlog. Failures are
-// counted and skipped: one malformed PGN must not stop the whole batch.
+// newest-first, matching the list order elsewhere, so the games the user cares
+// about most land first even on a large backlog. Failures are counted and
+// skipped: one malformed PGN must not stop the whole batch.
 router.post('/all', async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => ({}));
@@ -137,7 +147,9 @@ router.post('/all', async (c) => {
   const { depth } = parsed.data;
 
   const existing = bulkJobs.get(user.id);
-  if (existing?.running) return c.json(existing);
+  if (existing?.running) {
+    return c.json({ ...existing, pending_games: countPendingGames(user.id) });
+  }
   if (inflight.has(user.id)) return c.json({ error: 'already_analyzing' }, 429);
 
   const rows = db.prepare(`
@@ -160,7 +172,7 @@ router.post('/all', async (c) => {
   };
   bulkJobs.set(user.id, job);
 
-  if (rows.length === 0) return c.json(job);
+  if (rows.length === 0) return c.json({ ...job, pending_games: 0 });
 
   const work = (async () => {
     try {
@@ -190,12 +202,15 @@ router.post('/all', async (c) => {
   })();
 
   inflight.set(user.id, work);
-  return c.json(job);
+  return c.json({ ...job, pending_games: rows.length });
 });
 
 router.get('/all', (c) => {
   const user = c.get('user');
-  return c.json(bulkJobs.get(user.id) ?? idleBulkJob());
+  const job = bulkJobs.get(user.id) ?? idleBulkJob();
+  // Recomputed on every poll so the button reflects games imported while a
+  // batch runs, and goes back to 0 as soon as the last one is analysed.
+  return c.json({ ...job, pending_games: countPendingGames(user.id) });
 });
 
 router.post('/', async (c) => {

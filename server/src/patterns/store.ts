@@ -10,6 +10,7 @@
 // deletes its previous rows first, so a re-analysis never duplicates events.
 
 import { db } from '../db.js';
+import { SCORING_VERSION } from '../chess/classifier.js';
 import {
   PATTERN_VERSION,
   type PatternEvent,
@@ -163,11 +164,12 @@ export function listEvents(userId: number, opts: ListEventsOptions = {}): Stored
   if (opts.limitGames && opts.limitGames > 0) {
     where.push(`e.game_id IN (
       SELECT g2.id FROM games g2 JOIN analyses a ON a.game_id = g2.id
-      WHERE g2.user_id = @userId
+      WHERE g2.user_id = @userId AND a.scoring_version >= @scoringVersion
       ORDER BY COALESCE(g2.end_time, g2.created_at) DESC, g2.id DESC
       LIMIT @limitGames
     )`);
     params.limitGames = opts.limitGames;
+    params.scoringVersion = SCORING_VERSION;
   }
 
   const rows = db
@@ -187,11 +189,12 @@ export function analysedGameCount(userId: number, limitGames = 100): number {
       SELECT COUNT(*) AS n FROM (
         SELECT g.id FROM games g JOIN analyses a ON a.game_id = g.id
         WHERE g.user_id = ? AND (g.start_fen IS NULL OR g.start_fen = '')
+          AND a.scoring_version >= ?
         ORDER BY COALESCE(g.end_time, g.created_at) DESC, g.id DESC
         LIMIT ?
       )
     `)
-    .get(userId, limitGames) as { n: number };
+    .get(userId, SCORING_VERSION, limitGames) as { n: number };
   return row.n;
 }
 

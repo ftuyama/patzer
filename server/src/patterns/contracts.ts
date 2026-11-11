@@ -33,7 +33,12 @@ export interface DiagnosisOverview {
 /** GET /api/diagnosis?games=100 */
 export interface DiagnosisPayload {
   generated_at: string;
+  /** Analysed games inside the selected window. */
   games_analyzed: number;
+  /** Every game the user has imported or played. */
+  total_games: number;
+  /** Games with no analysis, or only an analysis from an old scoring version. */
+  pending_games: number;
   window_games: number;
   overview: DiagnosisOverview;
   patterns: PatternSummary[];
@@ -99,6 +104,10 @@ export interface DrillPosition {
   motif: PatternKey;
   /** Empty for a plain "find the best move" drill. */
   prompt?: 'find_best' | 'spot_threat';
+  // Context for the drill card; optional so a minimal payload stays valid.
+  opponent?: string | null;
+  opening_name?: string | null;
+  end_time?: string | null;
 }
 
 /** GET /api/train/drill?pattern=hung_piece&count=10&mode=find_best */

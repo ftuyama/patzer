@@ -43,7 +43,18 @@ function isoWeekStart(d: Date): string {
   return copy.toISOString().slice(0, 10);
 }
 
-function build(userId: number, windowGames: number): DiagnosisPayload {
+function countGames(userId: number): { total: number; pending: number } {
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total,
+           COALESCE(SUM(CASE WHEN a.game_id IS NULL OR a.scoring_version < ? THEN 1 ELSE 0 END), 0) AS pending
+      FROM games g
+      LEFT JOIN analyses a ON a.game_id = g.id
+     WHERE g.user_id = ?
+  `).get(SCORING_VERSION, userId) as { total: number; pending: number };
+  return { total: row.total, pending: row.pending };
+}
+
+function build(userId: number, windowGames: number, counts: { total: number; pending: number }): DiagnosisPayload {
   const rows = db.prepare(`
     SELECT a.game_id, g.user_color, a.moves_json, a.phase_split_json,
            a.accuracy_white, a.accuracy_black,
@@ -133,6 +144,8 @@ function build(userId: number, windowGames: number): DiagnosisPayload {
   return {
     generated_at: new Date().toISOString(),
     games_analyzed: rows.length,
+    total_games: counts.total,
+    pending_games: counts.pending,
     window_games: windowGames,
     overview: {
       accuracy: accuracyN ? Math.round((accuracySum / accuracyN) * 10) / 10 : null,
@@ -152,11 +165,19 @@ router.get('/', (c) => {
   const requested = Number(c.req.query('games') ?? 100);
   const windowGames = Math.min(200, Math.max(20, Number.isFinite(requested) ? requested : 100));
 
+  // Include the pending count in the cache key: a background "analyze all"
+  // changes it without touching `analyses` through this route, and a stale
+  // cache would keep telling the user there is nothing left to analyze.
+  const counts = countGames(me.id);
   const hit = cache.get(me.id);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS && hit.payload.window_games === windowGames) {
+  if (
+    hit && Date.now() - hit.at < CACHE_TTL_MS
+    && hit.payload.window_games === windowGames
+    && hit.payload.pending_games === counts.pending
+  ) {
     return c.json(hit.payload);
   }
-  const payload = build(me.id, windowGames);
+  const payload = build(me.id, windowGames, counts);
   cache.set(me.id, { at: Date.now(), payload });
   return c.json(payload);
 });

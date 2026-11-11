@@ -194,6 +194,9 @@ export interface DrillPosition {
   phase: 'opening' | 'middlegame' | 'endgame';
   motif: PatternKey;
   prompt?: 'find_best' | 'spot_threat';
+  opponent?: string | null;
+  opening_name?: string | null;
+  end_time?: string | null;
 }
 
 export interface DrillPayload {

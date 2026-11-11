@@ -14,6 +14,7 @@ import {
   GitFork, Hourglass, Minus, ShieldAlert, Sparkles, Stethoscope, Target, TrendingDown,
 } from 'lucide-react';
 import { api } from '../api';
+import AnalyzeAllButton from '../components/AnalyzeAllButton';
 import { cn } from '../lib/utils';
 
 type PatternKey =
@@ -67,6 +68,8 @@ interface WeeklyBucket {
 interface DiagnosisData {
   generated_at: string;
   games_analyzed: number;
+  total_games: number;
+  pending_games: number;
   window_games: number;
   overview: {
     accuracy: number | null;
@@ -130,7 +133,13 @@ export default function Diagnosis() {
             defaultValue: 'Analyze at least a few of your games with Stockfish. Your recurring error patterns will appear here, ranked by how much they cost you.',
           })}
         </div>
-        <Link to="/review" className="btn-primary mt-2 text-sm">{t('review.title')}</Link>
+        {data && data.pending_games > 0 ? (
+          <div className="mt-3">
+            <AnalyzeAllButton pending={data.pending_games} />
+          </div>
+        ) : (
+          <Link to="/review" className="btn-primary mt-2 text-sm">{t('review.title')}</Link>
+        )}
       </div>
     );
   }
@@ -144,23 +153,27 @@ export default function Diagnosis() {
           <h1 className="page-h1">{t('diagnosis.title', { defaultValue: 'Diagnosis' })}</h1>
           <p className="page-sub">
             {t('diagnosis.sub', {
-              defaultValue: 'Your {{n}} most recent analysed games. Patterns are ranked by how much they cost you, not just how often they happen.',
+              defaultValue: '{{n}} of your {{total}} games analysed. Patterns are ranked by how much they cost you, not just how often they happen.',
               n: data.games_analyzed,
+              total: data.total_games,
             })}
           </p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-chesscom-500">
-          {t('diagnosis.window', { defaultValue: 'Window' })}
-          <select
-            className="input py-1 text-xs"
-            value={windowGames}
-            onChange={(e) => setWindowGames(Number(e.target.value))}
-          >
-            {[50, 100, 200].map((n) => (
-              <option key={n} value={n}>{t('diagnosis.gamesCount', { defaultValue: '{{n}} games', n })}</option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <AnalyzeAllButton pending={data.pending_games} />
+          <label className="flex items-center gap-2 text-xs text-chesscom-500">
+            {t('diagnosis.window', { defaultValue: 'Window' })}
+            <select
+              className="input py-1 text-xs"
+              value={windowGames}
+              onChange={(e) => setWindowGames(Number(e.target.value))}
+            >
+              {[50, 100, 200].map((n) => (
+                <option key={n} value={n}>{t('diagnosis.gamesCount', { defaultValue: '{{n}} games', n })}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
 
       <Overview data={data} />
