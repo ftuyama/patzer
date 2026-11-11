@@ -7,6 +7,7 @@ import { hashPassword } from '../auth/passwords.js';
 import { createSession, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '../auth/sessions.js';
 import { testConnection } from '../coach/llm.js';
 import { connectionHint } from '../coach/connectionHint.js';
+import { ensureLocalUser } from '../localMode.js';
 
 const router = new Hono();
 
@@ -14,6 +15,14 @@ const router = new Hono();
 // asks for. The web app goes straight to the login page, and the first SSO
 // login creates the admin (see prepareSsoOnlyFirstRun in auth/oidc.ts).
 router.get('/status', (c) => {
+  if (config.localMode) {
+    // Make sure the row exists before the web app asks for the session, then
+    // tell it there is nothing to configure.
+    ensureLocalUser();
+    return c.json({ setup_required: false, local_mode: true });
+  }
+  // Payload shape stays exactly `{ setup_required }` when off (older clients
+  // and tests rely on it); local mode adds the flag it needs.
   return c.json({ setup_required: userCount() === 0 && !config.oidc.only });
 });
 

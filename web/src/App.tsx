@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './state/auth';
+import { api } from './api';
 import { useLobby } from './state/lobby';
 import { setMoveSoundSet, setSoundEnabled, setSoundSet, unlockAudio } from './lib/sounds';
 import Layout from './components/Layout';
@@ -39,6 +40,18 @@ export default function App() {
   const location = useLocation();
   const nav = useNavigate();
   const lobby = useLobby();
+
+  // LOCAL_MODE: single-user desktop install. The server auto-resolves every
+  // request to the `local` admin, so the gate below skips the setup wizard and
+  // the login screen entirely. `null` = probe still in flight.
+  const [localMode, setLocalMode] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.get<{ local_mode?: boolean }>('/api/auth/session')
+      .then((s) => { if (alive) setLocalMode(s.local_mode === true); })
+      .catch(() => { if (alive) setLocalMode(false); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -139,7 +152,7 @@ export default function App() {
     return undefined;
   }, [user?.profile?.site_theme]);
 
-  if (loading) {
+  if (loading || (localMode && !user)) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-ink-500">
         <div className="animate-pulse-soft">
@@ -152,29 +165,38 @@ export default function App() {
     );
   }
 
-  if (setupRequired) {
-    if (location.pathname !== '/setup') return <Navigate to="/setup" replace />;
-    return (
-      <Routes>
-        <Route path="/setup" element={<Setup />} />
-        <Route path="*" element={<Navigate to="/setup" replace />} />
-      </Routes>
-    );
+  // In LOCAL_MODE there is no account to create and nothing to log into: the
+  // local user above is the session. Keep the normal gate byte-for-byte when
+  // the flag is off.
+  if (!localMode) {
+    if (setupRequired) {
+      if (location.pathname !== '/setup') return <Navigate to="/setup" replace />;
+      return (
+        <Routes>
+          <Route path="/setup" element={<Setup />} />
+          <Route path="*" element={<Navigate to="/setup" replace />} />
+        </Routes>
+      );
+    }
+
+    if (!user) {
+      return (
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          {/* Reached from emailed links — must work without an authenticated session. */}
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      );
+    }
   }
 
-  if (!user) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* Reached from emailed links — must work without an authenticated session. */}
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
-  }
+  // Both paths above guarantee a user by now (local mode resolves one and the
+  // normal path returns otherwise); this is only for the type checker.
+  if (!user) return null;
 
   return (
     <>

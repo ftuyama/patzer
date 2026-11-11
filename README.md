@@ -202,6 +202,34 @@ npm run test:e2e    # boots a real server on a scratch DB and plays a PvP game o
 npm run build       # production build of both workspaces
 ```
 
+## Local mode (single-user desktop install)
+
+Set `LOCAL_MODE=1` (or the `CHESS_LOCAL=1` alias) to run Patzer as a one-person
+app: no setup wizard, no login screen. On boot the server creates a single
+`local` account with the admin role (display name from `LOCAL_USER_NAME`,
+default "Local player") and every request without a session cookie is served as
+that user. The default bind address also switches to `127.0.0.1`, so the
+instance is reachable only from the same machine. An explicit `HOST` still wins.
+
+```bash
+LOCAL_MODE=1 npm run dev
+```
+
+In Docker, use the bundled `local` compose profile — it publishes the port on
+loopback only and keeps its data in a separate volume:
+
+```bash
+docker compose --profile local up -d patzer-local
+```
+
+> **Security:** local mode has no authentication. Never put it behind a
+> reverse proxy, a tunnel, or a LAN-exposed `HOST`/port mapping. Anyone who can
+> reach the port is the admin. It is meant for a single desktop machine.
+
+Admin pages stay available (the local user is the admin), but account-related
+UI — sign-up, invitations, login — is bypassed. To go back to multi-user, unset
+the flag; the local account stays in the database but is no longer implicit.
+
 ## Deploying to a home server
 
 The published image plus the `docker compose` snippet above is all most people need — add the
@@ -249,6 +277,8 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `UPDATE_CHECK` | `1` | Set to `0` to disable the six-hourly "a newer release exists" check for the whole deployment (there's also a toggle in *Admin → System*) |
 | `SESSION_SECRET` | (auto-generated) | Cookie signing secret. Persisted on first run. |
 | `COOKIE_SECURE`  | `false` | Set to `true` when terminating TLS at a reverse proxy so session cookies are flagged `Secure`. |
+| `LOCAL_MODE` | `false` | Single-user desktop install: no wizard/login, auto-creates and auto-logs-in the `local` admin, and defaults `HOST` to `127.0.0.1`. `CHESS_LOCAL` is an alias. Never expose it to a network |
+| `LOCAL_USER_NAME` | `Local player` | Display name of the local account created by `LOCAL_MODE` |
 | `ENGINE_BACKEND` | `local` | `chessapi` sends Game Review positions to the hosted chess-api.com engine instead of the bundled Stockfish (opt-in — for a Pi or a public demo instance) |
 | `CHESSCOM_SYNC_MINUTES` | `15` | How often linked Chess.com accounts are synced, analyzed and reviewed in the background; `0` turns the timer off |
 | `DEEPSEEK_API_KEY` | (none) | DeepSeek key for the coach; wins over the key saved in *Admin → System* (handy with Docker secrets) |

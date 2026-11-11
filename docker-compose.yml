@@ -57,5 +57,33 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Single-user desktop install: `docker compose --profile local up -d patzer-local`.
+  # Port is published on loopback only and LOCAL_MODE skips the wizard/login.
+  # HOST stays 0.0.0.0 *inside* the container so Docker can forward the port;
+  # the 127.0.0.1 publish is what keeps it off the network. Never change that.
+  patzer-local:
+    image: sikamikaniko123/patzer:latest
+    # build: .
+    container_name: patzer-local
+    profiles: ["local"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${LOCAL_PORT:-8800}:8800"
+    volumes:
+      - patzer-local-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - LOCAL_MODE=1
+      - HOST=0.0.0.0
+      - ENGINE_BACKEND=${ENGINE_BACKEND:-local}
+      # Optional: the display name of the auto-created local account.
+      # - LOCAL_USER_NAME=${LOCAL_USER_NAME:-Local player}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   patzer-data:
+  patzer-local-data:

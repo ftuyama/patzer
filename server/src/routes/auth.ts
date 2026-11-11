@@ -24,11 +24,11 @@ import {
 import {
   createSession,
   destroySession,
-  lookupUser,
   sessionOidcIdToken,
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
 } from '../auth/sessions.js';
+import { currentUser } from '../auth/middleware.js';
 import { beginOidcLogin, finishOidcLogin, resolveOidcUser, oidcLogoutUrl, OidcError, logSafe } from '../auth/oidc.js';
 import type { Profile, Role } from '../types.js';
 
@@ -250,10 +250,17 @@ router.get('/oidc/callback', async (c) => {
 });
 
 router.get('/me', (c) => {
-  const cookie = getCookie(c, SESSION_COOKIE_NAME);
-  const user = lookupUser(cookie);
-  if (!user) return c.json({ user: null });
-  return c.json({ user });
+  return c.json({ user: currentUser(c), local_mode: config.localMode });
+});
+
+// One probe for the web app's auth gate: who am I, is this a single-user local
+// install, and does the setup wizard apply. `/me` stays for older front-ends.
+router.get('/session', (c) => {
+  return c.json({
+    user: currentUser(c),
+    local_mode: config.localMode,
+    setup_required: config.localMode ? false : userCount() === 0 && !config.oidc.only,
+  });
 });
 
 // ---- Self-service signup + email flows -----------------------------------
