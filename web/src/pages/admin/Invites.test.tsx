@@ -92,7 +92,8 @@ describe('Admin → Users → Invites', () => {
     fireEvent.change(screen.getByLabelText('Notiz (sehen nur Admins)'), { target: { value: 'Familie' } });
     fireEvent.change(screen.getByLabelText('Konten'), { target: { value: 'unlimited' } });
     fireEvent.change(screen.getByLabelText('Gültig für'), { target: { value: '30' } });
-    fireEvent.change(screen.getByLabelText('Sprache'), { target: { value: 'de' } });
+    fireEvent.click(screen.getByLabelText('Sprache'));
+    fireEvent.click(await screen.findByRole('option', { name: /Deutsch/ }));
     fireEvent.change(screen.getByLabelText('Erklär-Niveau'), { target: { value: 'kid' } });
     fireEvent.click(screen.getByRole('button', { name: 'Einladung erstellen' }));
 

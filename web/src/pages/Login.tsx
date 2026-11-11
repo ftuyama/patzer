@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { KeyRound, LogIn } from 'lucide-react';
@@ -8,7 +8,7 @@ import { useAuth } from '../state/auth';
 import { useAuthConfig } from '../lib/useAuthConfig';
 import { humanizeError } from '../lib/errors';
 import { LogoMark } from '../components/Logo';
-import { LANGUAGES, normalizeLanguage } from '../lib/languages';
+import LanguagePicker from '../components/LanguagePicker';
 
 // /login?sso_error=<code> after a failed single sign-on (see server/src/auth/oidc.ts).
 const SSO_ERROR_KEYS: Record<string, string> = {
@@ -22,7 +22,7 @@ const SSO_ERROR_KEYS: Record<string, string> = {
 };
 
 export default function Login() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { refresh } = useAuth();
   const { config, loaded } = useAuthConfig();
   const [params] = useSearchParams();
@@ -137,13 +137,8 @@ export default function Login() {
           </form>
         )}
 
-        <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">
-          {LANGUAGES.map((l, i) => (
-            <Fragment key={l.code}>
-              {i > 0 && <span>·</span>}
-              <button type="button" onClick={() => i18n.changeLanguage(l.code)} title={l.native} aria-label={l.native} className={`inline-flex items-center gap-1 px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}><span aria-hidden>{l.flag}</span>{l.short}</button>
-            </Fragment>
-          ))}
+        <div className="mt-6 flex justify-center">
+          <LanguagePicker appearance="ghost" showNative align="center" placement="top" />
         </div>
       </motion.div>
     </div>

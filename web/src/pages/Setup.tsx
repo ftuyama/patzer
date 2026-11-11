@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES, normalizeLanguage, type Language } from '../lib/languages';
+import { normalizeLanguage, type Language } from '../lib/languages';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, ChevronRight, ChevronLeft, Sparkles, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { LogoMark } from '../components/Logo';
+import LanguagePicker from '../components/LanguagePicker';
 
 export default function Setup() {
   const { t, i18n } = useTranslation();
@@ -93,12 +94,14 @@ export default function Setup() {
               <motion.div key="s1" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} className="space-y-4">
                 <h2 className="text-lg font-semibold">{t('setup.step1')}</h2>
                 <div>
-                  <label className="label mb-1 block">{t('common.language')}</label>
-                  <div className="flex gap-2">
-                    {LANGUAGES.map((l) => (
-                      <LangBtn key={l.code} current={language} value={l.code} onClick={() => { setLanguage(l.code); void i18n.changeLanguage(l.code); }} lang={l.code}>{l.native}</LangBtn>
-                    ))}
-                  </div>
+                  <label className="label mb-1 block" htmlFor="setup-language">{t('common.language')}</label>
+                  <LanguagePicker
+                    id="setup-language"
+                    value={language}
+                    onChange={(language) => { if (language) setLanguage(language); }}
+                    appearance="field"
+                    showNative
+                  />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -178,12 +181,5 @@ function Dot({ active, done, children }: { active?: boolean; done?: boolean; chi
         done ? 'bg-accent-500 text-white' : 'bg-ink-200 text-ink-500 dark:bg-ink-700 dark:text-ink-300'}`}>
       {done ? <CheckCircle2 className="h-4 w-4" /> : children}
     </span>
-  );
-}
-
-function LangBtn({ current, value, onClick, lang, children }: { current: string; value: string; onClick: () => void; lang?: string; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick} lang={lang}
-      className={`btn flex-1 ${current === value ? 'btn-primary' : 'btn-secondary'}`}>{children}</button>
   );
 }

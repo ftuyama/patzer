@@ -66,7 +66,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     cover the screens.
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
-    
+
+### One language picker everywhere
+
+- **A dropdown instead of a row of buttons.** The top bar, the login screens,
+  the mobile drawer, Settings and the admin user/invite dialogs all share one
+  `LanguagePicker`: a trigger showing flag plus code (or native name), a
+  listbox with arrows, Home/End, Enter and Esc, and the native name in every
+  row so a wrong choice can always be undone.
+- **SVG flags, not emoji.** Emoji flags render as bare letters on Windows, so
+  `Flag` draws simplified inline flags at any size.
+- **Fits on a laptop.** The top-bar switch is a compact dropdown from `lg` up,
+  instead of five buttons that only appeared above 1800 px.
+- Settings, setup and admin forms save the language on submit (`apply={false}`)
+  rather than switching the interface mid-edit.
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better

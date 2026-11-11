@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
 import { moveSoundsReady, playSound, setMoveSoundSet, setSoundSet } from '../lib/sounds';
+import LanguagePicker from '../components/LanguagePicker';
 
 const EMOJIS = ['♟','♞','♝','♜','♛','♚','🦊','🐯','🦁','🐻','🐼','🐰','🐶','🐱','🐹','🐢','🐧','🐳','⭐','🌟'];
 
@@ -124,10 +124,15 @@ export default function Settings() {
             </div>
           </div>
           <div>
-            <label className="label mb-1 block">{t('settings.language')}</label>
-            <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as Language)}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
-            </select>
+            <label className="label mb-1 block" htmlFor="settings-language">{t('settings.language')}</label>
+            <LanguagePicker
+              id="settings-language"
+              value={form.language}
+              onChange={(language) => { if (language) set('language', language); }}
+              apply={false}
+              appearance="field"
+              showNative
+            />
           </div>
           <div>
             <label className="label mb-1 block">{t('settings.audience')}</label>

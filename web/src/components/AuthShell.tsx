@@ -1,15 +1,15 @@
-import { Fragment, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { LogoMark } from './Logo';
-import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 import GitHubStar from './GitHubStar';
+import LanguagePicker from './LanguagePicker';
 
 // Shared visual frame for the unauthenticated pages (login / signup / forgot /
 // reset / verify) so they all read as the same product. Mirrors Login.tsx's
 // decorative background + centered card.
 export default function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-cream px-4 py-10 dark:bg-ink-900">
       <div className="pointer-events-none absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-700/10" />
@@ -27,13 +27,8 @@ export default function AuthShell({ title, subtitle, children }: { title: string
           </div>
           {children}
         </div>
-        <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">
-          {LANGUAGES.map((l, i) => (
-            <Fragment key={l.code}>
-              {i > 0 && <span>·</span>}
-              <button type="button" onClick={() => i18n.changeLanguage(l.code)} title={l.native} aria-label={l.native} className={`inline-flex items-center gap-1 px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}><span aria-hidden>{l.flag}</span>{l.short}</button>
-            </Fragment>
-          ))}
+        <div className="mt-6 flex justify-center">
+          <LanguagePicker appearance="ghost" showNative align="center" placement="top" />
         </div>
         {/* The login card is also where someone evaluating Patzer lands, so the
             repo gets one quiet line here too. */}

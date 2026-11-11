@@ -5,7 +5,8 @@ import { Plus, Trash2, Pencil, X } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../state/auth';
 import { humanizeError } from '../../lib/errors';
-import { LANGUAGES, type Language } from '../../lib/languages';
+import { type Language } from '../../lib/languages';
+import LanguagePicker from '../../components/LanguagePicker';
 import InvitesSection from './Invites';
 
 interface UserRow {
@@ -172,9 +173,13 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <option value="user">{t('admin.roleUser')}</option>
               <option value="admin">{t('admin.roleAdmin')}</option>
             </select>
-            <select className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as Language })}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
-            </select>
+            <LanguagePicker
+              value={form.language}
+              onChange={(language) => { if (language) setForm({ ...form, language }); }}
+              apply={false}
+              appearance="field"
+              showNative
+            />
             <select className="input" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value as never })}>
               <option value="kid">{t('settings.audienceLevel.kid')}</option>
               <option value="beginner">{t('settings.audienceLevel.beginner')}</option>

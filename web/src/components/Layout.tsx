@@ -9,7 +9,7 @@ import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
 import GitHubStar from './GitHubStar';
 import { LogoMark, LogoLockup } from './Logo';
-import { LANGUAGES, normalizeLanguage } from '../lib/languages';
+import LanguagePicker from './LanguagePicker';
 import { endSession } from '../lib/logout';
 
 // v4.0.0 Layout — chess.com-style horizontal top bar.
@@ -25,7 +25,6 @@ interface LayoutProps {
 
 export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
   const { t, i18n } = useTranslation();
-  const uiLang = normalizeLanguage(i18n.language);
   const { user, refresh } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
@@ -235,20 +234,11 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                 <Keyboard className="h-4 w-4" />
               </button>
             )}
-            {/* Language toggle — only on genuinely wide screens (2xl). Below
-                that the nav plus the user cluster already fill the bar, and
-                this was the first thing to hang off the right edge on a
-                laptop. Nothing becomes unreachable: the switch is in
-                Settings, in the command palette (⌘K → "Switch to …") and in
-                the mobile drawer. */}
-            <div className="hidden shrink-0 rounded-lg border border-chesscom-700 bg-chesscom-800 p-0.5 text-xs min-[1800px]:flex">
-              {LANGUAGES.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => i18n.changeLanguage(l.code)}
-                  className={cn('rounded-md px-2 py-1 transition-colors', uiLang === l.code ? 'bg-gold-500 text-chesscom-900' : 'text-chesscom-300 hover:text-white')}
-                >{l.short}</button>
-              ))}
+            {/* Language picker — a compact dropdown so it fits on laptops too.
+                Below `lg` the switch remains in the mobile drawer, Settings
+                and the command palette (⌘K → "Switch to …"). */}
+            <div className="hidden shrink-0 lg:block">
+              <LanguagePicker tone="dark" appearance="button" align="right" />
             </div>
 
             {/* User chip */}
@@ -338,11 +328,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               )}
             </nav>
             <div className="mt-auto space-y-2 pt-6">
-              <div className="flex gap-1">
-                {LANGUAGES.map((l) => (
-                  <button key={l.code} onClick={() => i18n.changeLanguage(l.code)} className={cn('flex-1 rounded-lg px-2 py-1 text-xs', uiLang === l.code ? 'bg-gold-500 text-chesscom-900' : 'bg-chesscom-800 text-chesscom-200')}>{l.short}</button>
-                ))}
-              </div>
+              <LanguagePicker tone="dark" appearance="field" showNative align="left" placement="top" />
               <button onClick={logout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-chesscom-200 hover:bg-chesscom-800">
                 <LogOut className="h-4 w-4" />
                 {t('common.logout')}

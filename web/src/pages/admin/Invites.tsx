@@ -7,6 +7,7 @@ import { api } from '../../api';
 import { humanizeError } from '../../lib/errors';
 import { copyText } from '../../lib/clipboard';
 import { LANGUAGES, type Language } from '../../lib/languages';
+import LanguagePicker from '../../components/LanguagePicker';
 
 type Audience = 'kid' | 'beginner' | 'intermediate' | 'advanced';
 type InviteStatus = 'active' | 'revoked' | 'expired' | 'used_up';
@@ -236,10 +237,16 @@ function CreateInviteModal({ onClose, onCreated }: { onClose: () => void; onCrea
               </div>
               <div>
                 <label className="label mb-1 block" htmlFor="invite-language">{t('common.language')}</label>
-                <select id="invite-language" className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as Language | '' })}>
-                  <option value="">{t('admin.invitePresetNone')}</option>
-                  {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
-                </select>
+                <LanguagePicker
+                  id="invite-language"
+                  value={form.language}
+                  onChange={(language) => setForm({ ...form, language })}
+                  apply={false}
+                  appearance="field"
+                  showNative
+                  allowNone
+                  noneLabel={t('admin.invitePresetNone')}
+                />
               </div>
               <div>
                 <label className="label mb-1 block" htmlFor="invite-audience">{t('admin.audience')}</label>
