@@ -697,6 +697,26 @@
         "more": "More puzzles",
         "already": "You did this one today — trying again doesn’t change your rating or your streak."
       }
+    },
+    "drill": {
+      "title": "Pattern drills",
+      "sub": "Positions from your own games that match your most expensive habit.",
+      "pattern": "Pattern",
+      "mixed": "Mixed",
+      "start": "Start drill",
+      "again": "New set",
+      "findBest": "Find the best move",
+      "spotThreat": "Spot the threat",
+      "empty": "No positions yet",
+      "emptyDesc": "Analyse a few games and the drill will fill itself from your own mistakes.",
+      "correct": "Correct",
+      "wrong": "Not the best move",
+      "reveal": "Show solution",
+      "next": "Next position",
+      "done": "Drill complete",
+      "position": "Position {{current}} of {{total}}",
+      "severity": "Cost {{value}}% win chance",
+      "source": "From your game vs {{opponent}}"
     }
   },
   "learn": {
@@ -1009,6 +1029,26 @@
         "slav": "Slav Defense: Main Line",
         "nimzo-indian": "Nimzo-Indian Defense: Rubinstein"
       }
+    },
+    "theory": {
+      "title": "Theory gaps",
+      "sub": "Where you leave the book early — and what theory plays instead.",
+      "color": "Colour",
+      "white": "White",
+      "black": "Black",
+      "both": "Both",
+      "scan": "Scan games",
+      "gap": "You played",
+      "instead": "Theory plays",
+      "games": "{{count}} games",
+      "share": "in {{value}}% of your games",
+      "loss": "Costs {{value}}% win chance",
+      "example": "See game",
+      "empty": "No theory gaps found",
+      "emptyDesc": "Either you follow the main lines or there are not enough analysed games yet.",
+      "source_lichess": "Checked against the Lichess Opening Explorer",
+      "source_local": "Checked against the built-in opening book",
+      "source_unavailable": "Opening explorer unavailable — showing local results"
     }
   },
   "plan": {
@@ -1366,6 +1406,39 @@
     "star_collector": {
       "title": "Star Collector",
       "description": "Collected 100 stars in Learn."
+    }
+  },
+  "progress": {
+    "nav": "Progress",
+    "title": "Progress",
+    "sub": "Week by week: accuracy, errors per game and the habit that cost you most.",
+    "notImplemented": "Weekly progress arrives in the next update.",
+    "range": "Range",
+    "weeks": "{{count}} weeks",
+    "thisWeek": "This week",
+    "partial": "in progress",
+    "games": "Games",
+    "wins": "Wins",
+    "draws": "Draws",
+    "losses": "Losses",
+    "accuracy": "Accuracy",
+    "accuracyDelta": "vs. previous week",
+    "errorsPerGame": "Errors / game",
+    "errorsDelta": "vs. previous week",
+    "topPattern": "Main habit",
+    "noData": "No analysed games in this period.",
+    "trend_up": "worse",
+    "trend_down": "better",
+    "trend_flat": "stable",
+    "report": {
+      "title": "Weekly report",
+      "generate": "Generate report",
+      "regenerate": "Regenerate",
+      "empty": "Finish a full week of analysed games to get a written report."
+    },
+    "explain": {
+      "accuracy": "Average move accuracy across the week's analysed games.",
+      "errors": "Severity-weighted errors per game: one blunder weighs more than several inaccuracies."
     }
   }
 }

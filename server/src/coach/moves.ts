@@ -12,6 +12,7 @@ const CASTLE_SHORT: Record<Language, string> = {
   es: "enroque corto",
   de: "kurze Rochade",
   ru: "короткая рокировка",
+  pt: "roque curto",
 };
 
 const CASTLE_LONG: Record<Language, string> = {
@@ -20,6 +21,7 @@ const CASTLE_LONG: Record<Language, string> = {
   es: "enroque largo",
   de: "lange Rochade",
   ru: "длинная рокировка",
+  pt: "roque longo",
 };
 
 type MoveFormatParams = {
@@ -105,6 +107,20 @@ const MOVE_DESCRIPTIONS: Record<
       if (promo) extra += `, превращение в ${ruForm(promo, "acc")}`;
       if (isMate) extra += " (мат)";
       else if (isCheck) extra += " (шах)";
+      return extra;
+    },
+  },
+  pt: {
+    capture: ({ pieceName, captured, to }) =>
+      `o ${pieceName} captura ${captured} em ${to}`,
+    pawn: ({ pieceName, to }) => `o ${pieceName} vai para ${to}`,
+    default: ({ pieceName, from, to }) =>
+      `o ${pieceName} vai de ${from} para ${to}`,
+    suffix: ({ promo, isCheck, isMate }) => {
+      let extra = "";
+      if (promo) extra += `, promovendo para ${promo}`;
+      if (isMate) extra += " (xeque-mate)";
+      else if (isCheck) extra += " (xeque)";
       return extra;
     },
   },

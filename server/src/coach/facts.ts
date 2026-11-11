@@ -33,6 +33,7 @@ const SECOND_PERSON_PERSPECTIVE: Record<Language, string> = {
   es: "tú",
   de: "du",
   ru: "ты",
+  pt: "você",
 };
 /** FACTS payload for /api/coach/explain. */
 export function factsForExplain(
@@ -238,6 +239,7 @@ export function correctionNote(language: Language, verdict: string): string {
     es: `IMPORTANTE: tu respuesta anterior contradecía FACTS.verdict ("${verdict}"). Empieza con ese veredicto y no elogies la jugada.`,
     de: `WICHTIG: Deine vorige Antwort widersprach FACTS.verdict ("${verdict}"). Beginne mit diesem Urteil und lobe den Zug nicht.`,
     ru: `ВАЖНО: твой прошлый ответ противоречил FACTS.verdict ("${verdict}"). Начни с этого вердикта и не хвали ход.`,
+    pt: `IMPORTANTE: sua resposta anterior contradisse FACTS.verdict ("${verdict}"). Comece com esse veredito e não elogie o lance.`,
   };
   return notes[language] ?? notes.en;
 }

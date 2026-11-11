@@ -429,6 +429,72 @@ db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
 db.prepare(`UPDATE challenges SET status = 'expired'
             WHERE status = 'pending' AND created_at < datetime('now','-15 minutes')`).run();
 
+// Diagnostic pattern persistence (chess/patterns.ts → patterns/store.ts).
+// `error_events` is one row per (game, ply, motif): the deterministic reasons a
+// move went wrong, written when an analysis is stored (and backfilled from
+// analyses.moves_json). Aggregating rows instead of re-parsing moves_json is
+// what makes the weekly snapshots and the 100-game window cheap.
+db.exec(`CREATE TABLE IF NOT EXISTS error_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  ply INTEGER NOT NULL,
+  motif TEXT NOT NULL,
+  phase TEXT NOT NULL,
+  color TEXT NOT NULL CHECK(color IN ('white','black')),
+  severity REAL NOT NULL,
+  cp_loss INTEGER NOT NULL,
+  classification TEXT NOT NULL,
+  fen TEXT NOT NULL,
+  played_san TEXT NOT NULL,
+  best_san TEXT,
+  end_time TEXT,
+  eco TEXT,
+  opening_name TEXT,
+  opponent TEXT,
+  result TEXT,
+  pattern_version INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(game_id, ply, motif)
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_error_events_user_motif ON error_events(user_id, motif)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_error_events_user_time ON error_events(user_id, end_time DESC)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_error_events_game ON error_events(game_id)`);
+
+// One row per (user, ISO week, motif): the frozen result of summarizing the
+// events that fell in that week. Written on demand (first read of a closed
+// week) so history survives later recipe changes and stays comparable.
+db.exec(`CREATE TABLE IF NOT EXISTS pattern_snapshots (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  week_start TEXT NOT NULL,
+  motif TEXT NOT NULL,
+  count INTEGER NOT NULL,
+  games_affected INTEGER NOT NULL,
+  score REAL NOT NULL,
+  avg_severity REAL NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, week_start, motif)
+)`);
+
+// The templated weekly report (prose + numbers). One per user and ISO week;
+// regenerated only when missing.
+db.exec(`CREATE TABLE IF NOT EXISTS weekly_reports (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  week_start TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  summary_text TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, week_start)
+)`);
+
+// Cached Lichess Opening Explorer responses (openings/theory.ts). Public API,
+// no key, but rate limited — a week of cache is plenty for theory gaps.
+db.exec(`CREATE TABLE IF NOT EXISTS theory_cache (
+  key TEXT PRIMARY KEY,
+  payload_json TEXT NOT NULL,
+  fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+
 export function getSetting(key: string): string | null {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
   return row?.value ?? null;

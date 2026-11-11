@@ -39,6 +39,49 @@ const positionSchema = z.object({
   lines: z.number().int().min(1).max(5).default(3),
 });
 
+const bulkSchema = z.object({
+  depth: z.number().int().min(8).max(22).default(16),
+});
+
+// "Analyze everything imported so far" runs as one background job per user.
+// The route only starts it and returns the current state; the UI polls
+// GET /api/analyze/all for progress. Like the single-game route, only one
+// analysis job may run per user at a time — the job owns `inflight` for its
+// whole lifetime so a manual Analyze click can't start a second engine.
+interface BulkJob {
+  running: boolean;
+  total: number;
+  done: number;
+  failed: number;
+  current_game_id: number | null;
+  started_at: string | null;
+  finished_at: string | null;
+  last_error: string | null;
+}
+
+interface BulkGameRow {
+  id: number;
+  pgn: string;
+  result: string | null;
+  user_color: 'white' | 'black' | null;
+  opponent_rating_before: number | null;
+}
+
+const bulkJobs = new Map<number, BulkJob>();
+
+function idleBulkJob(): BulkJob {
+  return {
+    running: false,
+    total: 0,
+    done: 0,
+    failed: 0,
+    current_game_id: null,
+    started_at: null,
+    finished_at: null,
+    last_error: null,
+  };
+}
+
 export interface AnalysisRow {
   depth: number;
   accuracy_white: number;
@@ -81,6 +124,79 @@ export function rowToAnalysis(row: AnalysisRow): AnalysisResult {
     moves: JSON.parse(row.moves_json) as AnalyzedMove[],
   };
 }
+
+// Analyze every game that has no current analysis yet. Games are processed
+// oldest-first? No — newest-first, matching the rest of the app, so the games
+// the user cares about most land first even on a large backlog. Failures are
+// counted and skipped: one malformed PGN must not stop the whole batch.
+router.post('/all', async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = bulkSchema.safeParse(body ?? {});
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const { depth } = parsed.data;
+
+  const existing = bulkJobs.get(user.id);
+  if (existing?.running) return c.json(existing);
+  if (inflight.has(user.id)) return c.json({ error: 'already_analyzing' }, 429);
+
+  const rows = db.prepare(`
+    SELECT g.id, g.pgn, g.result, g.user_color, g.opponent_rating_before
+      FROM games g
+      LEFT JOIN analyses a ON a.game_id = g.id
+     WHERE g.user_id = ? AND (a.game_id IS NULL OR a.scoring_version < ?)
+     ORDER BY COALESCE(g.end_time, g.created_at) DESC, g.id DESC
+  `).all(user.id, SCORING_VERSION) as BulkGameRow[];
+
+  const job: BulkJob = {
+    running: rows.length > 0,
+    total: rows.length,
+    done: 0,
+    failed: 0,
+    current_game_id: null,
+    started_at: new Date().toISOString(),
+    finished_at: rows.length === 0 ? new Date().toISOString() : null,
+    last_error: null,
+  };
+  bulkJobs.set(user.id, job);
+
+  if (rows.length === 0) return c.json(job);
+
+  const work = (async () => {
+    try {
+      for (const row of rows) {
+        job.current_game_id = row.id;
+        try {
+          const result = await analyzePgnFull(row.pgn, depth, {
+            score: scoreFromResultForUser(row.result, row.user_color ?? 'white'),
+            userColor: row.user_color ?? 'white',
+            opponentRating: row.opponent_rating_before,
+            opponentRd: null,
+          });
+          saveAnalysis(row.id, result);
+          job.done++;
+        } catch (err) {
+          job.failed++;
+          job.last_error = err instanceof Error ? err.message : String(err);
+          console.warn(`[analyze-all] game ${row.id}:`, job.last_error);
+        }
+      }
+    } finally {
+      job.running = false;
+      job.current_game_id = null;
+      job.finished_at = new Date().toISOString();
+      inflight.delete(user.id);
+    }
+  })();
+
+  inflight.set(user.id, work);
+  return c.json(job);
+});
+
+router.get('/all', (c) => {
+  const user = c.get('user');
+  return c.json(bulkJobs.get(user.id) ?? idleBulkJob());
+});
 
 router.post('/', async (c) => {
   const user = c.get('user');

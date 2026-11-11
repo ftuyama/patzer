@@ -320,6 +320,46 @@ const PHRASES: Record<Language, Phrases> = {
       topIdea: (r) => `Что даёт лучший ход по мнению движка: ${r}.`,
     },
   },
+  pt: {
+    on: "em",
+    allowsMate: (m) => `Este lance permite xeque-mate imediato do adversário: ${m}.`,
+    hangs: (p) => `Sem proteção depois deste lance: ${p}. O adversário pode ganhar material.`,
+    opponentReply: (m) => `A melhor resposta do adversário: ${m}.`,
+    reasons: {
+      mate: "é xeque-mate", stopsMate: "impede a ameaça de mate", threatensMate: "ameaça xeque-mate",
+      check: "dá xeque", castles: "coloca o rei em segurança", develops: "desenvolve uma peça",
+      wins: (p) => `ganha material (${p})`, fork: (ps) => `ataca duas peças ao mesmo tempo (${ps})`,
+      saves: (p) => `salva uma peça ameaçada (${p})`, threatens: (p) => `ataca uma peça solta (${p})`,
+    },
+    quiet: "um lance tranquilo que melhora a posição",
+    takeaway: {
+      allowed_mate: "Antes de cada lance, veja todos os xeques que o adversário pode dar em seguida, especialmente nas casas ao redor do seu rei.",
+      hung_piece: "Antes de soltar uma peça, pergunte: depois deste lance, o que o adversário pode capturar, e está defendido?",
+      missed_mate: "Quando o rei inimigo tem poucas casas, veja todos os xeques primeiro: pode haver mate.",
+      missed_win: "Quando você está ganhando, procure primeiro o lance forçado: xeques, capturas, ameaças.",
+      missed_tactic: "Procure peças soltas ou que possam ser atacadas duas vezes ao mesmo tempo. É aí que moram as táticas.",
+      positional: "Compare seu lance com o melhor: o que cada um faz pelas suas peças e pelo seu rei?",
+    },
+    kind: {
+      allowed_mate: "mate rápido permitido", hung_piece: "peça deixada sem defesa", missed_mate: "mate perdido",
+      missed_win: "vitória perdida", missed_tactic: "tática perdida",
+    },
+    pattern: (n, t, l) => `Um padrão das suas últimas partidas (${n} de ${t}): ${l}.`,
+    weakPhase: (w, wa, b, ba) => `Sua fase mais fraca ultimamente: ${w}, ${wa}% de precisão (${b}: ${ba}%).`,
+    phase: { opening: "abertura", middlegame: "meio-jogo", endgame: "final" },
+    greatFinds: (n) => `Nas suas últimas partidas há ${n} lances ótimos ou brilhantes.`,
+    trainer: (n, m) => `Esta posição está no seu treinador de aberturas (${n}× não encontrada); ali o correto é ${m}.`,
+    hint: {
+      mateAvailable: "Nesta posição você tem mate.",
+      mateThreat: "O adversário ameaça mate no próximo lance.",
+      inCheck: "Seu rei está em xeque.",
+      ourHanging: (ps) => `Atacadas e sem defesa suficiente: ${ps}.`,
+      theirHanging: (ps) => `O adversário tem uma peça mal defendida: ${ps}.`,
+      undeveloped: (ps) => `Ainda não desenvolvidas: ${ps}. Desenvolver vem primeiro.`,
+      notCastled: "Seu rei ainda não fez o roque.",
+      topIdea: (r) => `O que o melhor lance do motor consegue: ${r}.`,
+    },
+  },
 };
 
 export const phrases = (lang: Language): Phrases => PHRASES[lang] ?? PHRASES.en;
@@ -586,6 +626,7 @@ const PRAISE: Record<Language, RegExp> = {
   es: /(gran jugada|genial|excelente|brillante|bien jugad|buena jugada|jugada fuerte|sólid|perfect|estupend|bien hecho)/i,
   de: /(großartig|ausgezeichnet|brillant|gut gespielt|guter zug|starker zug|solide|perfekt|klasse zug|stark gespielt|gut gemacht|schöner zug)/i,
   ru: /(отличн|блестящ|прекрасн|молодец|хороший ход|(?<!более )сильный ход|здорово|великолепн|солидн|хорошо сыграно)/i,
+  pt: /(grande lance|genial|excelente|brilhante|bem jogado|boa jogada|lance forte|sólid|perfeito|muito bem|bonito lance)/i,
 };
 const BLAME: Record<Language, RegExp> = {
   en: /\b(blunder|mistake|inaccura)/i,
@@ -593,6 +634,7 @@ const BLAME: Record<Language, RegExp> = {
   es: /(error|imprecisi|fallo grave)/i,
   de: /(fehler|ungenauigkeit)/i,
   ru: /(ошибк|зевок|неточност)/i,
+  pt: /(erro|imprecis|erro grave|falha)/i,
 };
 
 const firstSentence = (t: string) => t.trim().split(/(?<=[.!?…])\s/)[0] ?? t;
@@ -624,5 +666,5 @@ export function fallbackText(c: ExplainCoaching["facts"], lang: Language): strin
 }
 
 function betterWord(lang: Language): string {
-  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:" }[lang] ?? "Better:";
+  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:", pt: "Melhor:" }[lang] ?? "Better:";
 }

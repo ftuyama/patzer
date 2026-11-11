@@ -697,6 +697,26 @@
         "more": "Weitere Aufgaben",
         "already": "Die hast du heute schon gemacht – nochmal lösen ändert weder Wertung noch Serie."
       }
+    },
+    "drill": {
+      "title": "Muster-Training",
+      "sub": "Stellungen aus deinen eigenen Partien, die zu deiner teuersten Gewohnheit passen.",
+      "pattern": "Muster",
+      "mixed": "Gemischt",
+      "start": "Training starten",
+      "again": "Neuer Satz",
+      "findBest": "Finde den besten Zug",
+      "spotThreat": "Erkenne die Drohung",
+      "empty": "Noch keine Stellungen",
+      "emptyDesc": "Analysiere ein paar Partien, dann füllt sich das Training aus deinen eigenen Fehlern.",
+      "correct": "Richtig",
+      "wrong": "Nicht der beste Zug",
+      "reveal": "Lösung zeigen",
+      "next": "Nächste Stellung",
+      "done": "Training abgeschlossen",
+      "position": "Stellung {{current}} von {{total}}",
+      "severity": "Kostete {{value}}% Gewinnchance",
+      "source": "Aus deiner Partie gegen {{opponent}}"
     }
   },
   "learn": {
@@ -1009,6 +1029,26 @@
         "slav": "Slawisch: Hauptvariante",
         "nimzo-indian": "Nimzo-Indisch: Rubinstein-Variante"
       }
+    },
+    "theory": {
+      "title": "Theorielücken",
+      "sub": "Wo du das Buch früh verlässt — und was die Theorie stattdessen spielt.",
+      "color": "Farbe",
+      "white": "Weiß",
+      "black": "Schwarz",
+      "both": "Beide",
+      "scan": "Partien prüfen",
+      "gap": "Du spieltest",
+      "instead": "Theorie spielt",
+      "games": "{{count}} Partien",
+      "share": "in {{value}}% deiner Partien",
+      "loss": "Kostet {{value}}% Gewinnchance",
+      "example": "Partie ansehen",
+      "empty": "Keine Theorielücken gefunden",
+      "emptyDesc": "Entweder folgst du den Hauptlinien oder es gibt noch zu wenige analysierte Partien.",
+      "source_lichess": "Geprüft gegen den Lichess Opening Explorer",
+      "source_local": "Geprüft gegen das eingebaute Eröffnungsbuch",
+      "source_unavailable": "Explorer nicht erreichbar — lokale Ergebnisse"
     }
   },
   "plan": {
@@ -1366,6 +1406,39 @@
     "star_collector": {
       "title": "Sternensammler",
       "description": "100 Sterne im Lernbereich gesammelt."
+    }
+  },
+  "progress": {
+    "nav": "Fortschritt",
+    "title": "Fortschritt",
+    "sub": "Woche für Woche: Genauigkeit, Fehler pro Partie und die Gewohnheit, die dich am meisten gekostet hat.",
+    "notImplemented": "Der Wochenfortschritt kommt im nächsten Update.",
+    "range": "Zeitraum",
+    "weeks": "{{count}} Wochen",
+    "thisWeek": "Diese Woche",
+    "partial": "läuft",
+    "games": "Partien",
+    "wins": "Siege",
+    "draws": "Remis",
+    "losses": "Niederlagen",
+    "accuracy": "Genauigkeit",
+    "accuracyDelta": "ggü. Vorwoche",
+    "errorsPerGame": "Fehler / Partie",
+    "errorsDelta": "ggü. Vorwoche",
+    "topPattern": "Hauptgewohnheit",
+    "noData": "Keine analysierten Partien in diesem Zeitraum.",
+    "trend_up": "schlechter",
+    "trend_down": "besser",
+    "trend_flat": "stabil",
+    "report": {
+      "title": "Wochenbericht",
+      "generate": "Bericht erstellen",
+      "regenerate": "Neu erstellen",
+      "empty": "Spiele eine volle Woche analysierter Partien, um einen schriftlichen Bericht zu bekommen."
+    },
+    "explain": {
+      "accuracy": "Durchschnittliche Zuggenauigkeit der analysierten Partien dieser Woche.",
+      "errors": "Schweregradgewichtete Fehler pro Partie: ein grober Fehler wiegt mehr als mehrere Ungenauigkeiten."
     }
   }
 }

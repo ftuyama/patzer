@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap, Stethoscope, LineChart } from 'lucide-react';
 import { api } from '../api';
 import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
@@ -144,6 +144,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
             <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
             <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
+            <NavPill to="/diagnosis" icon={Stethoscope} label={t('diagnosis.title', { defaultValue: 'Diagnosis' })} />
+            <NavPill to="/progress" icon={LineChart} label={t('progress.nav', { defaultValue: 'Progress' })} />
             <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
             <NavPill to="/learn" icon={GraduationCap} label={t('learn.nav')} />
             <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
@@ -318,6 +320,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <MobileNavItem to="/play" icon={Swords} label={t('home.playTitle')} />
               <MobileNavItem to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
               <MobileNavItem to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
+              <MobileNavItem to="/diagnosis" icon={Stethoscope} label={t('diagnosis.title', { defaultValue: 'Diagnosis' })} />
+              <MobileNavItem to="/progress" icon={LineChart} label={t('progress.nav', { defaultValue: 'Progress' })} />
               <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
               <MobileNavItem to="/learn" icon={GraduationCap} label={t('learn.nav')} />
               <MobileNavItem to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />

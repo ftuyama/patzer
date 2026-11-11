@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Home, Swords, BookOpen, BarChart3, Settings as SettingsIcon, Target,
   Trophy, Frown, Equal, Users, Server, Sun, Moon, Globe, LogOut, Star,
-  BookMarked, ListChecks, Microscope, GraduationCap,
+  BookMarked, ListChecks, Microscope, GraduationCap, Stethoscope, LineChart,
 } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -61,6 +61,8 @@ export default function CommandPalette({ open, onClose }: Props) {
       { id: 'nav-play', label: t('home.playTitle'), icon: Swords, group: 'nav', run: () => { nav('/play'); onClose(); } },
       { id: 'nav-review', label: t('review.title'), icon: BookOpen, group: 'nav', run: () => { nav('/review'); onClose(); } },
       { id: 'nav-insights', label: t('insights.title', { defaultValue: 'Insights' }), icon: BarChart3, group: 'nav', run: () => { nav('/insights'); onClose(); } },
+      { id: 'nav-diagnosis', label: t('diagnosis.title', { defaultValue: 'Diagnosis' }), icon: Stethoscope, group: 'nav', keywords: 'diagnosis patterns weaknesses errors blunders habits progress', run: () => { nav('/diagnosis'); onClose(); } },
+      { id: 'nav-progress', label: t('progress.title', { defaultValue: 'Progress' }), icon: LineChart, group: 'nav', keywords: 'progress weekly trend accuracy improvement history report', run: () => { nav('/progress'); onClose(); } },
       { id: 'nav-train', label: t('train.title', { defaultValue: 'Tactic Trainer' }), icon: Target, group: 'nav', keywords: 'puzzle tactic train practice', run: () => { nav('/train'); onClose(); } },
       { id: 'nav-learn', label: t('learn.title'), icon: GraduationCap, group: 'nav', keywords: 'learn lesson course rules basics tactics endgame', run: () => { nav('/learn'); onClose(); } },
       { id: 'nav-openings', label: t('openings.title', { defaultValue: 'Openings' }), icon: BookMarked, group: 'nav', keywords: 'opening repertoire tree eco', run: () => { nav('/openings'); onClose(); } },

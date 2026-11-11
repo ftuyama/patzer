@@ -6,6 +6,7 @@ import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
 import learnRu from './learn/ru.json';
 import ru from './ru.json';
+import pt from './pt.json';
 import bg from './bg.json';
 import es from './es.json';
 import { loadLearnTexts } from '../learn/content';
@@ -115,7 +116,7 @@ describe('ru locale', () => {
 // Bulgarian and Spanish are partial (missing keys fall back to English), but
 // the Home card is on everyone's first screen every day: its texts are in all
 // five locales.
-describe.each([['de', de], ['ru', ru], ['bg', bg], ['es', es]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
+describe.each([['de', de], ['ru', ru], ['bg', bg], ['es', es], ['pt', pt]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
   it('has the Home card and its Puzzles-tab texts', () => {
     const flat = flatten(texts as Tree);
     for (const key of ['home.todayPuzzle', 'home.dailyOpen', 'home.dailySolved', 'home.dailyDone', 'home.dailyStart',
@@ -148,5 +149,33 @@ describe('goalText', () => {
   it('falls back to the stored text for an unknown kind', () => {
     const goal = { kind: 'something_new', title: 'Stored title', description: 'Stored description', target: 1, metadata: null };
     expect(goalText(t, goal)).toEqual({ title: 'Stored title', description: 'Stored description' });
+  });
+});
+
+// Portuguese goal strings used {{count}}/{{opening}} while goalText supplies
+// {{target}}/{{name}}, so the Plan cards rendered the raw placeholders.
+describe('pt plan texts', () => {
+  it('interpolates every value the plan UI passes', async () => {
+    const i18n = createInstance();
+    await i18n.init({ lng: 'pt', resources: { pt: { translation: pt } } });
+    const t = i18n.getFixedT('pt');
+
+    const goals = [
+      { kind: 'puzzles_solve', target: 5, metadata: null },
+      { kind: 'opening_play', target: 3, metadata: { opening_name: 'Sicilian Defense', color: 'black' } },
+      { kind: 'review_games', target: 2, metadata: null },
+      { kind: 'accuracy', target: 4, metadata: { min_accuracy: 80 } },
+      { kind: 'win_streak', target: 3, metadata: null },
+    ];
+    for (const goal of goals) {
+      const text = goalText(t, { ...goal, title: '', description: '' });
+      expect(text.title, goal.kind).not.toMatch(/{{/);
+      expect(text.description, goal.kind).not.toMatch(/{{/);
+      expect(text.title, goal.kind).toContain(String(goal.target));
+    }
+
+    expect(t('plan.daysLeft', { n: 2 })).toBe('2 dias restantes');
+    expect(t('plan.daysLeft', { n: 2 })).not.toMatch(/{{/);
+    expect(t('home.planActive')).toBe('metas ativas');
   });
 });

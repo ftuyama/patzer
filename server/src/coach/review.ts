@@ -280,6 +280,46 @@ Schema: { "summary": string (3-5 Sätze), "skill_assessment": string (1 Satz: wa
     fallbackSkill: (elo) => `Эта партия сыграна примерно на уровне ${elo} Эло.`,
     fallbackOpening: (name) => `Дебют партии — ${name}: крепкий выбор.`,
   },
+  pt: {
+    jsonHard: `\n\nR10. Responda com EXATAMENTE UM objeto JSON no formato do esquema em TASK. Sem texto fora do JSON. Sem blocos markdown. Sem chaves extras.`,
+    perspective: 'você',
+    you: 'você',
+    opponent: 'o adversário',
+    result: { win: 'você venceu', loss: 'você perdeu', draw: 'empate' },
+    phase: { opening: 'abertura', middlegame: 'meio-jogo', endgame: 'final' },
+    keyMoment: 'Momento-chave',
+    taskPhase: (phase) => `TASK: Descreva em 2 a 4 frases como o jogador conduziu a fase de ${phase}, tratando-o por "você".
+- Lances em FACTS.moves com "by": "você" são do jogador; "by": "o adversário" são do adversário. Nunca atribua ao jogador um lance do adversário.
+- Cite os lances concretos de FACTS.moves que importaram (em palavras, como foram dados) e o que fizeram — os bons e os custosos.
+- Termine com uma coisa concreta a melhorar nesta fase, com base em FACTS.
+- Não repita o número de precisão; o jogador já o vê.
+Esquema: { "prose": string }`,
+    taskMomentOwn: `TASK: Este momento-chave é um lance DO PRÓPRIO jogador ("você"). Analise como treinador, tratando-o por "você". Campos:
+- title: no máximo 6 palavras, sem ponto final.
+- what_happened: 1-2 frases — o que foi jogado e o que o lance fez ou permitiu, segundo FACTS.moment.why e FACTS.moment.best_reply.
+- why_it_matters: 1-2 frases — o melhor lance em FACTS.moment.better_move e o que ele conseguiria (ou, se o lance foi bom, por que funcionou).
+- what_to_learn: 1 frase — a lição (FACTS.moment.takeaway, se existir).
+Esquema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskMomentOpponent: `TASK: Este momento-chave é um lance DO ADVERSÁRIO, não do jogador. Nunca escreva "você jogou". Campos:
+- title: no máximo 6 palavras, sem ponto final, sobre o lance do adversário.
+- what_happened: 1-2 frases — o que o adversário jogou e o veredito.
+- why_it_matters: 1-2 frases — o que isso significou para você: a chance que ele deu (FACTS.moment.best_reply — como punir) e se sua resposta a aproveitou (FACTS.moment.your_answer).
+- what_to_learn: 1 frase — no que observar quando o adversário joga assim.
+Esquema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Escreva o balanço do treinador sobre esta partida para o jogador ("você"). Conte a história com fatos concretos:
+- como a partida foi decidida — FACTS.turning_point, citando o lance em palavras e quem o jogou;
+- uma coisa boa (FACTS.your_best_moves) e o mais importante a corrigir (FACTS.your_costliest_moves, com o lance melhor);
+- se FACTS.opponent_gifts não estiver vazio: se essas chances foram aproveitadas.
+NÃO repita porcentagens de precisão, Elo ou contagens por categoria — o jogador já as vê. Sem frases vazias como "controlar o ritmo" ou "luta pela iniciativa", a menos que FACTS as sustente.
+Esquema: { "summary": string (3-5 frases), "skill_assessment": string (1 frase: o que a partida diz sobre o nível e qual hábito o elevaria), "opening_prose": string (no máximo 2 frases sobre a abertura) }`,
+    fallbackPhase: (phase, accuracy, plies) => `Na fase de ${phase}, sua precisão foi de ${accuracy}% em ${plies} meios-lances.`,
+    fallbackMoment: (move, verdict, cpLoss) => `No lance ${move}, a partida virou: ${verdict}. O custo foi de cerca de ${(cpLoss / 100).toFixed(1)} peão(ões).`,
+    fallbackMomentOpponent: (move, verdict) => `No lance ${move}, o adversário jogou: ${verdict}.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Sua precisão foi de ${acc}%. Você teve ${brilliant} lances brilhantes, ${mistakes} erros e ${blunders} erros graves.`,
+    fallbackSkillNone: 'Ainda sem avaliação do nível de jogo.',
+    fallbackSkill: (elo) => `Esta partida correspondeu a cerca de ${elo} Elo.`,
+    fallbackOpening: (name) => `Você abriu com ${name} — uma escolha sólida.`,
+  },
 };
 
 function reviewText(language: Language): ReviewText {

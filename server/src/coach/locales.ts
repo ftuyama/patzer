@@ -103,6 +103,23 @@ const PIECE_NAME_KID_RU: Record<string, string> = {
   P: "пешка",
 };
 
+const PIECE_NAME_KID_PT: Record<string, string> = {
+  K: "rei",
+  Q: "rainha",
+  R: "torrezinha",
+  B: "bispo",
+  N: "cavalinho",
+  P: "peão",
+};
+const PIECE_NAME_PT: Record<string, string> = {
+  K: "rei",
+  Q: "dama",
+  R: "torre",
+  B: "bispo",
+  N: "cavalo",
+  P: "peão",
+};
+
 // Russian piece names decline: the mover stays in the nominative ("конь бьёт"),
 // but the captured piece, a promotion target and a material edge take the
 // accusative ("бьёт пешку", "превращение в ферзя", "на ладью больше").
@@ -164,6 +181,7 @@ const PIECE_NAMES: Record<"kid" | "standard", Record<Language, Record<string, st
     es: PIECE_NAME_KID_ES,
     de: PIECE_NAME_KID_DE,
     ru: PIECE_NAME_KID_RU,
+    pt: PIECE_NAME_KID_PT,
   },
   standard: {
     en: PIECE_NAME_EN,
@@ -171,6 +189,7 @@ const PIECE_NAMES: Record<"kid" | "standard", Record<Language, Record<string, st
     es: PIECE_NAME_ES,
     de: PIECE_NAME_DE,
     ru: PIECE_NAME_RU,
+    pt: PIECE_NAME_PT,
   },
 };
 
@@ -361,12 +380,47 @@ const AUDIENCE_RU: Record<Audience, AudienceBlock> = {
   },
 };
 
+const AUDIENCE_PT: Record<Audience, AudienceBlock> = {
+  kid: {
+    tone: 'Caloroso, gentil, encorajador. Erros são "opa", não "erros". As peças são personagens: o cavalo é o cavalinho, a torre é o castelinho.',
+    sentences: "2 frases curtas, de 6 a 12 palavras cada.",
+    allowed:
+      'palavras simples; nomes das peças; "olha", "protege", "ataca", "defende"',
+    banned:
+      "erro grave, avaliação, profilaxia, posto avançado, tempo, iniciativa, cravada, raio-x, ataque descoberto, casa fraca",
+  },
+  beginner: {
+    tone: "Amigável, didático, princípio primeiro. Nomeie UM conceito por vez (segurança do rei, desenvolvimento, contagem de atacantes/defensores).",
+    sentences: "3 frases curtas, de 10 a 18 palavras cada.",
+    allowed:
+      "segurança do rei, desenvolvimento, centro, captura, ataque, defesa, ameaça, valor das peças",
+    banned:
+      "profilaxia, posto avançado, ataque de minoria, contenção, zugzwang, fortaleza, minagem",
+  },
+  intermediate: {
+    tone: "Comentário esportivo concreto. Nomeie os motivos táticos e posicionais pelo nome.",
+    sentences: "3 a 5 frases, de 14 a 22 palavras cada.",
+    allowed:
+      "cravada, garfo, raio-x, ataque descoberto, desvio, sobrecarga, casa fraca, posto avançado, coluna aberta, estrutura de peões, segurança do rei, atividade das peças, tempo, iniciativa",
+    banned:
+      "profilaxia, ataque de minoria, zugzwang, fortaleza, contenção, minagem",
+  },
+  advanced: {
+    tone: "De igual para igual, rápido, denso em motivos. Plano e casas-chave importam mais que o básico.",
+    sentences: "3 a 6 frases, de 16 a 26 palavras cada.",
+    allowed:
+      "profilaxia, ataque de minoria, contenção, minagem, ruptura, fortaleza, zugzwang, oposição, triangulação, além de todo o vocabulário intermediário",
+    banned: "(sem lista proibida neste nível — escreva de igual para igual)",
+  },
+};
+
 const AUDIENCE_DATA: Record<Language, Record<Audience, AudienceBlock>> = {
   en: AUDIENCE_EN,
   bg: AUDIENCE_BG,
   es: AUDIENCE_ES,
   de: AUDIENCE_DE,
   ru: AUDIENCE_RU,
+  pt: AUDIENCE_PT,
 };
 
 const AUDIENCE_LABELS: Record<
@@ -383,6 +437,8 @@ const AUDIENCE_LABELS: Record<
     `Zielgruppe: ${a}.\nTON: ${b.tone}\nLÄNGE: ${b.sentences}\nERLAUBTE BEGRIFFE: ${b.allowed}.\nVERBOTENE BEGRIFFE: ${b.banned}.`,
   ru: (a, b) =>
     `Аудитория: ${a}.\nТОН: ${b.tone}\nДЛИНА: ${b.sentences}\nРАЗРЕШЁННЫЕ ПОНЯТИЯ: ${b.allowed}.\nЗАПРЕЩЁННЫЕ ПОНЯТИЯ: ${b.banned}.`,
+  pt: (a, b) =>
+    `Público: ${a}.\nTOM: ${b.tone}\nTAMANHO: ${b.sentences}\nCONCEITOS PERMITIDOS: ${b.allowed}.\nCONCEITOS PROIBIDOS: ${b.banned}.`,
 };
 
 function audienceBlock(audience: Audience, language: Language): string {
@@ -489,6 +545,8 @@ const PERSONA: Record<Language, string> = {
   es: PERSONA_ES,
   de: PERSONA_DE,
   ru: PERSONA_RU,
+  pt: `=== PERSONA ===
+Você é o treinador de xadrez do Patzer. Você é um treinador, não um comentarista: explica POR QUE um lance funciona ou falha, mostra a ideia melhor, conecta com os hábitos do jogador e entrega algo para levar para a próxima partida. Caloroso, direto, nunca condescendente, sempre concreto. Fale diretamente com o jogador, tratando-o por "você".`,
 };
 const HARD_RULES: Record<Language, string> = {
   en: HARD_RULES_EN,
@@ -496,6 +554,12 @@ const HARD_RULES: Record<Language, string> = {
   es: HARD_RULES_ES,
   de: HARD_RULES_DE,
   ru: HARD_RULES_RU,
+  pt: HARD_RULES_EN
+    .replace("=== HARD RULES ===", "=== REGRAS RÍGIDAS ===")
+    .replace(
+      "R5. Output language: English. Every word in English. Translate piece names (queen, knight, etc.).",
+      "R5. Idioma da resposta: português do Brasil. Cada palavra em português. Traduza os nomes das peças (dama, cavalo etc.).",
+    ),
 };
 export function systemPrompt(audience: Audience, language: Language): string {
   const lang = PERSONA[language] ? language : "en";
@@ -585,6 +649,19 @@ const CLASS_PHRASES: Record<Language, Record<Classification, string>> = {
   es: CLASS_PHRASE_ES,
   de: CLASS_PHRASE_DE,
   ru: CLASS_PHRASE_RU,
+  pt: {
+    brilliant: "um lance brilhante — a melhor escolha do motor E um sacrifício real",
+    great: "um ótimo lance — o único que mantinha a posição",
+    best: "a melhor escolha do motor",
+    excellent: "um lance excelente",
+    good: "um lance sólido",
+    book: "um lance conhecido de abertura / teoria",
+    forced: "um lance forçado — a única opção legal",
+    inaccuracy: "uma pequena imprecisão",
+    mistake: "um erro — havia um lance claramente melhor",
+    blunder: "um erro grave — material ou posição importantes perdidos",
+    miss: "uma vitória perdida — havia um lance muito mais forte",
+  },
 };
 
 export function verdictPhrase(c: Classification, language: Language): string {
