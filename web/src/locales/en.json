@@ -1048,7 +1048,16 @@
       "emptyDesc": "Either you follow the main lines or there are not enough analysed games yet.",
       "source_lichess": "Checked against the Lichess Opening Explorer",
       "source_local": "Checked against the built-in opening book",
-      "source_unavailable": "Opening explorer unavailable — showing local results"
+      "source_unavailable": "Opening explorer unavailable — showing local results",
+      "window": "Games",
+      "gamesHeader": "Games",
+      "lossHeader": "Eval loss",
+      "line": "Opening",
+      "scanning": "Scanning…",
+      "scanHint": "Scan your analysed games to see where you leave the book. This can take a few seconds.",
+      "unavailable": "Lichess Explorer unavailable",
+      "unavailableDesc": "We couldn't reach the opening explorer. Your games are safe — please try again in a minute.",
+      "scanned": "{{count}} games scanned"
     }
   },
   "plan": {

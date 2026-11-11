@@ -9,13 +9,14 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Target } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AlertTriangle, BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Loader2, Search, Target } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
 import BetaBadge from '../components/BetaBadge';
 import OpeningTrainer, { TRAINER_QUERY_KEY, fetchTrainer } from '../components/OpeningTrainer';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
+import type { TheoryGapPayload } from '../types';
 
 interface TreeNode {
   san: string;
@@ -95,7 +96,10 @@ export default function Openings() {
       ) : isLoading ? (
         <Skeleton />
       ) : (
-        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} onTrainer={() => setTab('trainer')} />
+        <>
+          <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} onTrainer={() => setTab('trainer')} />
+          <TheoryGaps />
+        </>
       )}
     </div>
   );
@@ -430,6 +434,193 @@ function moveNumberPrefix(ply: number): string {
   // ply 1 -> "1." (white), ply 2 -> "1...", ply 3 -> "2.", etc.
   const move = Math.ceil(ply / 2);
   return ply % 2 === 1 ? `${move}.` : `${move}…`;
+}
+
+// Where your openings leave the book. Nothing touches the network until the
+// user presses "Scan games" — the scan replays the analysed games and asks the
+// (server-cached) Lichess Opening Explorer about each position.
+function TheoryGaps() {
+  const { t } = useTranslation();
+  const [color, setColor] = useState<'white' | 'black' | 'both'>('both');
+  const [windowGames, setWindowGames] = useState(100);
+  const [result, setResult] = useState<TheoryGapPayload | null>(null);
+
+  const scan = useMutation({
+    mutationFn: () =>
+      api.get<TheoryGapPayload>(`/api/openings/theory?color=${color}&games=${windowGames}`),
+    onSuccess: (payload) => setResult(payload),
+  });
+
+  const colorOptions: Array<'white' | 'black' | 'both'> = ['white', 'black', 'both'];
+  const colorClass = (active: boolean) =>
+    `btn-secondary text-xs ${active ? 'border-gold-500/60 bg-gold-500/15 text-gold-700 dark:text-gold-300' : ''}`;
+
+  return (
+    <section className="card overflow-hidden">
+      <div className="flex flex-col gap-3 border-b border-chesscom-200 px-4 py-3 dark:border-chesscom-700 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+            <Target className="h-4 w-4 text-board-dark" />
+            {t('openings.theory.title')}
+          </h2>
+          <p className="mt-1 text-sm text-chesscom-500">{t('openings.theory.sub')}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-chesscom-500">{t('openings.theory.color')}</span>
+          <div className="flex gap-1">
+            {colorOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setColor(option)}
+                className={colorClass(color === option)}
+              >
+                {t(`openings.theory.${option}`)}
+              </button>
+            ))}
+          </div>
+          <select
+            className="input w-auto text-xs"
+            value={windowGames}
+            onChange={(e) => setWindowGames(Number(e.target.value))}
+            aria-label={t('openings.theory.window')}
+          >
+            {[20, 50, 100, 200].map((n) => (
+              <option key={n} value={n}>
+                {t('openings.theory.window')} {n}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => scan.mutate()}
+            disabled={scan.isPending}
+            className="btn-primary text-sm"
+          >
+            {scan.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            {scan.isPending ? t('openings.theory.scanning') : t('openings.theory.scan')}
+          </button>
+        </div>
+      </div>
+
+      {scan.isPending ? (
+        <div className="flex flex-col items-center gap-2 p-10 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-chesscom-400" />
+          <div className="text-sm font-semibold">{t('openings.theory.scanning')}</div>
+          <div className="max-w-md text-xs text-chesscom-500">{t('openings.theory.scanHint')}</div>
+        </div>
+      ) : scan.isError || result?.source === 'unavailable' ? (
+        <div className="flex flex-col items-center gap-2 p-10 text-center">
+          <AlertTriangle className="h-8 w-8 text-gold-600" />
+          <div className="text-base font-semibold">{t('openings.theory.unavailable')}</div>
+          <div className="max-w-md text-sm text-chesscom-500">{t('openings.theory.unavailableDesc')}</div>
+        </div>
+      ) : !result ? (
+        <div className="flex flex-col items-center gap-2 p-10 text-center">
+          <Search className="h-8 w-8 text-chesscom-400" />
+          <div className="text-base font-semibold">{t('openings.theory.scan')}</div>
+          <div className="max-w-md text-sm text-chesscom-500">{t('openings.theory.scanHint')}</div>
+        </div>
+      ) : result.gaps.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 p-10 text-center">
+          <BookMarked className="h-8 w-8 text-chesscom-400" />
+          <div className="text-base font-semibold">{t('openings.theory.empty')}</div>
+          <div className="max-w-md text-sm text-chesscom-500">{t('openings.theory.emptyDesc')}</div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-chesscom-200 text-[11px] uppercase tracking-wider text-chesscom-500 dark:border-chesscom-700">
+              <tr>
+                <th className="px-4 py-2 font-medium">#</th>
+                <th className="px-2 py-2 font-medium">{t('openings.theory.line')}</th>
+                <th className="px-2 py-2 font-medium">{t('openings.theory.gap')}</th>
+                <th className="px-2 py-2 font-medium">{t('openings.theory.instead')}</th>
+                <th className="px-2 py-2 text-right font-medium">{t('openings.theory.gamesHeader')}</th>
+                <th className="px-2 py-2 text-right font-medium">{t('openings.theory.lossHeader')}</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-chesscom-200 dark:divide-chesscom-700">
+              {result.gaps.map((gap, i) => (
+                <tr key={`${gap.ply}-${gap.move_san}-${gap.san_line.join('-')}`} className="align-top">
+                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-chesscom-400">{i + 1}</td>
+                  <td className="max-w-[18rem] px-2 py-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {gap.eco && (
+                        <span className="rounded bg-chesscom-100 px-1 py-px font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
+                          {gap.eco}
+                        </span>
+                      )}
+                      <span className="truncate text-xs text-chesscom-600 dark:text-chesscom-300">
+                        {gap.name || t('openings.unknownLine', { defaultValue: 'Untheorized line' })}
+                      </span>
+                    </div>
+                    <div className="mt-1 font-mono text-[11px] text-chesscom-400">
+                      {gap.san_line.slice(0, -1).join(' ') || '—'}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3">
+                    <span className="font-mono text-sm font-semibold tabular-nums text-mistake">
+                      {moveNumberPrefix(gap.ply)}{gap.move_san}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {gap.explorer.slice(0, 2).map((m) => (
+                        <span
+                          key={m.uci}
+                          className="rounded bg-board-dark/10 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-board-dark dark:bg-board-dark/20"
+                          title={t('openings.theory.games', { count: m.games })}
+                        >
+                          {m.san}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-right">
+                    <div className="font-mono text-xs tabular-nums text-chesscom-700 dark:text-chesscom-100">
+                      {t('openings.theory.share', { value: Math.round(gap.share * 100) })}
+                    </div>
+                    <div className="mt-0.5 font-mono text-[11px] tabular-nums text-chesscom-400">
+                      {t('openings.theory.games', { count: gap.games })}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-right font-mono text-xs tabular-nums">
+                    {gap.eval_loss != null ? (
+                      <span className="text-mistake">{t('openings.theory.loss', { value: gap.eval_loss.toFixed(1) })}</span>
+                    ) : (
+                      <span className="text-chesscom-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {gap.example_game_id != null && (
+                      <Link
+                        to={`/review/${gap.example_game_id}?ply=${gap.ply}`}
+                        className="text-xs font-medium text-gold-700 hover:underline dark:text-gold-300"
+                      >
+                        {t('openings.theory.example')} →
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {result && !scan.isPending && !scan.isError && result.source !== 'unavailable' && (
+        <div className="border-t border-chesscom-200 px-4 py-2 text-[11px] text-chesscom-400 dark:border-chesscom-700">
+          {result.source === 'lichess-explorer'
+            ? t('openings.theory.source_lichess')
+            : t('openings.theory.source_local')}
+          {' · '}
+          {t('openings.theory.scanned', { count: result.scanned_games })}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function Skeleton() {

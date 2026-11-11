@@ -1048,7 +1048,16 @@
       "emptyDesc": "Entweder folgst du den Hauptlinien oder es gibt noch zu wenige analysierte Partien.",
       "source_lichess": "Geprüft gegen den Lichess Opening Explorer",
       "source_local": "Geprüft gegen das eingebaute Eröffnungsbuch",
-      "source_unavailable": "Explorer nicht erreichbar — lokale Ergebnisse"
+      "source_unavailable": "Explorer nicht erreichbar — lokale Ergebnisse",
+      "window": "Partien",
+      "gamesHeader": "Partien",
+      "lossHeader": "Eval-Verlust",
+      "line": "Eröffnung",
+      "scanning": "Wird geprüft…",
+      "scanHint": "Prüfe deine analysierten Partien, um zu sehen, wo du das Buch verlässt. Das kann ein paar Sekunden dauern.",
+      "unavailable": "Lichess Explorer nicht erreichbar",
+      "unavailableDesc": "Der Eröffnungs-Explorer war nicht erreichbar. Deine Partien sind sicher — bitte versuche es in einer Minute erneut.",
+      "scanned": "{{count}} Partien geprüft"
     }
   },
   "plan": {
