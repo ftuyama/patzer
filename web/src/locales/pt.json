@@ -645,6 +645,15 @@
     "errorsPerGame": "Erros / partida",
     "errorsDelta": "vs. semana anterior",
     "topPattern": "Hábito principal",
+    "week": "Semana",
+    "dateRange": "{{from}} – {{to}}",
+    "inProgressNote": "A semana atual ainda está em andamento.",
+    "summary": {
+      "currentAccuracy": "Precisão atual",
+      "bestWeek": "Melhor semana"
+    },
+    "error": "Não foi possível carregar seu progresso. Tente de novo.",
+    "retry": "Tentar de novo",
     "noData": "Nenhuma partida analisada neste período.",
     "trend_up": "piorando",
     "trend_down": "melhorando",
@@ -653,7 +662,9 @@
       "title": "Relatório semanal",
       "generate": "Gerar relatório",
       "regenerate": "Gerar de novo",
-      "empty": "Conclua uma semana cheia de partidas analisadas para receber um relatório escrito."
+      "empty": "Conclua uma semana cheia de partidas analisadas para receber um relatório escrito.",
+      "weekOf": "Semana de {{date}}",
+      "hint": "Montado com os números da semana — mesmos números, mesmas palavras."
     },
     "explain": {
       "accuracy": "Precisão média dos lances nas partidas analisadas da semana.",
