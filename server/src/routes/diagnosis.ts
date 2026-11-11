@@ -3,13 +3,26 @@
 // Aggregates deterministic pattern events (chess/patterns.ts) over the user's
 // most recent analysed games and ranks the top habits by severity. Also builds
 // a small weekly series so progress can be seen on the same page. Templated,
-// no LLM, no re-analysis; computed from analyses.moves_json and cached briefly.
+// no LLM, no re-analysis.
+//
+// The events themselves are a materialized view of `analyses.moves_json`
+// (`error_events`, written by saveAnalysis and scripts/backfill-patterns.ts),
+// so this route normally only reads rows. Games analysed before the event
+// store existed have no rows yet: those fall back to live detection for that
+// game, which keeps the page populated until the backfill catches up. The
+// weekly/overview counters still come from the analysis row (accuracy and
+// per-game classification counts are not part of a pattern event), so the
+// payload shape is unchanged.
+//
+// Cached for 60 s per user; `games` is part of the cache key so changing the
+// window recomputes immediately.
 
 import { Hono } from 'hono';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { detectGamePatterns, summarizePatterns, type GameMeta, type PatternEvent } from '../chess/patterns.js';
+import { analysedGameCount, hasEventsForGame, listEvents, type StoredPatternEvent } from '../patterns/store.js';
 import type { DiagnosisPayload, DiagnosisWeeklyBucket } from '../patterns/contracts.js';
 import type { AnalyzedMove, PhaseSplit } from '../types.js';
 
@@ -43,6 +56,72 @@ function isoWeekStart(d: Date): string {
   return copy.toISOString().slice(0, 10);
 }
 
+function metaFor(r: Row): GameMeta {
+  const color = r.user_color ?? 'white';
+  return {
+    game_id: r.game_id,
+    user_color: color,
+    end_time: r.end_time,
+    eco: r.eco,
+    opening_name: r.opening_name,
+    opponent: color === 'white' ? r.black : r.white,
+    result: r.result,
+  };
+}
+
+/** Stored rows carry row identity; the payload's `examples` must stay a plain
+ *  `PatternEvent` so stored and live-detected games serialise identically. */
+function toPatternEvent(e: StoredPatternEvent): PatternEvent {
+  return {
+    motif: e.motif,
+    game_id: e.game_id,
+    ply: e.ply,
+    phase: e.phase,
+    color: e.color,
+    severity: e.severity,
+    cp_loss: e.cp_loss,
+    classification: e.classification,
+    fen: e.fen,
+    played_san: e.played_san,
+    best_san: e.best_san,
+    end_time: e.end_time,
+    eco: e.eco,
+    opening_name: e.opening_name,
+    opponent: e.opponent,
+    result: e.result,
+  };
+}
+
+/** Group the stored events by game so the per-game loop can use them. */
+function eventsByGame(userId: number, limitGames: number): Map<number, PatternEvent[]> {
+  const byGame = new Map<number, PatternEvent[]>();
+  for (const stored of listEvents(userId, { limitGames })) {
+    const list = byGame.get(stored.game_id) ?? [];
+    list.push(toPatternEvent(stored));
+    byGame.set(stored.game_id, list);
+  }
+  return byGame;
+}
+
+/**
+ * The one place both data paths meet: stored events when the game has them,
+ * live detection when it does not. A game whose detection produced no events
+ * has no rows to read (the store only writes events), so it re-runs the cheap
+ * detector — `hasEventsForGame` still saves the (rare) case where another
+ * current-version row exists but the listEvents window missed it.
+ */
+function gameEventsFor(
+  r: Row,
+  moves: AnalyzedMove[],
+  split: PhaseSplit | null,
+  stored: Map<number, PatternEvent[]>,
+): PatternEvent[] {
+  const recorded = stored.get(r.game_id);
+  if (recorded) return recorded;
+  if (hasEventsForGame(r.game_id)) return [];
+  return detectGamePatterns(moves, metaFor(r), split);
+}
+
 function build(userId: number, windowGames: number): DiagnosisPayload {
   const rows = db.prepare(`
     SELECT a.game_id, g.user_color, a.moves_json, a.phase_split_json,
@@ -54,6 +133,7 @@ function build(userId: number, windowGames: number): DiagnosisPayload {
     LIMIT ?
   `).all(userId, SCORING_VERSION, windowGames) as Row[];
 
+  const stored = eventsByGame(userId, windowGames);
   const events: PatternEvent[] = [];
   const weekly = new Map<string, WeeklyBucket>();
   let accuracySum = 0;
@@ -88,16 +168,7 @@ function build(userId: number, windowGames: number): DiagnosisPayload {
     mistakes += gameMistakes;
     inaccuracies += gameInaccuracies;
 
-    const meta: GameMeta = {
-      game_id: r.game_id,
-      user_color: color,
-      end_time: r.end_time,
-      eco: r.eco,
-      opening_name: r.opening_name,
-      opponent: color === 'white' ? r.black : r.white,
-      result: r.result,
-    };
-    const gameEvents = detectGamePatterns(moves, meta, split);
+    const gameEvents = gameEventsFor(r, moves, split, stored);
     events.push(...gameEvents);
 
     const day = (r.end_time ?? '').slice(0, 10);
@@ -120,19 +191,20 @@ function build(userId: number, windowGames: number): DiagnosisPayload {
         : b.accuracy;
       b.mistakes_per_game = Math.round(((b.mistakes_per_game * (b.games - 1) + gameMistakes) / b.games) * 100) / 100;
       b.blunders_per_game = Math.round(((b.blunders_per_game * (b.games - 1) + gameBlunders) / b.games) * 100) / 100;
-      const top = gameEvents.sort((a, b2) => b2.severity - a.severity)[0];
+      const top = [...gameEvents].sort((a, b2) => b2.severity - a.severity)[0];
       if (top) b.top_pattern = b.top_pattern ?? top.motif;
       weekly.set(start, b);
     }
   }
 
-  const patterns = summarizePatterns(events, Math.max(1, rows.length));
+  const gamesAnalyzed = analysedGameCount(userId, windowGames);
+  const patterns = summarizePatterns(events, Math.max(1, gamesAnalyzed));
   const weeklyRows = [...weekly.values()].sort((a, b) => a.week_start.localeCompare(b.week_start)).slice(-8);
 
   dates.sort();
   return {
     generated_at: new Date().toISOString(),
-    games_analyzed: rows.length,
+    games_analyzed: gamesAnalyzed,
     window_games: windowGames,
     overview: {
       accuracy: accuracyN ? Math.round((accuracySum / accuracyN) * 10) / 10 : null,
