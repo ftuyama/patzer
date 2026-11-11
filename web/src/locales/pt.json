@@ -306,7 +306,20 @@
       "playFromHere": "Jogar a partir daqui"
     },
     "regenerateReport": "Gerar relatório novamente",
-    "fromPosition": "A partir de uma posição"
+    "fromPosition": "A partir de uma posição",
+    "sideShort.white": "B",
+    "sideShort.black": "P",
+    "why.yourMove": "Seu lance",
+    "why.opponentMove": "Lance do adversário",
+    "why.winChance": "Chance de vitória",
+    "why.engineWanted": "O motor preferia",
+    "why.line": "Linha principal",
+    "why.coachSays": "O treinador diz",
+    "why.playFromHere": "Jogar a partir daqui",
+    "source.chesscom": "Chess.com",
+    "source.played": "Jogada aqui",
+    "source.pvp": "Contra jogador",
+    "source.lichess": "Lichess"
   },
   "classification": {
     "brilliant": "Brilhante",
@@ -446,7 +459,11 @@
       "classic": "Sinos nítidos — os sons originais do Patzer.",
       "soft": "Notas quentes de marimba de madeira que combinam com os sons de lance."
     },
-    "soundSetPreview": "Prévia"
+    "soundSetPreview": "Prévia",
+    "audienceLevel.kid": "Criança",
+    "audienceLevel.beginner": "Iniciante",
+    "audienceLevel.intermediate": "Intermediário",
+    "audienceLevel.advanced": "Avançado"
   },
   "admin": {
     "users": "Usuários",
@@ -723,7 +740,30 @@
       "position": "Posição {{current}} de {{total}}",
       "severity": "Custou {{value}}% de chance de vitória",
       "source": "Da sua partida contra {{opponent}}"
-    }
+    },
+    "tabs.mine": "Meus erros",
+    "tabs.puzzles": "Puzzles",
+    "puzzles.intro": "Puzzles do banco público do Lichess.",
+    "puzzles.allDone": "Você resolveu todos os puzzles de hoje.",
+    "puzzles.findWhite": "Brancas jogam e ganham",
+    "puzzles.findBlack": "Pretas jogam e ganham",
+    "puzzles.solution": "Solução",
+    "puzzles.next": "Próximo",
+    "puzzles.hint": "Dica",
+    "puzzles.wrong": "Tente novamente.",
+    "puzzles.solved": "Resolvido!",
+    "puzzles.yourRating": "Seu rating de puzzles",
+    "puzzles.notRated": "Ainda sem rating",
+    "puzzles.themes.all": "Todos",
+    "puzzles.themes.mate": "Mate",
+    "puzzles.themes.fork": "Garfo",
+    "puzzles.themes.pin": "Cravada",
+    "puzzles.themes.sacrifice": "Sacrifício",
+    "puzzles.themes.hanging": "Peça pendurada",
+    "puzzles.themes.endgame": "Final",
+    "puzzles.daily.title": "Puzzle diário",
+    "puzzles.daily.more": "Mais puzzles",
+    "puzzles.daily.already": "Você já resolveu o puzzle de hoje."
   },
   "learn": {
     "nav": "Aprender",
@@ -832,7 +872,15 @@
       "skip": "Pular este exercício",
       "skipped": "Pulado — sem o motor, este exercício não pode ser jogado. Continue a lição.",
       "again": "Tentar novamente"
-    }
+    },
+    "levels.basics.title": "Fundamentos",
+    "levels.basics.desc": "Como as peças se movem, xeque e mate.",
+    "levels.beginner.title": "Iniciante",
+    "levels.beginner.desc": "Aberturas, táticas simples e finais básicos.",
+    "levels.intermediate.title": "Intermediário",
+    "levels.intermediate.desc": "Planos, estrutura de peões e cálculo.",
+    "levels.advanced.title": "Avançado",
+    "levels.advanced.desc": "Estratégia posicional e finais complexos."
   },
   "insights": {
     "title": "Estatísticas",
@@ -898,7 +946,24 @@
     "moveQualityTotal_other": "{{count}} lances",
     "brilliantMoves": "Lances brilhantes",
     "noBrilliant": "Nenhum lance brilhante ainda.",
-    "vsOpponent": "contra {{name}}"
+    "vsOpponent": "contra {{name}}",
+    "tax.hung": "Peças penduradas",
+    "tax.hungDesc": "Lances que perderam pelo menos 2 peões de material.",
+    "tax.oneMove": "Erros de um lance",
+    "tax.oneMoveDesc": "Posições estáveis que viraram catástrofe em um lance.",
+    "tax.backRank": "Fragilidade na última fileira",
+    "tax.backRankDesc": "Erros graves com o rei exposto na última fileira.",
+    "tax.missedMate": "Mates perdidos",
+    "tax.missedMateDesc": "Você tinha uma vitória forçada e não a encontrou.",
+    "tax.openingTrap": "Armadilhas na abertura",
+    "tax.openingTrapDesc": "Erros cometidos antes do fim da teoria.",
+    "tax.endgameDrift": "Deriva no final",
+    "tax.endgameDriftDesc": "Precisão caindo quando a partida chega ao final.",
+    "tax.promisingLosing": "De promissor a perdido",
+    "tax.promisingLosingDesc": "Posições favoráveis que viraram derrota.",
+    "result.win": "Vitória",
+    "result.loss": "Derrota",
+    "result.draw": "Empate"
   },
   "openings": {
     "nav": "Aberturas",
@@ -1055,7 +1120,17 @@
       "source_lichess": "Conferido no Lichess Opening Explorer",
       "source_local": "Conferido no livro de aberturas embutido",
       "source_unavailable": "Explorer indisponível — mostrando resultados locais"
-    }
+    },
+    "tabs.tree": "Árvore",
+    "tabs.trainer": "Treinador",
+    "trainer.intro": "Lembre os lances do seu repertório.",
+    "trainer.dueToday": "Para hoje",
+    "trainer.myLine": "Minha linha",
+    "trainer.iPlay": "Eu jogo",
+    "trainer.white": "Brancas",
+    "trainer.black": "Pretas",
+    "trainer.notReached": "Você ainda não chegou aqui.",
+    "trainer.yourHabits": "Seus hábitos"
   },
   "plan": {
     "nav": "Plano",
@@ -1102,7 +1177,22 @@
         "title": "Ganhe {{target}} partidas seguidas",
         "description": "Uma sequência curta para consolidar a confiança."
       }
-    }
+    },
+    "cta.puzzles_solve": "Resolver puzzles",
+    "cta.opening_play": "Jogar a abertura",
+    "cta.review_games": "Revisar partidas",
+    "cta.accuracy": "Analisar precisão",
+    "cta.win_streak": "Jogar",
+    "goal.puzzles_solve.title": "Resolva {{target}} puzzles",
+    "goal.puzzles_solve.description": "Puzzles retirados dos seus próprios erros.",
+    "goal.opening_play.title": "Jogue {{target}} partidas com {{name}}",
+    "goal.opening_play.description": "Você vem tendo dificuldade com {{name}} como {{color}}. Jogue-a mais {{target}} vezes esta semana para quebrar o padrão.",
+    "goal.review_games.title": "Revise {{target}} partidas",
+    "goal.review_games.description": "Revisar é onde o aprendizado acontece.",
+    "goal.accuracy.title": "Alcance {{minAccuracy}}% de precisão em {{target}} partidas",
+    "goal.accuracy.description": "Foque na precisão: jogue {{target}} partidas em que você fique acima de {{minAccuracy}}%.",
+    "goal.win_streak.title": "Ganhe {{target}} partidas seguidas",
+    "goal.win_streak.description": "Uma sequência curta para consolidar a confiança."
   },
   "lab": {
     "nav": "Laboratório",
@@ -1180,7 +1270,13 @@
     "unreviewed": "Não revisadas",
     "learnNext": "Próxima lição",
     "learnResume": "Continuar aprendendo",
-    "learnDesc": "Lições curtas de fundamentos, táticas e finais."
+    "learnDesc": "Lições curtas de fundamentos, táticas e finais.",
+    "greet.morning": "Bom dia",
+    "greet.afternoon": "Boa tarde",
+    "greet.evening": "Boa noite",
+    "streak.win": "vitória",
+    "streak.loss": "derrota",
+    "streak.draw": "empate"
   },
   "auth": {
     "passwordHint": "Pelo menos 10 caracteres",
@@ -1297,7 +1393,11 @@
       "rapid": "Rapid",
       "daily": "Diário"
     },
-    "onlineTitle": "online"
+    "onlineTitle": "online",
+    "tc.bullet": "Bullet",
+    "tc.blitz": "Blitz",
+    "tc.rapid": "Rapid",
+    "tc.daily": "Diário"
   },
   "threat": {
     "title": "Qual é a ameaça?",
@@ -1440,12 +1540,23 @@
       "title": "Relatório semanal",
       "generate": "Gerar relatório",
       "regenerate": "Gerar de novo",
-      "empty": "Conclua uma semana cheia de partidas analisadas para receber um relatório escrito."
+      "empty": "Conclua uma semana cheia de partidas analisadas para receber um relatório escrito.",
+      "weekOf": "Semana de {{date}}",
+      "hint": "Montado com os números da semana — mesmos números, mesmas palavras."
     },
     "explain": {
       "accuracy": "Precisão média dos lances nas partidas analisadas da semana.",
       "errors": "Erros por partida ponderados pela gravidade: um erro grave pesa mais que várias imprecisões."
-    }
+    },
+    "week": "Semana",
+    "dateRange": "{{from}} – {{to}}",
+    "inProgressNote": "A semana atual ainda está em andamento.",
+    "summary": {
+      "currentAccuracy": "Precisão atual",
+      "bestWeek": "Melhor semana"
+    },
+    "error": "Não foi possível carregar seu progresso. Tente de novo.",
+    "retry": "Tentar de novo"
   },
   "diagnosis": {
     "title": "Diagnóstico",

@@ -1426,6 +1426,15 @@
     "errorsPerGame": "Errors / game",
     "errorsDelta": "vs. previous week",
     "topPattern": "Main habit",
+    "week": "Week",
+    "dateRange": "{{from}} – {{to}}",
+    "inProgressNote": "The current week is still in progress.",
+    "summary": {
+      "currentAccuracy": "Current accuracy",
+      "bestWeek": "Best week"
+    },
+    "error": "Could not load your progress. Try again.",
+    "retry": "Try again",
     "noData": "No analysed games in this period.",
     "trend_up": "worse",
     "trend_down": "better",
@@ -1434,7 +1443,9 @@
       "title": "Weekly report",
       "generate": "Generate report",
       "regenerate": "Regenerate",
-      "empty": "Finish a full week of analysed games to get a written report."
+      "empty": "Finish a full week of analysed games to get a written report.",
+      "weekOf": "Week of {{date}}",
+      "hint": "Built from the week's numbers — same numbers, same words."
     },
     "explain": {
       "accuracy": "Average move accuracy across the week's analysed games.",

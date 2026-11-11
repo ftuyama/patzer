@@ -1426,6 +1426,15 @@
     "errorsPerGame": "Fehler / Partie",
     "errorsDelta": "ggü. Vorwoche",
     "topPattern": "Hauptgewohnheit",
+    "week": "Woche",
+    "dateRange": "{{from}} – {{to}}",
+    "inProgressNote": "Die aktuelle Woche läuft noch.",
+    "summary": {
+      "currentAccuracy": "Aktuelle Genauigkeit",
+      "bestWeek": "Beste Woche"
+    },
+    "error": "Dein Fortschritt konnte nicht geladen werden. Versuch es noch einmal.",
+    "retry": "Nochmal versuchen",
     "noData": "Keine analysierten Partien in diesem Zeitraum.",
     "trend_up": "schlechter",
     "trend_down": "besser",
@@ -1434,7 +1443,9 @@
       "title": "Wochenbericht",
       "generate": "Bericht erstellen",
       "regenerate": "Neu erstellen",
-      "empty": "Spiele eine volle Woche analysierter Partien, um einen schriftlichen Bericht zu bekommen."
+      "empty": "Spiele eine volle Woche analysierter Partien, um einen schriftlichen Bericht zu bekommen.",
+      "weekOf": "Woche vom {{date}}",
+      "hint": "Aus den Zahlen der Woche gebaut — gleiche Zahlen, gleiche Worte."
     },
     "explain": {
       "accuracy": "Durchschnittliche Zuggenauigkeit der analysierten Partien dieser Woche.",
