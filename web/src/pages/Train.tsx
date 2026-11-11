@@ -13,6 +13,7 @@ import { Target, RotateCcw, ArrowRight, Lightbulb, Check, X, Trophy, BookOpen, Z
 import BetaBadge from '../components/BetaBadge';
 import TacticsPuzzles from '../components/TacticsPuzzles';
 import ChessBoard from '../components/ChessBoard';
+import { PatternDrills } from '../components/DrillBoard';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { localDay } from '../lib/openingTrainer';
@@ -112,6 +113,7 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
             <Link to="/review" className="btn-secondary text-sm">{t('review.title')}</Link>
           </div>
         </div>
+        <PatternDrills />
       </div>
     );
   }
@@ -120,6 +122,9 @@ function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
     <div className="mx-auto max-w-5xl">
       {header}
       <OwnPuzzle key={`${puzzle.game_id}:${puzzle.ply}:${run}`} puzzle={puzzle} onNext={() => setRun((r) => r + 1)} />
+      <div className="mt-4">
+        <PatternDrills />
+      </div>
     </div>
   );
 }
