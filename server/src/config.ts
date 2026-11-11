@@ -72,13 +72,29 @@ function loadOidcConfig() {
   };
 }
 
+// Single-user local install (desktop app). `LOCAL_MODE=1` (or the CHESS_LOCAL
+// alias) auto-creates and auto-logs-in one `local` admin, skips the setup
+// wizard, and binds loopback so the instance isn't reachable from the LAN.
+// An explicit HOST still wins for the rare case someone fronts it themselves.
+const localMode = parseBool(process.env.LOCAL_MODE, false) || parseBool(process.env.CHESS_LOCAL, false);
+const host = process.env.HOST ?? (localMode ? '127.0.0.1' : '0.0.0.0');
+
+if (localMode) {
+  // One clear boot line so logs say why auth behaves differently. Also a
+  // reminder: this mode has no login and must never face a network.
+  console.log('LOCAL_MODE: single-user, bound to 127.0.0.1');
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 8800),
-  host: process.env.HOST ?? '0.0.0.0',
+  host,
   dbPath,
+  // Either an operator-provided SESSION_SECRET or the stable secret persisted
+  // next to the DB; local mode uses the same mechanism and needs no extra setup.
   sessionSecret: loadOrCreateSessionSecret(dbPath),
   stockfishPathHint: process.env.STOCKFISH_PATH || undefined,
   projectRoot: PROJECT_ROOT,
   cookieSecure: parseBool(process.env.COOKIE_SECURE, false),
+  localMode,
   oidc: loadOidcConfig(),
 };

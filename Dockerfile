@@ -54,6 +54,11 @@ ENV NODE_ENV=production \
     DB_PATH=/app/data/chess.db \
     STOCKFISH_PATH=/usr/games/stockfish
 
+# LOCAL_MODE=1 (single-user desktop install) is opt-in at run time. Inside a
+# container HOST must stay 0.0.0.0 so Docker can forward the port; publish it on
+# 127.0.0.1 only (see `docker-compose.yml` profile "local"). Never expose a
+# local-mode instance to a network — it has no authentication.
+
 USER node
 EXPOSE 8800
 CMD ["node", "server/dist/index.js"]
